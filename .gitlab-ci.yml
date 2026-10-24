@@ -1,0 +1,61 @@
+stages:
+  - audit
+
+ai_audit:
+  stage: audit
+  image: python:3.11-slim
+  script:
+    - pip install --quiet openai requests
+    - |
+      python3 - <<'PY'
+      import os, pathlib, requests
+      from openai import OpenAI
+
+      API_KEY = os.environ["GROK"]
+      PROJECT_ID = os.environ["CI_PROJECT_ID"]
+      CI_TOKEN = os.environ["CI_JOB_TOKEN"]
+      GITLAB_HOST = os.environ.get("CI_SERVER_HOST", "localhost")
+      REPO_DIR = pathlib.Path(os.environ.get("CI_PROJECT_DIR", "."))
+
+      # Собираем файлы проекта
+      files = []
+      total = 0
+      skip = {".git", "node_modules", "__pycache__", "venv", ".venv", "dist"}
+      
+      for path in sorted(REPO_DIR.rglob("*")):
+          if not path.is_file(): continue
+          rel = path.relative_to(REPO_DIR)
+          if any(part in skip for part in rel.parts): continue
+          if path.suffix in {".png", ".jpg", ".exe", ".zip", ".pdf", ".lock"}: continue
+          
+          if total < 40000:
+              try:
+                  text = path.read_text(errors="ignore")
+                  files.append(f"--- Файл: {rel} ---\n{text}")
+                  total += len(text)
+              except: pass
+
+      code = "\n".join(files)
+
+      # Запрос к бесплатному Groq
+      client = OpenAI(api_key=API_KEY, base_url="https://api.groq.com/openai/v1")
+      resp = client.chat.completions.create(
+          model="llama-3.3-70b-versatile",
+          messages=[{"role": "user", "content": f"Ты старший разработчик. Проанализируй этот код. Найди ошибки, уязвимости и напиши список того, что нужно доделать. Формат: 1. Что есть в проекте, 2. Ошибки и проблемы, 3. Что нужно доделать.\n\nКОД:\n{code}"}]
+      )
+      report = resp.choices[0].message.content
+
+      # Создаём Issue в GitLab
+      url = f"https://{GITLAB_HOST}/api/v4/projects/{PROJECT_ID}/issues"
+      headers = {"JOB-TOKEN": CI_TOKEN}
+      data = {"title": "AI-аудит кода", "description": report}
+      r = requests.post(url, headers=headers, json=data)
+      print(f"Готово! Статус: {r.status_code}")
+      if r.status_code in (200, 201):
+          print(f"Ссылка: {r.json().get('web_url', 'Смотри раздел Задачи')}")
+      else:
+          print(f"Ошибка: {r.text}")
+      PY
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
