@@ -45,11 +45,17 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
+    max-width: 420px;
 }
 .user-name-display {
     font-size: 15px;
     font-weight: 500;
     color: #333;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
 }
 .auth-btn {
     padding: 12px 28px;
@@ -60,6 +66,8 @@ body {
     font-size: 15px;
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 .auth-btn:hover { background: #F0F6FF; }
 
@@ -543,9 +551,9 @@ body {
         <h1>Система бронирования помещений</h1>
         <p>Добро пожаловать! Здесь вы можете забронировать любое помещение для ваших нужд: от небольших комнат для звонков до просторного актового зала.</p>
         <div class="home-features">
-            <div class="feature-card"><h3>🏢 3 помещения</h3><p>Различные по размеру и оснащению</p></div>
-            <div class="feature-card"><h3>📅 Удобное бронирование</h3><p>Выбирайте дату и время онлайн</p></div>
-            <div class="feature-card"><h3>⚡ Быстрое подтверждение</h3><p>Мгновенное одобрение заявки</p></div>
+            <div class="feature-card"><h3>3 помещения</h3><p>Различные по размеру и оснащению</p></div>
+            <div class="feature-card"><h3>Удобное бронирование</h3><p>Выбирайте дату и время онлайн</p></div>
+            <div class="feature-card"><h3>Быстрое подтверждение</h3><p>Мгновенное одобрение заявки</p></div>
         </div>
     </div>
 </div>
@@ -558,28 +566,8 @@ body {
     </div>
     <div class="week-divider"></div>
     <div class="booking-layout">
-        <div class="rooms-list">
-            <div class="room-list-item active" data-room="0" onclick="selectBookingRoom(0)">Актовый зал</div>
-            <div class="room-list-item" data-room="1" onclick="selectBookingRoom(1)">Переговорная комната № 1</div>
-            <div class="room-list-item" data-room="2" onclick="selectBookingRoom(2)">Переговорная комната № 2</div>
-            <div class="room-list-item" data-room="3" onclick="selectBookingRoom(3)">Конференц-зал</div>
-            <div class="room-list-item" data-room="4" onclick="selectBookingRoom(4)">Комната для звонков № 1</div>
-            <div class="room-list-item" data-room="5" onclick="selectBookingRoom(5)">Комната для звонков № 2</div>
-        </div>
-        <div class="time-slots" id="timeSlots">
-            <div class="time-slot" data-time="8:00 - 9:00" data-start-hour="8" onclick="selectSlot(this)">8:00 - 9:00</div>
-            <div class="time-slot" data-time="9:00 - 10:00" data-start-hour="9" onclick="selectSlot(this)">9:00 - 10:00</div>
-            <div class="time-slot" data-time="10:00 - 11:00" data-start-hour="10" onclick="selectSlot(this)">10:00 - 11:00</div>
-            <div class="time-slot" data-time="11:00 - 12:00" data-start-hour="11" onclick="selectSlot(this)">11:00 - 12:00</div>
-            <div class="time-slot" data-time="12:00 - 13:00" data-start-hour="12" onclick="selectSlot(this)">12:00 - 13:00</div>
-            <div class="time-slot" data-time="13:00 - 14:00" data-start-hour="13" onclick="selectSlot(this)">13:00 - 14:00</div>
-            <div class="time-slot" data-time="14:00 - 15:00" data-start-hour="14" onclick="selectSlot(this)">14:00 - 15:00</div>
-            <div class="time-slot" data-time="15:00 - 16:00" data-start-hour="15" onclick="selectSlot(this)">15:00 - 16:00</div>
-            <div class="time-slot" data-time="16:00 - 17:00" data-start-hour="16" onclick="selectSlot(this)">16:00 - 17:00</div>
-            <div class="time-slot" data-time="17:00 - 18:00" data-start-hour="17" onclick="selectSlot(this)">17:00 - 18:00</div>
-            <div class="time-slot" data-time="18:00 - 19:00" data-start-hour="18" onclick="selectSlot(this)">18:00 - 19:00</div>
-            <div class="time-slot" data-time="19:00 - 20:00" data-start-hour="19" onclick="selectSlot(this)">19:00 - 20:00</div>
-        </div>
+        <div class="rooms-list"></div>
+        <div class="time-slots" id="timeSlots"></div>
         <div class="action-buttons">
             <button class="action-btn primary" onclick="handleBookingClick()">Бронировать</button>
             <div class="booking-hint" id="bookingHint">Пожалуйста, выберите свободное время</div>
@@ -680,12 +668,6 @@ body {
                 <label for="rescheduleTime">Время:</label>
                 <select id="rescheduleTime" onchange="clearRescheduleError()">
                     <option value="">Выберите время</option>
-                    <option>8:00 - 9:00</option><option>9:00 - 10:00</option>
-                    <option>10:00 - 11:00</option><option>11:00 - 12:00</option>
-                    <option>12:00 - 13:00</option><option>13:00 - 14:00</option>
-                    <option>14:00 - 15:00</option><option>15:00 - 16:00</option>
-                    <option>16:00 - 17:00</option><option>17:00 - 18:00</option>
-                    <option>18:00 - 19:00</option><option>19:00 - 20:00</option>
                 </select>
             </div>
         </div>
@@ -727,8 +709,7 @@ let periodsData = [];
 let currentDayBookings = [];
 
 const fallbackRoomNames = [
-    'Актовый зал', 'Переговорная комната № 1', 'Переговорная комната № 2',
-    'Конференц-зал', 'Комната для звонков № 1', 'Комната для звонков № 2'
+    'Актовый зал', 'Переговорная А', 'Переговорная Б'
 ];
 const roomImages = [
     'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop',
@@ -756,7 +737,8 @@ let weekStart = getMonday(new Date());
 
 let currentDayIndex = 0;
 let selectedRoomIndex = 0;
-let selectedSlot = null; // { id, label, startHour, timeString }
+let selectedSlots = []; // массив выбранных слотов [{ id, time, period, startHour }]
+let selectedSlot = null; // для обратной совместимости
 
 // Даты для модалок календаря
 let pickerCalDate = new Date();
@@ -1007,7 +989,9 @@ function updateAuthButton() {
 
     if (currentUser) {
         if (nameEl) {
-            nameEl.textContent = currentUser.name || currentUser.fio;
+            const displayName = currentUser.name || currentUser.fio;
+            nameEl.textContent = displayName;
+            nameEl.title = displayName;
             nameEl.style.display = 'inline-block';
         }
         btn.textContent = 'Выход';
@@ -1280,7 +1264,7 @@ function updateTimeSlotsWithBookings() {
         slot.classList.remove('past-slot', 'occupied-other', 'occupied-mine');
         slot.removeAttribute('title');
 
-        // 1. Прошедшее время серым (блокируется, если до начала периода осталось <= 2 минут или он уже начался/прошел)
+        // 1. Прошедшее время: если период уже начался/прошел (или осталось <= 2 минут до начала), он полностью исчезает
         let isPastTime = false;
         if (isPastDay) {
             isPastTime = true;
@@ -1294,8 +1278,7 @@ function updateTimeSlotsWithBookings() {
         }
 
         if (isPastTime) {
-            slot.classList.add('past-slot');
-            slot.title = 'Это время уже недоступно для бронирования';
+            slot.style.display = 'none';
             if (slot.classList.contains('selected')) {
                 slot.classList.remove('selected');
                 selectedSlot = null;
@@ -1303,22 +1286,17 @@ function updateTimeSlotsWithBookings() {
             return;
         }
 
-        // 2. Проверка брони из базы данных
+        // 2. Проверка брони из базы данных:
+        // Если период уже занят (неважно кем), также полностью скрываем его из сетки доступного времени
         const booking = currentDayBookings.find(b => b.time_id === periodId);
         if (booking) {
-            if (myUserId && booking.user_id === myUserId) {
-                // Своя бронь - синяя
-                slot.classList.add('occupied-mine');
-                slot.title = `Ваша бронь (${booking.user || ''}). Кликните для отмены/просмотра`;
-            } else {
-                // Чужая бронь - красная
-                slot.classList.add('occupied-other');
-                slot.title = 'Занято другим пользователем';
-                if (slot.classList.contains('selected')) {
-                    slot.classList.remove('selected');
-                    selectedSlot = null;
-                }
+            slot.style.display = 'none';
+            if (slot.classList.contains('selected')) {
+                slot.classList.remove('selected');
+                selectedSlot = null;
             }
+        } else {
+            slot.style.display = '';
         }
     });
 }
@@ -1407,6 +1385,7 @@ function selectDay(index) {
 
     currentDayIndex = index;
     highlightSelectedDay();
+    selectedSlots = [];
     selectedSlot = null;
     loadScheduleGrid();
 }
@@ -1523,6 +1502,7 @@ setInterval(updateTimeSlotsWithBookings, 30000);
 function selectBookingRoom(index) {
     selectedRoomIndex = index;
     document.querySelectorAll('.room-list-item').forEach((el, i) => el.classList.toggle('active', i === index));
+    selectedSlots = [];
     selectedSlot = null;
     document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
     document.getElementById('bookingHint').classList.remove('active');
@@ -1530,42 +1510,41 @@ function selectBookingRoom(index) {
 }
 
 function selectSlot(el, periodObj) {
-    if (el.classList.contains('past-slot')) return;
+    if (el.classList.contains('past-slot') || el.style.display === 'none') return;
 
-    // Если это своя бронь (синяя ячейка) - переход к отмене брони
-    if (el.classList.contains('occupied-mine')) {
-        const booking = currentDayBookings.find(b => b.time_id === periodObj.id);
-        if (booking) {
-            const roomName = (roomsData[selectedRoomIndex] && roomsData[selectedRoomIndex].name) || 'помещение';
-            const dateFormatted = booking.date ? new Date(booking.date).toLocaleDateString('ru-RU') : getSelectedDateISO();
-            const timeFormatted = `${booking.start_time.substring(0,5)} - ${booking.end_time.substring(0,5)}`;
-            document.getElementById('cancelModalText').textContent =
-                `Вы точно хотите отменить бронь «${roomName}» на ${dateFormatted} (${timeFormatted})?`;
-            document.getElementById('cancelModal').dataset.bookingId = booking.id;
-            document.getElementById('cancelModal').classList.add('active');
-            return;
-        }
+    const periodId = periodObj ? periodObj.id : parseInt(el.dataset.periodId, 10);
+    const timeLabel = el.dataset.time || el.textContent.trim();
+    const startHour = parseInt(el.dataset.startHour, 10);
+
+    // Множественный выбор периодов (toggle):
+    const existingIndex = selectedSlots.findIndex(s => s.id === periodId);
+    if (existingIndex !== -1) {
+        // Снимаем выделение
+        selectedSlots.splice(existingIndex, 1);
+        el.classList.remove('selected');
+    } else {
+        // Добавляем выделение
+        selectedSlots.push({
+            id: periodId,
+            time: timeLabel,
+            period: periodObj,
+            startHour: startHour
+        });
+        el.classList.add('selected');
     }
 
-    // Если занято другим человеком (красная ячейка) - запрет
-    if (el.classList.contains('occupied-other')) {
-        showToast('Это время уже занято другим пользователем', 'error');
-        return;
-    }
+    // Сортируем выбранные периоды по времени начала
+    selectedSlots.sort((a, b) => a.startHour - b.startHour);
+    selectedSlot = selectedSlots.length > 0 ? selectedSlots[0] : null;
 
-    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedSlot = {
-        id: periodObj ? periodObj.id : parseInt(el.dataset.periodId, 10),
-        time: el.dataset.time || el.textContent.trim(),
-        period: periodObj
-    };
-    document.getElementById('bookingHint').classList.remove('active');
+    if (selectedSlots.length > 0) {
+        document.getElementById('bookingHint').classList.remove('active');
+    }
 }
 
 // ===== ОБРАБОТЧИК КНОПКИ "БРОНИРОВАТЬ" =====
 function handleBookingClick() {
-    if (!selectedSlot) {
+    if (selectedSlots.length === 0) {
         const hint = document.getElementById('bookingHint');
         hint.textContent = 'Пожалуйста, выберите свободное время';
         hint.classList.add('active');
@@ -1581,12 +1560,20 @@ function handleBookingClick() {
 // ===== МОДАЛКА БРОНИРОВАНИЯ =====
 function openBookingModal() {
     const room = (roomsData[selectedRoomIndex] && roomsData[selectedRoomIndex].name) || fallbackRoomNames[selectedRoomIndex];
-    const time = (selectedSlot && selectedSlot.time) || 'не выбрано';
     const targetDate = new Date(weekStart);
     targetDate.setDate(targetDate.getDate() + currentDayIndex);
 
+    let timeSummary = '';
+    if (selectedSlots.length === 1) {
+        timeSummary = selectedSlots[0].time;
+    } else if (selectedSlots.length > 1) {
+        timeSummary = selectedSlots.map(s => s.time).join(', ');
+    } else {
+        timeSummary = 'не выбрано';
+    }
+
     document.getElementById('bookingModalTitle').textContent =
-        'Забронировать ' + room + ' на ' + targetDate.toLocaleDateString('ru-RU') + ' (' + time + ')';
+        'Забронировать ' + room + ' на ' + targetDate.toLocaleDateString('ru-RU') + ' (' + timeSummary + ')';
     document.getElementById('bookingModal').classList.add('active');
 }
 
@@ -1596,7 +1583,7 @@ async function submitBooking() {
         openAuthModal();
         return;
     }
-    if (!selectedSlot) {
+    if (selectedSlots.length === 0) {
         closeModal('bookingModal');
         return;
     }
@@ -1604,11 +1591,14 @@ async function submitBooking() {
     const room = roomsData[selectedRoomIndex] || { id: selectedRoomIndex + 1, name: fallbackRoomNames[selectedRoomIndex] };
     const dateISO = getSelectedDateISO();
 
+    // Используем обновлённое API: time_ids (массив периодов) для пакетного атомарного бронирования
+    const timeIds = selectedSlots.map(s => s.id);
+
     const body = {
         user_id: currentUser.id,
         resource_id: room.id,
         booking_date: dateISO,
-        time_id: selectedSlot.id
+        time_ids: timeIds
     };
 
     const res = await apiFetch('/bookings', {
@@ -1622,14 +1612,14 @@ async function submitBooking() {
     }
 
     if (res.status === 409) {
-        showToast('Накладка: этот период уже успели забронировать!', 'error');
+        showToast(res.data?.detail || 'Накладка: выбранное время уже успели забронировать!', 'error');
         closeModal('bookingModal');
         loadScheduleGrid();
         return;
     }
 
     if (res.status === 400) {
-        showToast('Нельзя бронировать прошедшее время!', 'error');
+        showToast(res.data?.detail || 'Нельзя бронировать прошедшее время!', 'error');
         closeModal('bookingModal');
         loadScheduleGrid();
         return;
@@ -1642,9 +1632,18 @@ async function submitBooking() {
     }
 
     closeModal('bookingModal');
+    selectedSlots = [];
     selectedSlot = null;
     document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-    const bookingIdText = res.data && res.data.id ? ` (ID брони: #${res.data.id})` : '';
+
+    let bookingIdText = '';
+    if (res.data) {
+        if (res.data.ids && res.data.ids.length > 1) {
+            bookingIdText = ` (ID броней: #${res.data.ids.join(', #')})`;
+        } else if (res.data.id) {
+            bookingIdText = ` (ID брони: #${res.data.id})`;
+        }
+    }
     showToast(`Бронь успешно оформлена!${bookingIdText}`, 'success');
     loadScheduleGrid();
 }
@@ -1798,20 +1797,65 @@ function openRescheduleModalFromMyBookings() {
         return;
     }
     clearRescheduleError();
+    const curBooking = myBookings[selectedBookingIndex];
+    const initialDate = curBooking && curBooking.date ? toDateISO(new Date(curBooking.date)) : toDateISO(new Date());
     document.getElementById('rescheduleDate').min = toDateISO(new Date());
+    document.getElementById('rescheduleDate').value = initialDate;
+    document.getElementById('rescheduleDate').onchange = updateRescheduleAvailableTimes;
 
-    // Заполняем выпадающий список времени периодами из базы
+    renderRescheduleMiniCalendar();
+    updateRescheduleAvailableTimes();
+    document.getElementById('rescheduleModal').classList.add('active');
+}
+
+async function updateRescheduleAvailableTimes() {
     const select = document.getElementById('rescheduleTime');
+    if (!select) return;
+
+    if (selectedBookingIndex === null || !myBookings[selectedBookingIndex]) {
+        select.innerHTML = '<option value="">Выберите время</option>';
+        return;
+    }
+
+    const curBooking = myBookings[selectedBookingIndex];
+    let resId = curBooking.resource_id;
+    if (!resId && curBooking.resource && roomsData.length > 0) {
+        const found = roomsData.find(r => r.name === curBooking.resource);
+        if (found) resId = found.id;
+    }
+    if (!resId) {
+        select.innerHTML = '<option value="">Ошибка: помещение не определено</option>';
+        return;
+    }
+
+    const dateVal = document.getElementById('rescheduleDate').value;
+    if (!dateVal) {
+        select.innerHTML = '<option value="">Сначала выберите дату</option>';
+        return;
+    }
+
+    select.innerHTML = '<option value="">Загрузка доступного времени...</option>';
+
+    // Используем эндпоинт бэкенда GET /availability, который возвращает свободные периоды
+    const res = await apiFetch(`/availability?resource_id=${resId}&booking_date=${dateVal}`);
+    
     select.innerHTML = '<option value="">Выберите время</option>';
-    periodsData.forEach(p => {
+
+    if (!res.ok || !Array.isArray(res.data) || res.data.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.disabled = true;
+        opt.textContent = 'Нет свободного времени на эту дату';
+        select.appendChild(opt);
+        return;
+    }
+
+    res.data.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p.id;
         opt.textContent = formatPeriodLabel(p.start_time, p.end_time);
         select.appendChild(opt);
     });
-
-    renderRescheduleMiniCalendar();
-    document.getElementById('rescheduleModal').classList.add('active');
 }
 
 async function confirmReschedule() {
@@ -1831,17 +1875,19 @@ async function confirmReschedule() {
 
     const currentB = myBookings[selectedBookingIndex];
 
-    // В объекте брони из GET /bookings ресурс возвращается как resource (название),
-    // найдем его id в roomsData по имени или id
+    // Ищем точный ID помещения, не используя фиктивный fallback resId = 1
     let resId = currentB.resource_id;
     if (!resId && currentB.resource && roomsData.length > 0) {
         const found = roomsData.find(r => r.name === currentB.resource);
         if (found) resId = found.id;
     }
-    if (!resId) resId = 1;
+    if (!resId) {
+        showRescheduleError('Не удалось определить помещение для переноса');
+        return;
+    }
 
-    // Backend не имеет отдельного PUT /reschedule, поэтому перенос выполняется
-    // атомарно для пользователя: создаём новую бронь в БД, при успехе отменяем старую
+    // НАДЁЖНЫЙ ФРОНТЕНД ПЕРЕНОС (С КОМПЕНСИРУЮЩИМ ОТКАТОМ):
+    // Шаг 1. Создаём новую бронь
     const createRes = await apiFetch('/bookings', {
         method: 'POST',
         body: JSON.stringify({
@@ -1853,14 +1899,14 @@ async function confirmReschedule() {
     });
 
     if (createRes.status === 409) {
-        showRescheduleError('Выбранное время уже занято! Выберите другое время или день.');
+        showRescheduleError(createRes.data?.detail || 'Выбранное время уже занято! Выберите другое время или день.');
         return;
     }
     if (createRes.status === 400) {
-        showRescheduleError('Нельзя переносить на прошедшее время!');
+        showRescheduleError(createRes.data?.detail || 'Нельзя переносить на прошедшее время!');
         return;
     }
-    if (!createRes.ok) {
+    if (!createRes.ok || !createRes.data) {
         let msg = 'Ошибка создания новой брони';
         if (createRes.data) {
             if (typeof createRes.data.detail === 'string') {
@@ -1875,12 +1921,23 @@ async function confirmReschedule() {
         return;
     }
 
-    // Отменяем старую бронь
-    await apiFetch(`/bookings/${currentB.id}/cancel`, { method: 'POST' });
+    const newBookingId = createRes.data.id;
 
+    // Шаг 2. Отменяем старую бронь со строгой проверкой результата
+    const cancelOldRes = await apiFetch(`/bookings/${currentB.id}/cancel`, { method: 'POST' });
+
+    if (!cancelOldRes.ok) {
+        // ОШИБКА ОТМЕНЫ СТАРОЙ БРОНИ: запускаем компенсирующий откат (отменяем только что созданную новую)
+        console.error('Ошибка отмены старой брони, выполняется откат новой брони:', cancelOldRes);
+        await apiFetch(`/bookings/${newBookingId}/cancel`, { method: 'POST' });
+        showRescheduleError('Не удалось отменить старую бронь. Перенос отменён во избежание дублирования.');
+        return;
+    }
+
+    // Обе операции успешно завершены
     selectedBookingIndex = null;
     closeModal('rescheduleModal');
-    const newBookingIdText = createRes.data && createRes.data.id ? ` (Новый ID брони: #${createRes.data.id})` : '';
+    const newBookingIdText = newBookingId ? ` (Новый ID брони: #${newBookingId})` : '';
     showToast(`Бронь успешно перенесена!${newBookingIdText}`, 'success');
     renderMyBookings();
     loadScheduleGrid();
@@ -1935,6 +1992,7 @@ function renderRescheduleMiniCalendar() {
                 document.getElementById('rescheduleDate').value =
                     year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
                 clearRescheduleError();
+                updateRescheduleAvailableTimes();
             };
         }
         grid.appendChild(el);
