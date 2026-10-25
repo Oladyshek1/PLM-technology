@@ -60,9 +60,12 @@ app = FastAPI(
         "Система бронирования общих помещений. "
         "Накладки невозможны: в POST /bookings строка ресурса блокируется "
         "(SELECT ... FOR UPDATE) до конца транзакции — параллельные запросы "
-        "по тому же помещению выполняются строго по очереди."
+        "по тому же помещению выполняются строго по очереди. "
+        "Одним запросом можно забронировать несколько периодов подряд "
+        "(time_ids) — все или ни один. Список свободного времени на дату — "
+        "GET /availability (занятые и прошедшие периоды в него не попадают)."
     ),
-    version="0.5.0",
+    version="0.6.0",
     lifespan=lifespan,
 )
 
@@ -80,7 +83,16 @@ class BookingIn(BaseModel):
     user_id: int = Field(..., description="ID пользователя")
     resource_id: int = Field(..., description="ID ресурса (помещения)")
     booking_date: date = Field(..., description="Дата брони, YYYY-MM-DD")
-    time_id: int = Field(..., description="ID периода брони из GET /times")
+    # Можно выбрать как один период (time_id — старый формат, работает),
+    # так и несколько подряд (time_ids): всё создаётся одной бронью-пакетом.
+    time_id: int | None = Field(
+        None, description="ID периода брони из GET /times (один период)"
+    )
+    time_ids: list[int] | None = Field(
+        None,
+        description="ID периодов из GET /times (несколько, например 9:00 и 10:00) — "
+                    "создаются все сразу и атомарно",
+    )
 
 
 class UserIn(BaseModel):
@@ -106,6 +118,29 @@ def status_id(cur, name):
     return row["ID_Статус"]
 
 
+def _period_label(p):
+    # "09:00-10:00" — для текста ошибки
+    return f'{p["start_time"].strftime("%H:%M")}-{p["end_time"].strftime("%H:%M")}'
+
+
+def _hhmmss(t):
+    return t.strftime("%H:%M:%S")
+
+
+def _requested_period_ids(body):
+    # Принимаем оба формата: time_id (один период) и time_ids (несколько).
+    # Дубли убираем, порядок не важен — дальше всё сортируется по времени.
+    ids = []
+    if body.time_id is not None:
+        ids.append(body.time_id)
+    for tid in body.time_ids or []:
+        if tid not in ids:
+            ids.append(tid)
+    if not ids:
+        raise HTTPException(400, "укажите период: time_id или time_ids")
+    return ids
+
+
 # ---------------------------------------------------------------- чтение
 
 @app.get("/", include_in_schema=False)
@@ -127,9 +162,46 @@ def get_settings():
 
 @app.get("/times", summary="Справочник периодов брони (сеансы)")
 def list_times():
-    # Периоды из таблицы "Время" — фронт по ним строит сетку расписания
-    # и выпадающий список времени для брони.
+    # Периоды из таблицы "Время" — полная сетка: фронт рисует по ним расписание
+    # (включая занятые ячейки). Список свободного времени — GET /availability.
     return get_periods()
+
+
+@app.get("/availability", summary="Свободные периоды помещения на дату")
+def list_availability(resource_id: int, booking_date: date):
+    # Готовый список для выпадающего меню времени: занятые и прошедшие периоды
+    # в него НЕ попадают — пользователю нечего выбирать «вслепую».
+    # Занятость считается по пересечению периодов, отменённые брони не мешают.
+    # Для сетки расписания (где нужны и занятые ячейки) остаётся GET /bookings.
+    if not query('SELECT 1 FROM "Ресурс" WHERE "ID_Ресурс" = %s', (resource_id,)):
+        raise HTTPException(404, "ресурс не найден")
+
+    rows = query("""
+        SELECT p."ID_Время"       AS id,
+               p."ВремяНачала"    AS start_time,
+               p."ВремяОкончания" AS end_time
+        FROM "Время" p
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM "Бронь" b
+            JOIN "Время"  v ON b."ID_Время"  = v."ID_Время"
+            JOIN "Статус" s ON b."ID_Статус" = s."ID_Статус"
+            WHERE b."ID_Ресурс" = %s
+              AND b."Дата" = %s
+              AND s."Название" <> %s
+              AND v."ВремяНачала"    < p."ВремяОкончания"
+              AND v."ВремяОкончания" > p."ВремяНачала"
+        )
+        ORDER BY p."ВремяНачала", p."ID_Время"
+    """, (resource_id, booking_date, CANCELLED))
+
+    # Прошедшее время тоже не предлагаем (его всё равно нельзя забронировать).
+    now = datetime.now()
+    return [
+        row for row in rows
+        if booking_date > now.date()
+        or (booking_date == now.date() and row["start_time"] >= now.time())
+    ]
 
 
 @app.get("/resources", summary="Список помещений")
@@ -251,30 +323,48 @@ def create_user(body: UserIn):
     return {"id": new_id, "name": body.name, "phone": body.phone}
 
 
-@app.post("/bookings", status_code=201, summary="Создать бронь (атомарно)")
+@app.post("/bookings", status_code=201, summary="Создать бронь (атомарно, можно несколько периодов)")
 def create_booking(body: BookingIn):
+    # Одна бронь = один период. Несколько периодов подряд (например 09:00-10:00
+    # и 10:00-11:00) приходят как time_ids и создаются ВСЕ ИЛИ НИ ОДИН:
+    # та же транзакция и та же блокировка строки ресурса, что и для одного слота.
+    # Если занят хотя бы один период — 409 и в базу не пишется ничего.
+    requested = _requested_period_ids(body)
+
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Период брони берётся из справочника "Время" (см. GET /times):
+        # Периоды брони берутся из справочника "Время" (см. GET /times):
         # произвольное время забронировать нельзя.
         cur.execute(
-            'SELECT "ID_Время", "ВремяНачала", "ВремяОкончания" FROM "Время" '
-            'WHERE "ID_Время" = %s',
-            (body.time_id,),
+            'SELECT "ID_Время" AS id, '
+            '       "ВремяНачала" AS start_time, '
+            '       "ВремяОкончания" AS end_time '
+            'FROM "Время" WHERE "ID_Время" = ANY(%s) '
+            'ORDER BY "ВремяНачала", "ID_Время"',
+            (requested,),
         )
-        period = cur.fetchone()
-        if period is None:
-            raise HTTPException(404, "период не найден (см. GET /times)")
-        start_time = period["ВремяНачала"]
-        end_time = period["ВремяОкончания"]
+        periods = cur.fetchall()
+        found = {p["id"] for p in periods}
+        missing = [tid for tid in requested if tid not in found]
+        if missing:
+            raise HTTPException(404, f"период не найден: {missing} (см. GET /times)")
 
+        # Прошедшее время — 400 целиком: частичная бронь сломала бы ожидание
+        # «выделил с 9 до 11 — получил с 9 до 11».
         now = datetime.now()
-        if body.booking_date < now.date() or (
-            body.booking_date == now.date() and start_time < now.time()
-        ):
-            raise HTTPException(400, "нельзя бронировать прошедшее время")
+        past = [
+            p for p in periods
+            if body.booking_date < now.date()
+            or (body.booking_date == now.date() and p["start_time"] < now.time())
+        ]
+        if past:
+            raise HTTPException(
+                400,
+                "нельзя бронировать прошедшее время: "
+                + ", ".join(_period_label(p) for p in past),
+            )
 
         # SELECT ... FOR UPDATE блокирует строку ресурса до конца транзакции:
         # параллельные POST по одному помещению выстраиваются в очередь за ней.
@@ -296,32 +386,44 @@ def create_booking(body: BookingIn):
 
         cancelled_id = status_id(cur, CANCELLED)
 
-        # Накладка: пересечение по (ресурс, дата) среди НЕ отменённых.
+        # Накладка: пересечение по (ресурс, дата) среди НЕ отменённых —
+        # проверяем каждый выбранный период против всех существующих броней.
         # new.start < old.end AND new.end > old.start
         cur.execute("""
-            SELECT 1
+            SELECT DISTINCT v."ID_Время"       AS id,
+                            v."ВремяНачала"    AS start_time,
+                            v."ВремяОкончания" AS end_time
             FROM "Бронь" b
             JOIN "Время" v ON b."ID_Время" = v."ID_Время"
             WHERE b."ID_Ресурс" = %s
               AND b."Дата" = %s
               AND b."ID_Статус" <> %s
-              AND v."ВремяНачала" < %s
-              AND v."ВремяОкончания" > %s
-            LIMIT 1
-        """, (body.resource_id, body.booking_date, cancelled_id,
-              end_time, start_time))
-        if cur.fetchone() is not None:
-            raise HTTPException(409, "накладка: это время уже занято")
+              AND EXISTS (
+                  SELECT 1 FROM "Время" r
+                  WHERE r."ID_Время" = ANY(%s)
+                    AND v."ВремяНачала"    < r."ВремяОкончания"
+                    AND v."ВремяОкончания" > r."ВремяНачала"
+              )
+            ORDER BY v."ВремяНачала"
+        """, (body.resource_id, body.booking_date, cancelled_id, requested))
+        busy = cur.fetchall()
+        if busy:
+            raise HTTPException(
+                409,
+                "накладка: уже занято " + ", ".join(_period_label(p) for p in busy),
+            )
 
         active_id = status_id(cur, ACTIVE)
+        # INSERT ... SELECT вставляет все выбранные периоды одним оператором.
         cur.execute(
             'INSERT INTO "Бронь" '
             '("ID_Пользователь","ID_Ресурс","ID_Статус","ID_Время","Дата") '
-            'VALUES (%s,%s,%s,%s,%s) RETURNING "ID_Бронь"',
-            (body.user_id, body.resource_id, active_id, body.time_id, body.booking_date),
+            'SELECT %s, %s, %s, v."ID_Время", %s FROM "Время" v '
+            'WHERE v."ID_Время" = ANY(%s) '
+            'RETURNING "ID_Бронь", "ID_Время"',
+            (body.user_id, body.resource_id, active_id, body.booking_date, requested),
         )
-        new_id = cur.fetchone()["ID_Бронь"]
-
+        new_ids = {row["ID_Время"]: row["ID_Бронь"] for row in cur.fetchall()}
 
         conn.commit()
     except Exception:
@@ -330,15 +432,29 @@ def create_booking(body: BookingIn):
     finally:
         conn.close()
 
+    # Ответ: и старые поля (id/time_id/start_time/end_time), и пакет целиком.
+    created = [
+        {
+            "id": new_ids[p["id"]],
+            "time_id": p["id"],
+            "start_time": _hhmmss(p["start_time"]),
+            "end_time": _hhmmss(p["end_time"]),
+        }
+        for p in periods
+    ]
     return {
-        "id": new_id,
+        "id": created[0]["id"],
+        "ids": [c["id"] for c in created],
+        "count": len(created),
         "user_id": body.user_id,
         "resource_id": body.resource_id,
         "date": body.booking_date.isoformat(),
-        "time_id": body.time_id,
-        "start_time": start_time.strftime("%H:%M:%S"),
-        "end_time": end_time.strftime("%H:%M:%S"),
+        "time_id": created[0]["time_id"],
+        "time_ids": [c["time_id"] for c in created],
+        "start_time": created[0]["start_time"],
+        "end_time": created[-1]["end_time"],
         "status": ACTIVE,
+        "bookings": created,
     }
 
 
