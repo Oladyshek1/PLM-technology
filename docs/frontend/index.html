@@ -1753,7 +1753,13 @@ async function confirmCancel() {
         return;
     }
 
-    const res = await apiFetch(`/bookings/${bookingId}/cancel`, { method: 'POST' });
+    if (!currentUser || !currentUser.id) {
+        showToast('Для отмены брони необходимо авторизоваться', 'error');
+        closeModal('cancelModal');
+        return;
+    }
+
+    const res = await apiFetch(`/bookings/${bookingId}/cancel?user_id=${currentUser.id}`, { method: 'POST' });
 
     if (res.isNetworkError) {
         showToast('Сервер БД недоступен', 'error');
@@ -1923,13 +1929,13 @@ async function confirmReschedule() {
 
     const newBookingId = createRes.data.id;
 
-    // Шаг 2. Отменяем старую бронь со строгой проверкой результата
-    const cancelOldRes = await apiFetch(`/bookings/${currentB.id}/cancel`, { method: 'POST' });
+    // Шаг 2. Отменяем старую бронь со строгой проверкой результата (обязательно передаём user_id)
+    const cancelOldRes = await apiFetch(`/bookings/${currentB.id}/cancel?user_id=${currentUser.id}`, { method: 'POST' });
 
     if (!cancelOldRes.ok) {
         // ОШИБКА ОТМЕНЫ СТАРОЙ БРОНИ: запускаем компенсирующий откат (отменяем только что созданную новую)
         console.error('Ошибка отмены старой брони, выполняется откат новой брони:', cancelOldRes);
-        await apiFetch(`/bookings/${newBookingId}/cancel`, { method: 'POST' });
+        await apiFetch(`/bookings/${newBookingId}/cancel?user_id=${currentUser.id}`, { method: 'POST' });
         showRescheduleError('Не удалось отменить старую бронь. Перенос отменён во избежание дублирования.');
         return;
     }
