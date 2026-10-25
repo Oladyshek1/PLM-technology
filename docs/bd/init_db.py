@@ -16,6 +16,12 @@ WORKING_START = time(8, 0)
 WORKING_END = time(22, 0)
 PERIOD_MINUTES = 60
 
+# Жизненный цикл брони: PENDING (создана) → CONFIRMED (подтверждена),
+# CANCELLED — отменена. Слот занимают все статусы, кроме CANCELLED.
+PENDING = "PENDING"
+CONFIRMED = "CONFIRMED"
+CANCELLED = "CANCELLED"
+
 DDL = """
 CREATE TABLE IF NOT EXISTS "Пользователь" (
     "ID_Пользователь" SERIAL PRIMARY KEY,
@@ -147,6 +153,67 @@ def seed_periods(cur):
     return len(wanted)
 
 
+def ensure_statuses(cur):
+    # Справочник статусов брони (идемпотентно).
+    cur.executemany(
+        'INSERT INTO "Статус" ("Название") VALUES (%s) '
+        'ON CONFLICT ("Название") DO NOTHING',
+        [(PENDING,), (CONFIRMED,), (CANCELLED,)],
+    )
+
+
+def migrate_active_status(cur):
+    # Старый статус ACTIVE заменён на CONFIRMED: брони переводим, строку убираем.
+    cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', ("ACTIVE",))
+    old = cur.fetchone()
+    if old is None:
+        return
+    cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (CONFIRMED,))
+    confirmed_id = cur.fetchone()[0]
+    cur.execute(
+        'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Статус" = %s',
+        (confirmed_id, old[0]),
+    )
+    moved = cur.rowcount
+    cur.execute('DELETE FROM "Статус" WHERE "ID_Статус" = %s', (old[0],))
+    print(f"Статусы: ACTIVE объединён с CONFIRMED (броней переведено: {moved})")
+
+
+def ensure_active_slot_index(cur):
+    # Одна активная (не отменённая) бронь на (помещение, дата, период).
+    # Сначала вычищаем возможные дубли: самую раннюю бронь оставляем,
+    # остальные переводим в CANCELLED (история сохраняется).
+    cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (CANCELLED,))
+    cancelled_id = int(cur.fetchone()[0])
+
+    cur.execute("""
+        SELECT "ID_Бронь" FROM (
+            SELECT "ID_Бронь",
+                   ROW_NUMBER() OVER (
+                       PARTITION BY "ID_Ресурс", "Дата", "ID_Время"
+                       ORDER BY "ID_Бронь"
+                   ) AS rn
+            FROM "Бронь"
+            WHERE "ID_Статус" <> %s
+        ) t
+        WHERE rn > 1
+    """, (cancelled_id,))
+    duplicates = [row[0] for row in cur.fetchall()]
+    if duplicates:
+        cur.execute(
+            'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Бронь" = ANY(%s)',
+            (cancelled_id, duplicates),
+        )
+        print(f"Слоты: отменено дублей активных броней — {len(duplicates)}")
+
+    # Частичный уникальный индекс: отменённые брони один слот не блокируют.
+    cur.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "uq_booking_active_slot" '
+        'ON "Бронь" ("ID_Ресурс", "Дата", "ID_Время") '
+        f'WHERE "ID_Статус" <> {cancelled_id}'
+    )
+
+
 def main():
     print("Embedded PostgreSQL: первый запуск может занять несколько секунд...")
     db.get_server()
@@ -157,11 +224,7 @@ def main():
         cur = conn.cursor()
         cur.execute(DDL)  # несколько операторов в одной транзакции
 
-        cur.executemany(
-            'INSERT INTO "Статус" ("Название") VALUES (%s) '
-            'ON CONFLICT ("Название") DO NOTHING',
-            [("ACTIVE",), ("CANCELLED",)],
-        )
+        ensure_statuses(cur)
 
         cur.execute('SELECT COUNT(*) FROM "Ресурс"')
         if cur.fetchone()[0] == 0:
@@ -184,9 +247,12 @@ def main():
             )
 
         periods = seed_periods(cur)
+        migrate_active_status(cur)
+        ensure_active_slot_index(cur)
 
         conn.commit()
-        print(f"OK: таблицы созданы, залиты статусы, 3 переговорные, 2 пользователя, "
+        print(f"OK: таблицы созданы, залиты статусы ({PENDING}, {CONFIRMED}, {CANCELLED}), "
+              f"3 переговорные, 2 пользователя, "
               f"{periods} периодов брони ({WORKING_START.strftime('%H:%M')}-"
               f"{WORKING_END.strftime('%H:%M')}, шаг {PERIOD_MINUTES} мин).")
         print("Подключение:", db.get_uri())

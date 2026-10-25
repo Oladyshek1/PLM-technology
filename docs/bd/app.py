@@ -14,19 +14,25 @@ from pydantic import BaseModel, Field
 
 import db
 
-ACTIVE = "ACTIVE"
+# Жизненный цикл брони: PENDING (создана) → CONFIRMED (подтверждена),
+# CANCELLED — отменена. Слот занимают все статусы, кроме CANCELLED.
+PENDING = "PENDING"
+CONFIRMED = "CONFIRMED"
 CANCELLED = "CANCELLED"
 
 
 def get_periods():
     # Справочник периодов брони — таблица "Время" (сеансы 08:00-09:00, 09:00-10:00, ...).
     # Источник истины — БД: фронт рисует сетку по этому списку.
-    return query(
+    rows = query(
         'SELECT "ID_Время"      AS id, '
         '       "ВремяНачала"   AS start_time, '
         '       "ВремяОкончания" AS end_time '
         'FROM "Время" ORDER BY "ВремяНачала", "ID_Время"'
     )
+    for row in rows:
+        row["duration_minutes"] = _minutes(row["end_time"]) - _minutes(row["start_time"])
+    return rows
 
 
 def working_hours_block():
@@ -58,14 +64,16 @@ app = FastAPI(
     title="API бронирования помещений",
     description=(
         "Система бронирования общих помещений. "
+        "Время — в ISO 8601 (дата YYYY-MM-DD, интервалы вида "
+        "2026-10-26T09:00:00+03:00). Бронь проходит жизненный цикл "
+        "PENDING → CONFIRMED, отмена — CANCELLED (слот освобождается). "
         "Накладки невозможны: в POST /bookings строка ресурса блокируется "
-        "(SELECT ... FOR UPDATE) до конца транзакции — параллельные запросы "
-        "по тому же помещению выполняются строго по очереди. "
-        "Одним запросом можно забронировать несколько периодов подряд "
-        "(time_ids) — все или ни один. Список свободного времени на дату — "
-        "GET /availability (занятые и прошедшие периоды в него не попадают)."
+        "(SELECT ... FOR UPDATE) до конца транзакции, плюс на (помещение, дата, "
+        "период) стоит уникальный индекс для неотменённых броней. "
+        "Несколько периодов подряд (time_ids или starts_at+ends_at) создаются "
+        "атомарно — все или ни один. Свободное время на дату — GET /availability."
     ),
-    version="0.6.0",
+    version="0.7.0",
     lifespan=lifespan,
 )
 
@@ -82,9 +90,12 @@ app.add_middleware(
 class BookingIn(BaseModel):
     user_id: int = Field(..., description="ID пользователя")
     resource_id: int = Field(..., description="ID ресурса (помещения)")
-    booking_date: date = Field(..., description="Дата брони, YYYY-MM-DD")
-    # Можно выбрать как один период (time_id — старый формат, работает),
-    # так и несколько подряд (time_ids): всё создаётся одной бронью-пакетом.
+    # Время можно задать двумя способами:
+    #   1) booking_date + time_id/time_ids (периоды из GET /times);
+    #   2) starts_at + ends_at в ISO 8601 — сервер сам раскладывает интервал на периоды.
+    booking_date: date | None = Field(
+        None, description="Дата брони, YYYY-MM-DD (обязательна вместе с time_id/time_ids)"
+    )
     time_id: int | None = Field(
         None, description="ID периода брони из GET /times (один период)"
     )
@@ -92,6 +103,16 @@ class BookingIn(BaseModel):
         None,
         description="ID периодов из GET /times (несколько, например 9:00 и 10:00) — "
                     "создаются все сразу и атомарно",
+    )
+    starts_at: datetime | None = Field(
+        None,
+        description="Начало брони в ISO 8601, например 2026-10-26T09:00:00+03:00 "
+                    "(альтернатива time_id/time_ids; должен совпадать с сеткой периодов)",
+    )
+    ends_at: datetime | None = Field(
+        None,
+        description="Конец брони в ISO 8601, например 2026-10-26T11:00:00+03:00 "
+                    "(указывается вместе со starts_at)",
     )
 
 
@@ -127,6 +148,20 @@ def _hhmmss(t):
     return t.strftime("%H:%M:%S")
 
 
+def _iso_local(d, t):
+    # Дата + время слота → строка ISO 8601 с часовым поясом сервера,
+    # например "2026-10-26T09:00:00+03:00"
+    return datetime.combine(d, t).astimezone().isoformat()
+
+
+def _local_naive(value):
+    # Пришедшее по API время приводим к локальному поясу сервера и убираем tzinfo,
+    # чтобы сравнивать с временами из справочника периодов.
+    if value.tzinfo is not None:
+        value = value.astimezone()
+    return value.replace(tzinfo=None)
+
+
 def _requested_period_ids(body):
     # Принимаем оба формата: time_id (один период) и time_ids (несколько).
     # Дубли убираем, порядок не важен — дальше всё сортируется по времени.
@@ -136,9 +171,79 @@ def _requested_period_ids(body):
     for tid in body.time_ids or []:
         if tid not in ids:
             ids.append(tid)
-    if not ids:
-        raise HTTPException(400, "укажите период: time_id или time_ids")
     return ids
+
+
+def _resolve_periods(cur, body):
+    # Возвращает (дата брони, [выбранные периоды]) — либо по time_id/time_ids,
+    # либо по интервалу starts_at/ends_at в ISO 8601 (должен совпадать с сеткой).
+    ids = _requested_period_ids(body)
+
+    if ids:
+        if body.booking_date is None:
+            raise HTTPException(
+                400, "вместе с time_id/time_ids нужна booking_date (YYYY-MM-DD)"
+            )
+        cur.execute(
+            'SELECT "ID_Время" AS id, '
+            '       "ВремяНачала" AS start_time, '
+            '       "ВремяОкончания" AS end_time '
+            'FROM "Время" WHERE "ID_Время" = ANY(%s) '
+            'ORDER BY "ВремяНачала", "ID_Время"',
+            (ids,),
+        )
+        periods = cur.fetchall()
+        found = {p["id"] for p in periods}
+        missing = [tid for tid in ids if tid not in found]
+        if missing:
+            raise HTTPException(404, f"период не найден: {missing} (см. GET /times)")
+        return body.booking_date, periods
+
+    # --- вариант 2: интервал в ISO 8601 ---
+    if body.starts_at is None and body.ends_at is None:
+        raise HTTPException(
+            400, "укажите период: time_id/time_ids или пару starts_at + ends_at"
+        )
+    if body.starts_at is None or body.ends_at is None:
+        raise HTTPException(400, "нужны оба поля: starts_at и ends_at")
+
+    start = _local_naive(body.starts_at)
+    end = _local_naive(body.ends_at)
+    if start >= end:
+        raise HTTPException(400, "ends_at должен быть позже starts_at")
+    if start.date() != end.date():
+        raise HTTPException(400, "starts_at и ends_at должны быть в один день")
+    if body.booking_date is not None and body.booking_date != start.date():
+        raise HTTPException(400, "booking_date не совпадает с датой в starts_at")
+    if start.second or end.second or start.microsecond or end.microsecond:
+        raise HTTPException(400, "время должно совпадать с сеткой периодов (см. GET /times)")
+
+    start_min = _minutes(start)
+    end_min = _minutes(end)
+    cur.execute(
+        'SELECT "ID_Время" AS id, '
+        '       "ВремяНачала" AS start_time, '
+        '       "ВремяОкончания" AS end_time '
+        'FROM "Время" ORDER BY "ВремяНачала", "ID_Время"'
+    )
+    periods = [
+        p for p in cur.fetchall()
+        if _minutes(p["start_time"]) >= start_min and _minutes(p["end_time"]) <= end_min
+    ]
+    if (
+        not periods
+        or _minutes(periods[0]["start_time"]) != start_min
+        or _minutes(periods[-1]["end_time"]) != end_min
+    ):
+        raise HTTPException(
+            400, "интервал должен совпадать с сеткой периодов (см. GET /times)"
+        )
+    # периоды внутри интервала обязаны идти подряд
+    for prev, nxt in zip(periods, periods[1:]):
+        if prev["end_time"] != nxt["start_time"]:
+            raise HTTPException(400, "в интервале есть разрыв — не хватает периода")
+
+    return start.date(), periods
 
 
 # ---------------------------------------------------------------- чтение
@@ -152,11 +257,12 @@ def root():
 def get_settings():
     # Фронт берёт отсюда границы рабочего дня и шаг слота, чтобы построить
     # расписание дня/недели/месяца и список свободного времени.
+    # now — ISO 8601 с часовым поясом сервера.
     periods = get_periods()
     return {
         "working_hours": working_hours_block(),
         "periods_count": len(periods),
-        "now": datetime.now().isoformat(timespec="seconds"),
+        "now": datetime.now().astimezone().isoformat(timespec="seconds"),
     }
 
 
@@ -291,7 +397,12 @@ def list_bookings(
     if where:
         sql += " WHERE " + " AND ".join(where)
     sql += ' ORDER BY b."ID_Бронь"'
-    return query(sql, tuple(params))
+    rows = query(sql, tuple(params))
+    for row in rows:
+        # Плюс к date/start_time/end_time — полные временные метки ISO 8601
+        row["starts_at"] = _iso_local(row["date"], row["start_time"])
+        row["ends_at"] = _iso_local(row["date"], row["end_time"])
+    return rows
 
 
 # ---------------------------------------------------------------- запись
@@ -326,38 +437,25 @@ def create_user(body: UserIn):
 @app.post("/bookings", status_code=201, summary="Создать бронь (атомарно, можно несколько периодов)")
 def create_booking(body: BookingIn):
     # Одна бронь = один период. Несколько периодов подряд (например 09:00-10:00
-    # и 10:00-11:00) приходят как time_ids и создаются ВСЕ ИЛИ НИ ОДИН:
-    # та же транзакция и та же блокировка строки ресурса, что и для одного слота.
-    # Если занят хотя бы один период — 409 и в базу не пишется ничего.
-    requested = _requested_period_ids(body)
-
+    # и 10:00-11:00) приходят как time_ids или как интервал starts_at/ends_at
+    # в ISO 8601 и создаются ВСЕ ИЛИ НИ ОДИН: та же транзакция и та же блокировка
+    # строки ресурса, что и для одного слота. Новая бронь получает статус PENDING.
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
         # Периоды брони берутся из справочника "Время" (см. GET /times):
         # произвольное время забронировать нельзя.
-        cur.execute(
-            'SELECT "ID_Время" AS id, '
-            '       "ВремяНачала" AS start_time, '
-            '       "ВремяОкончания" AS end_time '
-            'FROM "Время" WHERE "ID_Время" = ANY(%s) '
-            'ORDER BY "ВремяНачала", "ID_Время"',
-            (requested,),
-        )
-        periods = cur.fetchall()
-        found = {p["id"] for p in periods}
-        missing = [tid for tid in requested if tid not in found]
-        if missing:
-            raise HTTPException(404, f"период не найден: {missing} (см. GET /times)")
+        booking_date, periods = _resolve_periods(cur, body)
+        requested = [p["id"] for p in periods]
 
         # Прошедшее время — 400 целиком: частичная бронь сломала бы ожидание
         # «выделил с 9 до 11 — получил с 9 до 11».
         now = datetime.now()
         past = [
             p for p in periods
-            if body.booking_date < now.date()
-            or (body.booking_date == now.date() and p["start_time"] < now.time())
+            if booking_date < now.date()
+            or (booking_date == now.date() and p["start_time"] < now.time())
         ]
         if past:
             raise HTTPException(
@@ -405,7 +503,7 @@ def create_booking(body: BookingIn):
                     AND v."ВремяОкончания" > r."ВремяНачала"
               )
             ORDER BY v."ВремяНачала"
-        """, (body.resource_id, body.booking_date, cancelled_id, requested))
+        """, (body.resource_id, booking_date, cancelled_id, requested))
         busy = cur.fetchall()
         if busy:
             raise HTTPException(
@@ -413,7 +511,7 @@ def create_booking(body: BookingIn):
                 "накладка: уже занято " + ", ".join(_period_label(p) for p in busy),
             )
 
-        active_id = status_id(cur, ACTIVE)
+        pending_id = status_id(cur, PENDING)
         # INSERT ... SELECT вставляет все выбранные периоды одним оператором.
         cur.execute(
             'INSERT INTO "Бронь" '
@@ -421,24 +519,32 @@ def create_booking(body: BookingIn):
             'SELECT %s, %s, %s, v."ID_Время", %s FROM "Время" v '
             'WHERE v."ID_Время" = ANY(%s) '
             'RETURNING "ID_Бронь", "ID_Время"',
-            (body.user_id, body.resource_id, active_id, body.booking_date, requested),
+            (body.user_id, body.resource_id, pending_id, booking_date, requested),
         )
         new_ids = {row["ID_Время"]: row["ID_Бронь"] for row in cur.fetchall()}
 
         conn.commit()
+    except UniqueViolation:
+        # страховка второй линии: уникальный индекс на (помещение, дата, период)
+        # среди НЕ отменённых броней (проверка выше + блокировка уже не пропустили)
+        conn.rollback()
+        raise HTTPException(409, "накладка: это время уже занято")
     except Exception:
         conn.rollback()
         raise
     finally:
         conn.close()
 
-    # Ответ: и старые поля (id/time_id/start_time/end_time), и пакет целиком.
+    # Ответ: и старые поля (id/time_id/start_time/end_time), и пакет целиком,
+    # и полные метки ISO 8601 (starts_at/ends_at).
     created = [
         {
             "id": new_ids[p["id"]],
             "time_id": p["id"],
             "start_time": _hhmmss(p["start_time"]),
             "end_time": _hhmmss(p["end_time"]),
+            "starts_at": _iso_local(booking_date, p["start_time"]),
+            "ends_at": _iso_local(booking_date, p["end_time"]),
         }
         for p in periods
     ]
@@ -448,34 +554,116 @@ def create_booking(body: BookingIn):
         "count": len(created),
         "user_id": body.user_id,
         "resource_id": body.resource_id,
-        "date": body.booking_date.isoformat(),
+        "date": booking_date.isoformat(),
         "time_id": created[0]["time_id"],
         "time_ids": [c["time_id"] for c in created],
         "start_time": created[0]["start_time"],
         "end_time": created[-1]["end_time"],
-        "status": ACTIVE,
+        "starts_at": created[0]["starts_at"],
+        "ends_at": created[-1]["ends_at"],
+        "status": PENDING,
         "bookings": created,
     }
 
 
-@app.post("/bookings/{booking_id}/cancel", summary="Отменить бронь")
-def cancel_booking(booking_id: int):
+def _booking_row(cur, booking_id):
+    # Строка брони под блокировкой — для подтверждения/отмены.
+    cancelled_id = status_id(cur, CANCELLED)
+    cur.execute(
+        'SELECT b."ID_Бронь"        AS id, '
+        '       b."ID_Пользователь" AS user_id, '
+        '       s."Название"        AS status, '
+        '       b."Дата"            AS date, '
+        '       v."ВремяНачала"     AS start_time, '
+        '       v."ВремяОкончания"  AS end_time '
+        'FROM "Бронь" b '
+        'JOIN "Статус" s ON b."ID_Статус" = s."ID_Статус" '
+        'JOIN "Время"  v ON b."ID_Время"  = v."ID_Время" '
+        'WHERE b."ID_Бронь" = %s FOR UPDATE OF b',
+        (booking_id,),
+    )
+    row = cur.fetchone()
+    if row is None:
+        raise HTTPException(404, "бронь не найдена")
+    row["cancelled_id"] = cancelled_id
+    return row
+
+
+@app.post("/bookings/{booking_id}/confirm", summary="Подтвердить бронь (только владелец)")
+def confirm_booking(booking_id: int, user_id: int):
+    # PENDING → CONFIRMED. Подтверждать может только владелец брони.
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cancelled_id = status_id(cur, CANCELLED)
-        # UPDATE атомарен сам по себе: строка брони блокируется до COMMIT,
-        # повторная отмена и гонка с другими запросами безопасны.
+        booking = _booking_row(cur, booking_id)
+
+        if booking["user_id"] != user_id:
+            raise HTTPException(403, "это не ваша бронь")
+        if booking["status"] == CANCELLED:
+            raise HTTPException(409, "бронь уже отменена")
+        if booking["status"] == CONFIRMED:
+            raise HTTPException(409, "бронь уже подтверждена")
+
+        confirmed_id = status_id(cur, CONFIRMED)
         cur.execute(
             'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Бронь" = %s',
-            (cancelled_id, booking_id),
+            (confirmed_id, booking_id),
         )
-        if cur.rowcount == 0:
-            raise HTTPException(404, "бронь не найдена")
         conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
     except Exception:
         conn.rollback()
         raise
     finally:
         conn.close()
-    return {"id": booking_id, "status": CANCELLED}
+
+    return {
+        "id": booking_id,
+        "status": CONFIRMED,
+        "date": booking["date"].isoformat(),
+        "start_time": _hhmmss(booking["start_time"]),
+        "end_time": _hhmmss(booking["end_time"]),
+        "starts_at": _iso_local(booking["date"], booking["start_time"]),
+        "ends_at": _iso_local(booking["date"], booking["end_time"]),
+    }
+
+
+@app.post("/bookings/{booking_id}/cancel", summary="Отменить бронь (только владелец)")
+def cancel_booking(booking_id: int, user_id: int):
+    # Отменить бронь может только её владелец. Повторная отмена — 409,
+    # чужая бронь — 403. Строка брони блокируется до COMMIT, гонки безопасны.
+    conn = db.connect()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        booking = _booking_row(cur, booking_id)
+
+        if booking["user_id"] != user_id:
+            raise HTTPException(403, "это не ваша бронь")
+        if booking["status"] == CANCELLED:
+            raise HTTPException(409, "бронь уже отменена")
+
+        cur.execute(
+            'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Бронь" = %s',
+            (booking["cancelled_id"], booking_id),
+        )
+        conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    return {
+        "id": booking_id,
+        "status": CANCELLED,
+        "date": booking["date"].isoformat(),
+        "start_time": _hhmmss(booking["start_time"]),
+        "end_time": _hhmmss(booking["end_time"]),
+        "starts_at": _iso_local(booking["date"], booking["start_time"]),
+        "ends_at": _iso_local(booking["date"], booking["end_time"]),
+    }
