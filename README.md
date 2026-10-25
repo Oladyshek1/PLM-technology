@@ -17,16 +17,29 @@
 - **Роман** (PO) — приёмка результата
 
 ## Технологический стек
-- **Backend:** [???]
+- **Backend:** Python, FastAPI, uvicorn, psycopg2
 - **Frontend:** HTML, CSS, JavaScript
-- **База данных:** [????]
-- **Документация API:** ???
+- **База данных:** Embedded PostgreSQL (`pgserver`), БД `booking`
+- **Документация API:** Swagger `http://127.0.0.1:8000/docs`, контракт `docs/API_CONTRACT.md`
+- **Процесс / Mini-Wiki:** вкладка Wiki репозитория
 
 ## Структура проекта
 ```text
-├── backend/      # Серверная часть и API
-├── frontend/     # Клиентская часть
-├── docs/         # Документация (ER-диаграммы, API-контракт)
-├── docs/Дизайн/     # Примеры оформления
-├── docs/Тестирование / #Тест-кейсы
-└── README.md     # Этот файл
+├── docs/
+│   ├── API_CONTRACT.md   # API-контракт (нужна синхронизация с кодом)
+│   ├── bd/               # Бэкенд (FastAPI): app.py, db.py, init_db.py
+│   ├── frontend/         # Фронтенд: index.html
+│   ├── Дизайнер/         # Макеты PNG + HTML-прототип
+│   └── Тестирование/     # Тест-план, кейсы, отчёт
+├── LICENSE
+└── README.md
+```
+
+## Быстрый старт
+1. Бэкенд: см. Wiki → «Запуск бэкенда» или `docs/bd/readme.txt`
+2. Фронт: см. Wiki → «Запуск фронта» или `docs/frontend/README.txt`
+
+## Доска и задачи
+- Project: «Спринт 1 — Бронирование»
+- Milestone: «Спринт 1: Система бронирования»
+- Баги заводите Issues с меткой `bug`
