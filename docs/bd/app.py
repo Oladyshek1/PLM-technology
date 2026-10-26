@@ -67,6 +67,8 @@ app = FastAPI(
         "Время — в ISO 8601 (дата YYYY-MM-DD, интервалы вида "
         "2026-10-26T09:00:00+03:00). Бронь проходит жизненный цикл "
         "PENDING → CONFIRMED, отмена — CANCELLED (слот освобождается). "
+        "Отменить или подтвердить бронь можно только ДО начала её периода: "
+        "если период уже начался (или прошёл), оба действия возвращают 409. "
         "Накладки невозможны: в POST /bookings строка ресурса блокируется "
         "(SELECT ... FOR UPDATE) до конца транзакции, плюс на (помещение, дата, "
         "период) стоит уникальный индекс для неотменённых броней. "
@@ -160,6 +162,22 @@ def _local_naive(value):
     if value.tzinfo is not None:
         value = value.astimezone()
     return value.replace(tzinfo=None)
+
+
+def _period_started(booking_date, start_time):
+    # Прошедшим считаем период, который уже НАЧАЛСЯ: бронь 08:00-09:00 нельзя
+    # отменить/подтвердить уже в 08:00:00 (и в 08:01, пока она идёт) — иначе
+    # можно было бы «перенести»/отменить бронь, которой уже пользуются.
+    # Время локальное для сервера — то же, что и в проверке при создании брони.
+    now = datetime.now()
+    return booking_date < now.date() or (
+        booking_date == now.date() and start_time <= now.time()
+    )
+
+
+def _booking_label(booking):
+    # "26.10.2026 08:00-09:00" — для текста ошибки
+    return f'{booking["date"].strftime("%d.%m.%Y")} {_period_label(booking)}'
 
 
 def _requested_period_ids(body):
@@ -592,6 +610,7 @@ def _booking_row(cur, booking_id):
 @app.post("/bookings/{booking_id}/confirm", summary="Подтвердить бронь (только владелец)")
 def confirm_booking(booking_id: int, user_id: int):
     # PENDING → CONFIRMED. Подтверждать может только владелец брони.
+    # Период уже начался или прошёл — 409: задним числом не подтверждаем.
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -603,6 +622,13 @@ def confirm_booking(booking_id: int, user_id: int):
             raise HTTPException(409, "бронь уже отменена")
         if booking["status"] == CONFIRMED:
             raise HTTPException(409, "бронь уже подтверждена")
+        if _period_started(booking["date"], booking["start_time"]):
+            raise HTTPException(
+                409,
+                "нельзя подтвердить прошедшую бронь: "
+                + _booking_label(booking)
+                + " (период уже начался)",
+            )
 
         confirmed_id = status_id(cur, CONFIRMED)
         cur.execute(
@@ -633,7 +659,11 @@ def confirm_booking(booking_id: int, user_id: int):
 @app.post("/bookings/{booking_id}/cancel", summary="Отменить бронь (только владелец)")
 def cancel_booking(booking_id: int, user_id: int):
     # Отменить бронь может только её владелец. Повторная отмена — 409,
-    # чужая бронь — 403. Строка брони блокируется до COMMIT, гонки безопасны.
+    # чужая бронь — 403. Период уже начался (в том числе идёт прямо сейчас,
+    # например 08:01 для 08:00-09:00) — 409: прошедшее не отменяем.
+    # Перенос на фронте = «создать новую → отменить старую», поэтому прошедшую
+    # бронь нельзя и перенести: шаг отмены упадёт, клиент откатит новую.
+    # Строка брони блокируется до COMMIT, гонки безопасны.
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -643,6 +673,13 @@ def cancel_booking(booking_id: int, user_id: int):
             raise HTTPException(403, "это не ваша бронь")
         if booking["status"] == CANCELLED:
             raise HTTPException(409, "бронь уже отменена")
+        if _period_started(booking["date"], booking["start_time"]):
+            raise HTTPException(
+                409,
+                "нельзя отменить прошедшую бронь: "
+                + _booking_label(booking)
+                + " (период уже начался)",
+            )
 
         cur.execute(
             'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Бронь" = %s',
