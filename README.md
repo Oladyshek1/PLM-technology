@@ -15,16 +15,16 @@
 - **Роман** (PO) — приёмка
 
 ## Стек
-- **Backend:** Python, FastAPI, uvicorn, psycopg2
+- **Backend:** Python, FastAPI, uvicorn, psycopg2 (API `0.7.0`)
 - **Frontend:** HTML, CSS, JavaScript (`docs/frontend/index.html`)
 - **БД:** Embedded PostgreSQL (`pgserver`), БД `booking` (инициализация через `docs/bd/init_db.py`)
-- **API:** контракт `docs/API_CONTRACT.md` **v1.1** (синхронизирован с кодом) + Swagger `http://127.0.0.1:8000/docs`
+- **API:** контракт `docs/API_CONTRACT.md` **v1.2** (синхронизирован с кодом) + Swagger `http://127.0.0.1:8000/docs`
 - **Процесс:** Wiki репозитория (команда, правила, запуск, flow)
 
 ## Структура
 ```text
 ├── docs/
-│   ├── API_CONTRACT.md   # контракт API v1.1
+│   ├── API_CONTRACT.md   # контракт API v1.2
 │   ├── bd/               # бэкенд: app.py, db.py, init_db.py, readme.txt
 │   ├── frontend/         # фронт: index.html, README.txt
 │   ├── Дизайнер/         # PNG-макеты, Описание, HTML.txt
@@ -45,6 +45,6 @@
 - Баги — Issues с меткой `bug`
 
 ## Статус спринта
-**Готово:** дизайн (#2), фронт (#4), процесс/контракт (#6, #11), перенос на фронте (#10).
+**Готово:** дизайн (#2), фронт (#4), процесс (#6, #11), бэкенд (#3), QA (#5), статусы (#12), cancel/owner (#13), перенос на фронте (#10).
 
-**В работе / хвосты:** аналитика и ER/словарь (#1, #14), статусы (#12), cancel/owner (#13), бэкенд DoD (#3), актуализация QA (#5), финальная приёмка PO (#7).
+**Хвосты:** аналитика / ER и словарь ошибок (#1, #14), финальная приёмка PO (#7).
