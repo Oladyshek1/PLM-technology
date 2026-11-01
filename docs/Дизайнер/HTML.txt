@@ -5,16 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ТаймРум — Бронирование помещений</title>
 <style>
-/* ===== ОБЩИЕ СТИЛИ ===== */
+/* ===== ОБЩИЕ СТИЛИ И ФОН ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #fff;
   color: #333;
-  padding-top: 140px; /* Отступ под фиксированную шапку */
+  /* Фоновое изображение (белая кирпичная стена) */
+  background-image: url('https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); 
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-top: 140px; /* Отступ под фиксированную шапку */
 }
 
 /* ===== ШАПКА (HEADER) ===== */
@@ -22,20 +27,21 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 70px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95); /* Полупрозрачный белый */
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 60px;
   z-index: 1000;
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid #E0E0E0;
 }
 .logo {
   display: flex;
   align-items: center;
   gap: 12px;
   text-decoration: none;
-  color: #2563EB;
+  color: #2563EB; /* Цвет логотипа */
   font-weight: 800;
   font-size: 24px;
 }
@@ -59,7 +65,8 @@ body {
   position: fixed;
   top: 70px; left: 0; right: 0;
   height: 70px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -71,7 +78,7 @@ body {
   padding: 12px 40px;
   border: none;
   border-radius: 30px;
-  background: #2563EB;
+  background: #2563EB; /* Синий цвет кнопок */
   color: #fff;
   font-size: 16px;
   font-weight: 500;
@@ -107,10 +114,21 @@ body {
 .page { display: none; padding: 40px 60px; flex: 1; }
 .page.active { display: block; }
 
+/* Контейнер для контента с белым фоном (чтобы читалось на стене) */
+.content-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 /* ===== ГЛАВНАЯ СТРАНИЦА ===== */
 .rooms-carousel {
   display: flex;
-  gap: 30px;
+  gap: 20px;
   overflow-x: auto;
   padding-bottom: 20px;
   margin-bottom: 40px;
@@ -131,46 +149,48 @@ body {
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 8px;
+  border: 2px solid transparent;
 }
-.room-thumb span { font-size: 14px; color: #333; display: block; }
+.room-thumb.active img { border-color: #2563EB; }
+.room-thumb span { font-size: 14px; color: #333; display: block; font-weight: 500; }
 
-/* Карточка характеристик помещения */
 .room-detail {
   display: flex;
   gap: 40px;
   align-items: stretch;
-  max-width: 1000px;
-  margin: 0 auto;
 }
 .room-specs {
   flex: 1;
-  border: 3px solid #333;
-  padding: 40px;
-  border-radius: 4px;
+  border: 2px solid #E0E0E0;
+  padding: 30px;
+  border-radius: 12px;
+  background: #fff;
 }
 .spec-row {
   display: flex;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   align-items: baseline;
 }
 .spec-row:last-child { margin-bottom: 0; }
 .spec-label {
-  width: 180px;
+  width: 160px;
   font-weight: 600;
   font-size: 16px;
-  color: #333;
+  color: #555;
   flex-shrink: 0;
 }
 .spec-value {
   font-size: 16px;
   color: #333;
   line-height: 1.5;
+  font-weight: 500;
 }
 .room-photo {
   flex: 1;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   max-height: 400px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 .room-photo img {
   width: 100%; height: 100%;
@@ -182,10 +202,11 @@ body {
 .week-calendar {
   display: flex;
   background: #F8F8F8;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   max-width: 1000px;
-  margin-bottom: 40px;
+  margin: 0 auto 30px auto;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 .week-day {
   flex: 1;
@@ -197,9 +218,9 @@ body {
 }
 .week-day:last-child { border-right: none; }
 .week-day:hover { background: #F0F0F0; }
-.week-day.active { background: #fff; font-weight: 600; }
+.week-day.active { background: #fff; font-weight: 600; border-bottom: 3px solid #2563EB; }
 .week-day .day-name { font-size: 13px; color: #888; margin-bottom: 4px; }
-.week-day.active .day-name { color: #333; }
+.week-day.active .day-name { color: #2563EB; }
 .week-day .day-date { font-size: 15px; color: #555; }
 .week-day.active .day-date { color: #333; }
 .calendar-icon-btn {
@@ -207,14 +228,14 @@ body {
   padding: 16px 20px; cursor: pointer; background: #F8F8F8; border: none; font-size: 20px;
 }
 
-.booking-layout { display: flex; gap: 30px; align-items: flex-start; max-width: 1200px; }
-.rooms-list { min-width: 240px; flex-shrink: 0; }
+.booking-layout { display: flex; gap: 30px; align-items: flex-start; }
+.rooms-list { min-width: 240px; flex-shrink: 0; background: #fff; border-radius: 12px; padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .room-list-item {
   padding: 14px 10px; cursor: pointer; font-size: 15px; color: #AAA;
-  transition: color 0.2s; border-left: 3px solid transparent;
+  transition: color 0.2s; border-left: 3px solid transparent; border-radius: 6px;
 }
-.room-list-item:hover { color: #666; }
-.room-list-item.active { color: #2563EB; font-weight: 600; border-left-color: #2563EB; }
+.room-list-item:hover { color: #666; background: #F9FAFB; }
+.room-list-item.active { color: #2563EB; font-weight: 600; border-left-color: #2563EB; background: #EFF6FF; }
 
 .time-slots {
   flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 10px 0;
@@ -222,43 +243,45 @@ body {
 .time-slot {
   padding: 14px 20px; border: 2px solid #2563EB; border-radius: 30px;
   text-align: center; font-size: 16px; cursor: pointer; background: #fff; color: #333;
-  transition: all 0.2s; user-select: none;
+  transition: all 0.2s; user-select: none; font-weight: 500;
 }
 .time-slot:hover { background: #EFF6FF; }
-.time-slot.selected { background: #2563EB; color: #fff; }
+.time-slot.selected { background: #2563EB; color: #fff; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
 
 .action-buttons { min-width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; padding-top: 10px; }
 .action-btn {
   padding: 14px 24px; border: 2px solid #2563EB; border-radius: 30px;
   background: #fff; color: #2563EB; font-size: 15px; cursor: pointer;
-  transition: all 0.2s; text-align: center;
+  transition: all 0.2s; text-align: center; font-weight: 500;
 }
 .action-btn:hover { background: #EFF6FF; }
 .action-btn.primary { background: #2563EB; color: #fff; }
-.action-btn.primary:hover { background: #1D4ED8; }
+.action-btn.primary:hover { background: #1D4ED8; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
 
 /* ===== МОИ БРОНИ ===== */
-.my-bookings-layout { display: flex; gap: 40px; max-width: 1200px; margin: 0 auto; }
+.my-bookings-layout { display: flex; gap: 40px; }
 .bookings-list { flex: 1; }
 .booking-card {
-  border: 2px solid #E0E0E0; border-radius: 12px; padding: 20px; margin-bottom: 20px;
-  display: flex; gap: 20px; align-items: center; transition: border-color 0.2s; cursor: pointer;
+  border: 1px solid #E0E0E0; border-radius: 12px; padding: 20px; margin-bottom: 20px;
+  display: flex; gap: 20px; align-items: center; transition: all 0.2s; cursor: pointer;
+  background: #fff;
 }
-.booking-card:hover { border-color: #2563EB; }
-.booking-card-img { width: 200px; height: 150px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+.booking-card:hover { border-color: #2563EB; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.booking-card-img { width: 180px; height: 130px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
 .booking-card-info h3 { font-size: 18px; color: #333; margin-bottom: 8px; }
 .booking-card-info p { font-size: 15px; color: #666; margin-bottom: 5px; }
 .booking-actions { min-width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
 .booking-action-btn {
   padding: 14px 24px; border: 2px solid #2563EB; border-radius: 30px;
-  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; text-align: center;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; text-align: center; font-weight: 500;
 }
 .booking-action-btn:hover { background: #EFF6FF; }
-.no-bookings { text-align: center; padding: 60px 20px; color: #999; font-size: 18px; }
+.no-bookings { text-align: center; padding: 60px 20px; color: #999; font-size: 18px; background: rgba(255,255,255,0.8); border-radius: 12px; }
 
 /* ===== ПОДВАЛ ===== */
 .footer {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   padding: 40px 60px;
   border-top: 1px solid #E0E0E0;
   margin-top: auto;
@@ -283,11 +306,12 @@ body {
 .modal-overlay {
   display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center;
+  backdrop-filter: blur(3px);
 }
 .modal-overlay.active { display: flex; }
 .modal {
-  background: #fff; border-radius: 12px; padding: 35px 40px;
-  max-width: 500px; width: 90%; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  background: #fff; border-radius: 16px; padding: 35px 40px;
+  max-width: 500px; width: 90%; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
 }
 .modal-close {
   position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer;
@@ -297,27 +321,26 @@ body {
 .modal h2 { font-size: 22px; margin-bottom: 25px; color: #333; line-height: 1.4; }
 .modal label { display: block; font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #333; }
 .modal input[type="text"], .modal input[type="tel"], .modal input[type="date"], .modal select {
-  width: 100%; padding: 12px 16px; border: 1px solid #CCC; border-radius: 25px;
+  width: 100%; padding: 12px 16px; border: 2px solid #E0E0E0; border-radius: 25px;
   font-size: 15px; margin-bottom: 20px; outline: none; transition: border-color 0.2s;
 }
 .modal input:focus, .modal select:focus { border-color: #2563EB; }
 
 /* Модалка информации */
 .info-modal { max-width: 450px; text-align: left; }
-.info-modal h2 { font-size: 20px; margin-bottom: 15px; }
+.info-modal h2 { font-size: 20px; margin-bottom: 15px; color: #2563EB; }
 .info-modal p { font-size: 15px; color: #555; margin-bottom: 8px; line-height: 1.6; }
-.info-modal .close-only { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #999; background: none; border: none; }
 
 /* Остальные модалки */
 .auth-modal { max-width: 520px; text-align: center; }
-.auth-modal h2 { font-size: 32px; text-align: center; margin-bottom: 30px; }
+.auth-modal h2 { font-size: 32px; text-align: center; margin-bottom: 30px; color: #2563EB; }
 .auth-modal .form-group { text-align: left; margin-bottom: 10px; }
 .auth-modal .form-group label { font-size: 15px; font-weight: 500; }
 .auth-modal .form-group input { border-radius: 6px; margin-bottom: 18px; }
 .auth-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 10px; }
 .auth-action-btn {
   padding: 14px 30px; border: 2px solid #2563EB; border-radius: 30px;
-  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 180px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 180px; font-weight: 500;
 }
 .auth-action-btn:hover { background: #EFF6FF; }
 
@@ -325,7 +348,7 @@ body {
 .booking-simple-modal h2 { font-size: 26px; text-align: center; margin-bottom: 35px; line-height: 1.4; }
 .booking-simple-btn {
   padding: 14px 40px; border: 2px solid #2563EB; border-radius: 30px;
-  background: #fff; color: #2563EB; font-size: 16px; cursor: pointer; transition: all 0.2s;
+  background: #fff; color: #2563EB; font-size: 16px; cursor: pointer; transition: all 0.2s; font-weight: 500;
 }
 .booking-simple-btn:hover { background: #EFF6FF; }
 
@@ -335,14 +358,14 @@ body {
 .confirm-buttons { display: flex; gap: 20px; justify-content: center; }
 .confirm-btn {
   padding: 12px 30px; border: 2px solid #2563EB; border-radius: 30px;
-  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 160px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 160px; font-weight: 500;
 }
 .confirm-btn:hover { background: #EFF6FF; }
 .confirm-btn.danger { border-color: #E53935; color: #E53935; }
 .confirm-btn.danger:hover { background: #FFEBEE; }
 
 .reschedule-modal { max-width: 520px; }
-.reschedule-modal h2 { text-align: center; font-size: 24px; margin-bottom: 20px; }
+.reschedule-modal h2 { text-align: center; font-size: 24px; margin-bottom: 20px; color: #2563EB; }
 .mini-calendar { margin-bottom: 25px; }
 .mini-calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .mini-calendar-header button { background: none; border: none; font-size: 18px; cursor: pointer; color: #555; padding: 4px 8px; }
@@ -360,12 +383,12 @@ body {
 .reschedule-buttons { display: flex; gap: 20px; justify-content: center; }
 .reschedule-btn {
   padding: 12px 30px; border: 2px solid #2563EB; border-radius: 30px;
-  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 160px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 160px; font-weight: 500;
 }
 .reschedule-btn:hover { background: #EFF6FF; }
 
 .warning-modal { text-align: center; max-width: 480px; padding: 40px 50px; }
-.warning-modal h2 { font-size: 30px; margin-bottom: 20px; text-align: center; }
+.warning-modal h2 { font-size: 30px; margin-bottom: 20px; text-align: center; color: #E53935; }
 .warning-modal p { font-size: 20px; color: #333; line-height: 1.5; text-align: center; }
 </style>
 </head>
@@ -398,93 +421,99 @@ body {
 
 <!-- ===== ГЛАВНАЯ СТРАНИЦА ===== -->
 <div class="page active" id="page-home">
-  <!-- Карусель помещений -->
-  <div class="rooms-carousel" id="roomsCarousel">
-    <div class="room-thumb active" data-room="0" onclick="selectRoom(0)">
-      <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&h=200&fit=crop" alt="Актовый зал">
-      <span>Актовый зал</span>
+  <div class="content-card">
+    <!-- Карусель помещений -->
+    <div class="rooms-carousel" id="roomsCarousel">
+      <div class="room-thumb active" data-room="0" onclick="selectRoom(0)">
+        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&h=200&fit=crop" alt="Актовый зал">
+        <span>Актовый зал</span>
+      </div>
+      <div class="room-thumb" data-room="1" onclick="selectRoom(1)">
+        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=200&fit=crop" alt="Переговорная №1">
+        <span>Переговорная комната № 1</span>
+      </div>
+      <div class="room-thumb" data-room="2" onclick="selectRoom(2)">
+        <img src="https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=300&h=200&fit=crop" alt="Переговорная №2">
+        <span>Переговорная комната № 2</span>
+      </div>
+      <div class="room-thumb" data-room="3" onclick="selectRoom(3)">
+        <img src="https://images.unsplash.com/photo-1517502884422-41e157d25225?w=300&h=200&fit=crop" alt="Конференц-зал">
+        <span>Конференц-зал</span>
+      </div>
+      <div class="room-thumb" data-room="4" onclick="selectRoom(4)">
+        <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=300&h=200&fit=crop" alt="Комната для звонков №1">
+        <span>Комната для звонков № 1</span>
+      </div>
+      <div class="room-thumb" data-room="5" onclick="selectRoom(5)">
+        <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=300&h=200&fit=crop" alt="Комната для звонков №2">
+        <span>Комната для звонков № 2</span>
+      </div>
     </div>
-    <div class="room-thumb" data-room="1" onclick="selectRoom(1)">
-      <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=200&fit=crop" alt="Переговорная №1">
-      <span>Переговорная комната № 1</span>
-    </div>
-    <div class="room-thumb" data-room="2" onclick="selectRoom(2)">
-      <img src="https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=300&h=200&fit=crop" alt="Переговорная №2">
-      <span>Переговорная комната № 2</span>
-    </div>
-    <div class="room-thumb" data-room="3" onclick="selectRoom(3)">
-      <img src="https://images.unsplash.com/photo-1517502884422-41e157d25225?w=300&h=200&fit=crop" alt="Конференц-зал">
-      <span>Конференц-зал</span>
-    </div>
-    <div class="room-thumb" data-room="4" onclick="selectRoom(4)">
-      <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=300&h=200&fit=crop" alt="Комната для звонков №1">
-      <span>Комната для звонков № 1</span>
-    </div>
-    <div class="room-thumb" data-room="5" onclick="selectRoom(5)">
-      <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=300&h=200&fit=crop" alt="Комната для звонков №2">
-      <span>Комната для звонков № 2</span>
-    </div>
-  </div>
 
-  <!-- Характеристики выбранного помещения -->
-  <div class="room-detail" id="roomDetail">
-    <div class="room-specs" id="roomSpecs">
-      <!-- Заполняется через JS -->
-    </div>
-    <div class="room-photo">
-      <img id="roomPhoto" src="" alt="Фото помещения">
+    <!-- Характеристики выбранного помещения -->
+    <div class="room-detail" id="roomDetail">
+      <div class="room-specs" id="roomSpecs">
+        <!-- Заполняется через JS -->
+      </div>
+      <div class="room-photo">
+        <img id="roomPhoto" src="" alt="Фото помещения">
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ===== СТРАНИЦА БРОНИРОВАНИЯ ===== -->
 <div class="page" id="page-booking">
-  <div class="week-calendar" id="weekCalendar">
-    <div class="week-day active" data-day="0" onclick="selectDay(0)"><div class="day-name">ПН</div><div class="day-date" id="wd-0">2 НОЯ</div></div>
-    <div class="week-day" data-day="1" onclick="selectDay(1)"><div class="day-name">ВТ</div><div class="day-date" id="wd-1">3 НОЯ</div></div>
-    <div class="week-day" data-day="2" onclick="selectDay(2)"><div class="day-name">СР</div><div class="day-date" id="wd-2">4 НОЯ</div></div>
-    <div class="week-day" data-day="3" onclick="selectDay(3)"><div class="day-name">ЧТ</div><div class="day-date" id="wd-3">5 НОЯ</div></div>
-    <div class="week-day" data-day="4" onclick="selectDay(4)"><div class="day-name">ПТ</div><div class="day-date" id="wd-4">6 НОЯ</div></div>
-    <div class="week-day" data-day="5" onclick="selectDay(5)"><div class="day-name">СБ</div><div class="day-date" id="wd-5">7 НОЯ</div></div>
-    <div class="week-day" data-day="6" onclick="selectDay(6)"><div class="day-name">ВС</div><div class="day-date" id="wd-6">8 НОЯ</div></div>
-    <button class="calendar-icon-btn" title="Открыть календарь">📅</button>
-  </div>
-  <div class="booking-layout">
-    <div class="rooms-list">
-      <div class="room-list-item active" data-room="0" onclick="selectBookingRoom(0)">Актовый зал</div>
-      <div class="room-list-item" data-room="1" onclick="selectBookingRoom(1)">Переговорная комната № 1</div>
-      <div class="room-list-item" data-room="2" onclick="selectBookingRoom(2)">Переговорная комната № 2</div>
-      <div class="room-list-item" data-room="3" onclick="selectBookingRoom(3)">Конференц-зал</div>
-      <div class="room-list-item" data-room="4" onclick="selectBookingRoom(4)">Комната для звонков № 1</div>
-      <div class="room-list-item" data-room="5" onclick="selectBookingRoom(5)">Комната для звонков № 2</div>
+  <div class="content-card">
+    <div class="week-calendar" id="weekCalendar">
+      <div class="week-day active" data-day="0" onclick="selectDay(0)"><div class="day-name">ПН</div><div class="day-date" id="wd-0">2 НОЯ</div></div>
+      <div class="week-day" data-day="1" onclick="selectDay(1)"><div class="day-name">ВТ</div><div class="day-date" id="wd-1">3 НОЯ</div></div>
+      <div class="week-day" data-day="2" onclick="selectDay(2)"><div class="day-name">СР</div><div class="day-date" id="wd-2">4 НОЯ</div></div>
+      <div class="week-day" data-day="3" onclick="selectDay(3)"><div class="day-name">ЧТ</div><div class="day-date" id="wd-3">5 НОЯ</div></div>
+      <div class="week-day" data-day="4" onclick="selectDay(4)"><div class="day-name">ПТ</div><div class="day-date" id="wd-4">6 НОЯ</div></div>
+      <div class="week-day" data-day="5" onclick="selectDay(5)"><div class="day-name">СБ</div><div class="day-date" id="wd-5">7 НОЯ</div></div>
+      <div class="week-day" data-day="6" onclick="selectDay(6)"><div class="day-name">ВС</div><div class="day-date" id="wd-6">8 НОЯ</div></div>
+      <button class="calendar-icon-btn" title="Открыть календарь">📅</button>
     </div>
-    <div class="time-slots" id="timeSlots">
-      <div class="time-slot" onclick="selectSlot(this)">8:00 - 9:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">12:00 - 13:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">16:00 - 17:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">9:00 - 10:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">13:00 - 14:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">17:00 - 18:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">10:00 - 11:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">14:00 - 15:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">18:00 - 19:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">11:00 - 12:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">15:00 - 16:00</div>
-      <div class="time-slot" onclick="selectSlot(this)">19:00 - 20:00</div>
-    </div>
-    <div class="action-buttons">
-      <button class="action-btn primary" onclick="handleBookingClick()">Бронировать</button>
+    <div class="booking-layout">
+      <div class="rooms-list">
+        <div class="room-list-item active" data-room="0" onclick="selectBookingRoom(0)">Актовый зал</div>
+        <div class="room-list-item" data-room="1" onclick="selectBookingRoom(1)">Переговорная комната № 1</div>
+        <div class="room-list-item" data-room="2" onclick="selectBookingRoom(2)">Переговорная комната № 2</div>
+        <div class="room-list-item" data-room="3" onclick="selectBookingRoom(3)">Конференц-зал</div>
+        <div class="room-list-item" data-room="4" onclick="selectBookingRoom(4)">Комната для звонков № 1</div>
+        <div class="room-list-item" data-room="5" onclick="selectBookingRoom(5)">Комната для звонков № 2</div>
+      </div>
+      <div class="time-slots" id="timeSlots">
+        <div class="time-slot" onclick="selectSlot(this)">8:00 - 9:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">12:00 - 13:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">16:00 - 17:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">9:00 - 10:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">13:00 - 14:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">17:00 - 18:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">10:00 - 11:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">14:00 - 15:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">18:00 - 19:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">11:00 - 12:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">15:00 - 16:00</div>
+        <div class="time-slot" onclick="selectSlot(this)">19:00 - 20:00</div>
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn primary" onclick="handleBookingClick()">Бронировать</button>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ===== МОИ БРОНИ ===== -->
 <div class="page" id="page-my-bookings">
-  <div class="my-bookings-layout">
-    <div class="bookings-list" id="bookingsList"></div>
-    <div class="booking-actions" id="bookingActions" style="display: none;">
-      <button class="booking-action-btn" onclick="openCancelModalFromMyBookings()">Отменить бронь</button>
-      <button class="booking-action-btn" onclick="openRescheduleModalFromMyBookings()">Перенести бронь</button>
+  <div class="content-card">
+    <div class="my-bookings-layout">
+      <div class="bookings-list" id="bookingsList"></div>
+      <div class="booking-actions" id="bookingActions" style="display: none;">
+        <button class="booking-action-btn" onclick="openCancelModalFromMyBookings()">Отменить бронь</button>
+        <button class="booking-action-btn" onclick="openRescheduleModalFromMyBookings()">Перенести бронь</button>
+      </div>
     </div>
   </div>
 </div>
@@ -520,7 +549,7 @@ body {
 <!-- ===== МОДАЛКА: ИНФОРМАЦИЯ ===== -->
 <div class="modal-overlay" id="infoModal">
   <div class="modal info-modal">
-    <button class="close-only" onclick="closeModal('infoModal')">&times;</button>
+    <button class="modal-close" onclick="closeModal('infoModal')">&times;</button>
     <h2>Система бронирования помещений</h2>
     <p>Версия: 1.2.0</p>
     <p>Сборка: 01.11.2026</p>
