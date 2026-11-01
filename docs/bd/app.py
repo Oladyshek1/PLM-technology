@@ -20,6 +20,21 @@ PENDING = "PENDING"
 CONFIRMED = "CONFIRMED"
 CANCELLED = "CANCELLED"
 
+# Сведения о сборке — для попапа «i» на фронте и для баг-репортов
+# («на какой версии найден дефект»). Единственный источник версии в коде:
+# отсюда же берётся version= у FastAPI (Swagger).
+# ⚠ BUILD_DATE обновлять вручную при каждом релизе (YYYY-MM-DD).
+API_VERSION = "0.8.0"
+BUILD_DATE = "2026-11-01"
+PRODUCT_NAME = "Система бронирования помещений"
+SUPPORT = {
+    # Заглушка: заменить на реальные контакты, когда их даст Тимур/PO.
+    "name": "Служба поддержки «Бронирование»",
+    "email": "support@booking.example",
+    "phone": "+7 (999) 123-45-67",
+    "hours": "Пн–Пт, 09:00–18:00",
+}
+
 
 def get_periods():
     # Справочник периодов брони — таблица "Время" (сеансы 08:00-09:00, 09:00-10:00, ...).
@@ -75,7 +90,7 @@ app = FastAPI(
         "Несколько периодов подряд (time_ids или starts_at+ends_at) создаются "
         "атомарно — все или ни один. Свободное время на дату — GET /availability."
     ),
-    version="0.7.0",
+    version=API_VERSION,
     lifespan=lifespan,
 )
 
@@ -269,6 +284,22 @@ def _resolve_periods(cur, body):
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse("/docs")
+
+
+@app.get("/version", summary="Версия продукта, дата сборки и контакты поддержки")
+@app.get("/api/version", include_in_schema=False)
+def get_version():
+    # Для иконки «i» на фронте и для баг-репортов: на какой сборке найден
+    # дефект и куда обращаться. Два пути на одну функцию: /version — по стилю
+    # контракта (базовый URL без /api), /api/version — как в задаче и тест-кейсе.
+    # БД не используется намеренно: ответ не зависит от данных и не упадёт
+    # на пустой базе (нет запросов к таблицам).
+    return {
+        "product": PRODUCT_NAME,
+        "version": API_VERSION,
+        "build_date": BUILD_DATE,
+        "support": SUPPORT,
+    }
 
 
 @app.get("/settings", summary="Настройки расписания (рабочие часы, слоты)")
