@@ -3,46 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Бронирование помещений</title>
+<title>ТаймРум — Бронирование помещений</title>
 <style>
+/* ===== ОБЩИЕ СТИЛИ ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #fff;
   color: #333;
-  padding-top: 120px;
+  padding-top: 140px; /* Отступ под фиксированную шапку */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ===== ФИКСИРОВАННАЯ НАВИГАЦИЯ ===== */
-.nav {
+/* ===== ШАПКА (HEADER) ===== */
+.header {
   position: fixed;
   top: 0; left: 0; right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-  padding: 30px 60px;
+  height: 70px;
   background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 60px;
   z-index: 1000;
+  border-bottom: 1px solid #F0F0F0;
 }
-.nav-btn {
-  padding: 14px 40px;
-  border: none;
-  border-radius: 30px;
-  background: #2563EB;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #2563EB;
+  font-weight: 800;
+  font-size: 24px;
 }
-.nav-btn:hover { background: #1D4ED8; }
-.nav-btn.active { background: #2563EB; }
-
-/* Кнопка входа/регистрации справа */
+.logo svg { width: 40px; height: 40px; fill: #2563EB; }
 .auth-btn {
-  position: absolute;
-  right: 40px;
-  padding: 12px 28px;
+  padding: 10px 24px;
   border: 2px solid #2563EB;
   border-radius: 30px;
   background: #fff;
@@ -50,118 +49,189 @@ body {
   font-size: 15px;
   cursor: pointer;
   transition: all 0.2s;
+  font-weight: 500;
 }
 .auth-btn:hover { background: #EFF6FF; }
-.auth-btn.logged-in {
+.auth-btn.logged-in { background: #2563EB; color: #fff; }
+
+/* ===== НАВИГАЦИЯ (ВКЛАДКИ) ===== */
+.nav-tabs {
+  position: fixed;
+  top: 70px; left: 0; right: 0;
+  height: 70px;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  z-index: 999;
+  border-bottom: 1px solid #E0E0E0;
+}
+.nav-tab {
+  padding: 12px 40px;
+  border: none;
+  border-radius: 30px;
   background: #2563EB;
   color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
 }
+.nav-tab:hover { background: #1D4ED8; }
+.nav-tab.active { background: #2563EB; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
 
-/* ===== СТРАНИЦЫ ===== */
-.page { display: none; padding: 20px 60px 60px 60px; }
-.page.active { display: block; }
-
-/* ===== ГЛАВНАЯ ===== */
-.home-content { max-width: 800px; margin: 0 auto; text-align: center; }
-.home-content h1 { font-size: 36px; margin-bottom: 20px; color: #333; }
-.home-content p { font-size: 18px; line-height: 1.6; color: #666; margin-bottom: 30px; }
-.home-features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 30px;
-  margin-top: 50px;
-}
-.feature-card {
-  padding: 30px;
-  border: 2px solid #E0E0E0;
-  border-radius: 12px;
+/* ===== КНОПКА ИНФОРМАЦИИ (i) ===== */
+.info-btn {
+  position: fixed;
+  bottom: 30px; right: 30px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #2563EB;
+  color: #fff;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  font-family: serif;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s;
 }
-.feature-card:hover { transform: translateY(-5px); border-color: #2563EB; }
-.feature-card h3 { font-size: 20px; margin-bottom: 10px; color: #333; }
-.feature-card p { font-size: 16px; color: #666; }
+.info-btn:hover { transform: scale(1.1); }
 
-/* ===== БРОНИРОВАНИЕ ===== */
+/* ===== СТРАНИЦЫ ===== */
+.page { display: none; padding: 40px 60px; flex: 1; }
+.page.active { display: block; }
+
+/* ===== ГЛАВНАЯ СТРАНИЦА ===== */
+.rooms-carousel {
+  display: flex;
+  gap: 30px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+  margin-bottom: 40px;
+  scrollbar-width: thin;
+}
+.room-thumb {
+  flex-shrink: 0;
+  width: 160px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.room-thumb:hover { opacity: 0.8; }
+.room-thumb.active { opacity: 1; }
+.room-thumb img {
+  width: 160px; height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.room-thumb span { font-size: 14px; color: #333; display: block; }
+
+/* Карточка характеристик помещения */
+.room-detail {
+  display: flex;
+  gap: 40px;
+  align-items: stretch;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.room-specs {
+  flex: 1;
+  border: 3px solid #333;
+  padding: 40px;
+  border-radius: 4px;
+}
+.spec-row {
+  display: flex;
+  margin-bottom: 24px;
+  align-items: baseline;
+}
+.spec-row:last-child { margin-bottom: 0; }
+.spec-label {
+  width: 180px;
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  flex-shrink: 0;
+}
+.spec-value {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.5;
+}
+.room-photo {
+  flex: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 400px;
+}
+.room-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ===== СТРАНИЦА БРОНИРОВАНИЯ ===== */
 .week-calendar {
   display: flex;
-  background: #F0F0F0;
-  border-radius: 8px 8px 0 0;
+  background: #F8F8F8;
+  border-radius: 8px;
   overflow: hidden;
-  max-width: 900px;
+  max-width: 1000px;
+  margin-bottom: 40px;
 }
 .week-day {
   flex: 1;
-  padding: 14px 10px;
+  padding: 16px 10px;
   text-align: center;
   cursor: pointer;
   border-right: 1px solid #E0E0E0;
   transition: background 0.2s;
-  user-select: none;
 }
 .week-day:last-child { border-right: none; }
-.week-day:hover { background: #E8E8E8; }
+.week-day:hover { background: #F0F0F0; }
 .week-day.active { background: #fff; font-weight: 600; }
 .week-day .day-name { font-size: 13px; color: #888; margin-bottom: 4px; }
 .week-day.active .day-name { color: #333; }
 .week-day .day-date { font-size: 15px; color: #555; }
 .week-day.active .day-date { color: #333; }
-.calendar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 20px;
-  cursor: pointer;
-  background: #F0F0F0;
-  border: none;
-  font-size: 22px;
-  transition: background 0.2s;
+.calendar-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px 20px; cursor: pointer; background: #F8F8F8; border: none; font-size: 20px;
 }
-.calendar-btn:hover { background: #E8E8E8; }
-.week-divider { height: 3px; background: #C0C0C0; max-width: 900px; margin-bottom: 30px; }
+
 .booking-layout { display: flex; gap: 30px; align-items: flex-start; max-width: 1200px; }
-.rooms-list { min-width: 220px; flex-shrink: 0; }
+.rooms-list { min-width: 240px; flex-shrink: 0; }
 .room-list-item {
-  padding: 14px 10px;
-  cursor: pointer;
-  font-size: 15px;
-  color: #AAA;
-  transition: color 0.2s;
-  border-left: 3px solid transparent;
+  padding: 14px 10px; cursor: pointer; font-size: 15px; color: #AAA;
+  transition: color 0.2s; border-left: 3px solid transparent;
 }
 .room-list-item:hover { color: #666; }
 .room-list-item.active { color: #2563EB; font-weight: 600; border-left-color: #2563EB; }
+
 .time-slots {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  padding: 10px 0;
+  flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 10px 0;
 }
 .time-slot {
-  padding: 14px 20px;
-  border: 2px solid #2563EB;
-  border-radius: 30px;
-  text-align: center;
-  font-size: 16px;
-  cursor: pointer;
-  background: #fff;
-  color: #333;
-  transition: all 0.2s;
-  user-select: none;
+  padding: 14px 20px; border: 2px solid #2563EB; border-radius: 30px;
+  text-align: center; font-size: 16px; cursor: pointer; background: #fff; color: #333;
+  transition: all 0.2s; user-select: none;
 }
 .time-slot:hover { background: #EFF6FF; }
 .time-slot.selected { background: #2563EB; color: #fff; }
+
 .action-buttons { min-width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; padding-top: 10px; }
 .action-btn {
-  padding: 14px 24px;
-  border: 2px solid #2563EB;
-  border-radius: 30px;
-  background: #fff;
-  color: #2563EB;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
+  padding: 14px 24px; border: 2px solid #2563EB; border-radius: 30px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer;
+  transition: all 0.2s; text-align: center;
 }
 .action-btn:hover { background: #EFF6FF; }
 .action-btn.primary { background: #2563EB; color: #fff; }
@@ -171,15 +241,8 @@ body {
 .my-bookings-layout { display: flex; gap: 40px; max-width: 1200px; margin: 0 auto; }
 .bookings-list { flex: 1; }
 .booking-card {
-  border: 2px solid #E0E0E0;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  transition: border-color 0.2s;
-  cursor: pointer;
+  border: 2px solid #E0E0E0; border-radius: 12px; padding: 20px; margin-bottom: 20px;
+  display: flex; gap: 20px; align-items: center; transition: border-color 0.2s; cursor: pointer;
 }
 .booking-card:hover { border-color: #2563EB; }
 .booking-card-img { width: 200px; height: 150px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
@@ -187,82 +250,65 @@ body {
 .booking-card-info p { font-size: 15px; color: #666; margin-bottom: 5px; }
 .booking-actions { min-width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
 .booking-action-btn {
-  padding: 14px 24px;
-  border: 2px solid #2563EB;
-  border-radius: 30px;
-  background: #fff;
-  color: #2563EB;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
+  padding: 14px 24px; border: 2px solid #2563EB; border-radius: 30px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; text-align: center;
 }
 .booking-action-btn:hover { background: #EFF6FF; }
 .no-bookings { text-align: center; padding: 60px 20px; color: #999; font-size: 18px; }
 
+/* ===== ПОДВАЛ ===== */
+.footer {
+  background: #fff;
+  padding: 40px 60px;
+  border-top: 1px solid #E0E0E0;
+  margin-top: auto;
+}
+.footer-logo {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  color: #2563EB; font-weight: 800; font-size: 24px; text-decoration: none;
+}
+.footer-logo svg { width: 40px; height: 40px; fill: #2563EB; }
+.footer-content {
+  display: flex; gap: 60px; flex-wrap: wrap; font-size: 14px; color: #555; line-height: 1.8;
+}
+.footer-col { flex: 1; min-width: 250px; }
+.footer-col strong { color: #333; }
+.footer-bottom {
+  text-align: center; margin-top: 30px; padding-top: 20px;
+  border-top: 1px solid #E0E0E0; font-size: 14px; color: #333;
+}
+.footer-bottom a { color: #2563EB; text-decoration: none; }
+
 /* ===== МОДАЛЬНЫЕ ОКНА ===== */
 .modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 2000;
-  justify-content: center;
-  align-items: center;
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center;
 }
 .modal-overlay.active { display: flex; }
 .modal {
-  background: #fff;
-  border-radius: 12px;
-  padding: 35px 40px;
-  max-width: 500px;
-  width: 90%;
-  position: relative;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  background: #fff; border-radius: 12px; padding: 35px 40px;
+  max-width: 500px; width: 90%; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
 }
 .modal-close {
-  position: absolute;
-  top: 15px; right: 20px;
-  font-size: 28px;
-  cursor: pointer;
-  color: #999;
-  background: none;
-  border: none;
-  line-height: 1;
+  position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer;
+  color: #999; background: none; border: none; line-height: 1;
 }
 .modal-close:hover { color: #333; }
 .modal h2 { font-size: 22px; margin-bottom: 25px; color: #333; line-height: 1.4; }
 .modal label { display: block; font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #333; }
-.modal input[type="text"],
-.modal input[type="tel"],
-.modal input[type="date"],
-.modal select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #CCC;
-  border-radius: 25px;
-  font-size: 15px;
-  margin-bottom: 20px;
-  outline: none;
-  transition: border-color 0.2s;
+.modal input[type="text"], .modal input[type="tel"], .modal input[type="date"], .modal select {
+  width: 100%; padding: 12px 16px; border: 1px solid #CCC; border-radius: 25px;
+  font-size: 15px; margin-bottom: 20px; outline: none; transition: border-color 0.2s;
 }
 .modal input:focus, .modal select:focus { border-color: #2563EB; }
-.modal-submit {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  border-radius: 30px;
-  background: #2563EB;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-}
-.modal-submit:hover { opacity: 0.9; }
 
-/* ===== МОДАЛКА РЕГИСТРАЦИИ ===== */
+/* Модалка информации */
+.info-modal { max-width: 450px; text-align: left; }
+.info-modal h2 { font-size: 20px; margin-bottom: 15px; }
+.info-modal p { font-size: 15px; color: #555; margin-bottom: 8px; line-height: 1.6; }
+.info-modal .close-only { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #999; background: none; border: none; }
+
+/* Остальные модалки */
 .auth-modal { max-width: 520px; text-align: center; }
 .auth-modal h2 { font-size: 32px; text-align: center; margin-bottom: 30px; }
 .auth-modal .form-group { text-align: left; margin-bottom: 10px; }
@@ -270,63 +316,31 @@ body {
 .auth-modal .form-group input { border-radius: 6px; margin-bottom: 18px; }
 .auth-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 10px; }
 .auth-action-btn {
-  padding: 14px 30px;
-  border: 2px solid #2563EB;
-  border-radius: 30px;
-  background: #fff;
-  color: #2563EB;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 180px;
+  padding: 14px 30px; border: 2px solid #2563EB; border-radius: 30px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 180px;
 }
 .auth-action-btn:hover { background: #EFF6FF; }
 
-/* ===== МОДАЛКА БРОНИРОВАНИЯ (упрощённая) ===== */
-.booking-simple-modal {
-  text-align: center;
-  max-width: 480px;
-  padding: 40px 50px;
-}
-.booking-simple-modal h2 {
-  font-size: 26px;
-  text-align: center;
-  margin-bottom: 35px;
-  line-height: 1.4;
-}
+.booking-simple-modal { text-align: center; max-width: 480px; padding: 40px 50px; }
+.booking-simple-modal h2 { font-size: 26px; text-align: center; margin-bottom: 35px; line-height: 1.4; }
 .booking-simple-btn {
-  padding: 14px 40px;
-  border: 2px solid #2563EB;
-  border-radius: 30px;
-  background: #fff;
-  color: #2563EB;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
+  padding: 14px 40px; border: 2px solid #2563EB; border-radius: 30px;
+  background: #fff; color: #2563EB; font-size: 16px; cursor: pointer; transition: all 0.2s;
 }
 .booking-simple-btn:hover { background: #EFF6FF; }
 
-/* ===== МОДАЛКА ПОДТВЕРЖДЕНИЯ ===== */
 .confirm-modal { text-align: center; }
 .confirm-modal h2 { font-size: 26px; margin-bottom: 15px; }
 .confirm-modal p { font-size: 17px; color: #555; margin-bottom: 30px; line-height: 1.5; }
 .confirm-buttons { display: flex; gap: 20px; justify-content: center; }
 .confirm-btn {
-  padding: 12px 30px;
-  border: 2px solid #2563EB;
-  border-radius: 30px;
-  background: #fff;
-  color: #2563EB;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 160px;
+  padding: 12px 30px; border: 2px solid #2563EB; border-radius: 30px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 160px;
 }
 .confirm-btn:hover { background: #EFF6FF; }
 .confirm-btn.danger { border-color: #E53935; color: #E53935; }
 .confirm-btn.danger:hover { background: #FFEBEE; }
 
-/* ===== МОДАЛКА ПЕРЕНОСА ===== */
 .reschedule-modal { max-width: 520px; }
 .reschedule-modal h2 { text-align: center; font-size: 24px; margin-bottom: 20px; }
 .mini-calendar { margin-bottom: 25px; }
@@ -345,58 +359,96 @@ body {
 .reschedule-fields input, .reschedule-fields select { margin-bottom: 0; border-radius: 6px; }
 .reschedule-buttons { display: flex; gap: 20px; justify-content: center; }
 .reschedule-btn {
-  padding: 12px 30px;
-  border: 2px solid #2563EB;
-  border-radius: 30px;
-  background: #fff;
-  color: #2563EB;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 160px;
+  padding: 12px 30px; border: 2px solid #2563EB; border-radius: 30px;
+  background: #fff; color: #2563EB; font-size: 15px; cursor: pointer; transition: all 0.2s; min-width: 160px;
 }
 .reschedule-btn:hover { background: #EFF6FF; }
 
-/* ===== МОДАЛКА ПРЕДУПРЕЖДЕНИЯ ===== */
 .warning-modal { text-align: center; max-width: 480px; padding: 40px 50px; }
 .warning-modal h2 { font-size: 30px; margin-bottom: 20px; text-align: center; }
 .warning-modal p { font-size: 20px; color: #333; line-height: 1.5; text-align: center; }
 </style>
 </head>
 <body>
-<!-- ===== НАВИГАЦИЯ ===== -->
-<nav class="nav">
-  <button class="nav-btn" onclick="showPage('home', this)">Главная</button>
-  <button class="nav-btn" onclick="showPage('booking', this)">Бронирование</button>
-  <button class="nav-btn active" onclick="showPage('my-bookings', this)">Мои брони</button>
+
+<!-- ===== ШАПКА ===== -->
+<header class="header">
+  <a href="#" class="logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
+    <!-- SVG Логотип ТаймРум -->
+    <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="6" width="32" height="30" rx="4" fill="none" stroke="#2563EB" stroke-width="2.5"/>
+      <path d="M12 6 V3 M28 6 V3" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="20" cy="22" r="10" fill="none" stroke="#2563EB" stroke-width="2"/>
+      <polyline points="20,16 20,22 25,25" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    ТаймРум
+  </a>
   <button class="auth-btn" id="authBtn" onclick="openAuthModal()">Войти / Зарегистрироваться</button>
+</header>
+
+<!-- ===== НАВИГАЦИЯ (ВКЛАДКИ) ===== -->
+<nav class="nav-tabs">
+  <button class="nav-tab active" onclick="showPage('home', this)">Главная</button>
+  <button class="nav-tab" onclick="showPage('booking', this)">Бронирование</button>
+  <button class="nav-tab" onclick="showPage('my-bookings', this)">Мои брони</button>
 </nav>
 
-<!-- ===== ГЛАВНАЯ ===== -->
-<div class="page" id="page-home">
-  <div class="home-content">
-    <h1>Система бронирования помещений</h1>
-    <p>Добро пожаловать! Здесь вы можете забронировать любое помещение для ваших нужд: от небольших комнат для звонков до просторного актового зала.</p>
-    <div class="home-features">
-      <div class="feature-card"><h3> 6 помещений</h3><p>Различные по размеру и оснащению</p></div>
-      <div class="feature-card"><h3> Удобное бронирование</h3><p>Выбирайте дату и время онлайн</p></div>
-      <div class="feature-card"><h3>⚡ Быстрое подтверждение</h3><p>Мгновенное одобрение заявки</p></div>
+<!-- ===== КНОПКА ИНФОРМАЦИИ ===== -->
+<button class="info-btn" onclick="openInfoModal()" title="Информация о системе">i</button>
+
+<!-- ===== ГЛАВНАЯ СТРАНИЦА ===== -->
+<div class="page active" id="page-home">
+  <!-- Карусель помещений -->
+  <div class="rooms-carousel" id="roomsCarousel">
+    <div class="room-thumb active" data-room="0" onclick="selectRoom(0)">
+      <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&h=200&fit=crop" alt="Актовый зал">
+      <span>Актовый зал</span>
+    </div>
+    <div class="room-thumb" data-room="1" onclick="selectRoom(1)">
+      <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=200&fit=crop" alt="Переговорная №1">
+      <span>Переговорная комната № 1</span>
+    </div>
+    <div class="room-thumb" data-room="2" onclick="selectRoom(2)">
+      <img src="https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=300&h=200&fit=crop" alt="Переговорная №2">
+      <span>Переговорная комната № 2</span>
+    </div>
+    <div class="room-thumb" data-room="3" onclick="selectRoom(3)">
+      <img src="https://images.unsplash.com/photo-1517502884422-41e157d25225?w=300&h=200&fit=crop" alt="Конференц-зал">
+      <span>Конференц-зал</span>
+    </div>
+    <div class="room-thumb" data-room="4" onclick="selectRoom(4)">
+      <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=300&h=200&fit=crop" alt="Комната для звонков №1">
+      <span>Комната для звонков № 1</span>
+    </div>
+    <div class="room-thumb" data-room="5" onclick="selectRoom(5)">
+      <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=300&h=200&fit=crop" alt="Комната для звонков №2">
+      <span>Комната для звонков № 2</span>
+    </div>
+  </div>
+
+  <!-- Характеристики выбранного помещения -->
+  <div class="room-detail" id="roomDetail">
+    <div class="room-specs" id="roomSpecs">
+      <!-- Заполняется через JS -->
+    </div>
+    <div class="room-photo">
+      <img id="roomPhoto" src="" alt="Фото помещения">
     </div>
   </div>
 </div>
 
-<!-- ===== БРОНИРОВАНИЕ ===== -->
+<!-- ===== СТРАНИЦА БРОНИРОВАНИЯ ===== -->
 <div class="page" id="page-booking">
   <div class="week-calendar" id="weekCalendar">
-    <div class="week-day active" data-day="0" onclick="selectDay(0)"><div class="day-name">ПН</div><div class="day-date" id="wd-0">1 ОКТ</div></div>
-    <div class="week-day" data-day="1" onclick="selectDay(1)"><div class="day-name">ВТ</div><div class="day-date" id="wd-1">2 ОКТ</div></div>
-    <div class="week-day" data-day="2" onclick="selectDay(2)"><div class="day-name">СР</div><div class="day-date" id="wd-2">3 ОКТ</div></div>
-    <div class="week-day" data-day="3" onclick="selectDay(3)"><div class="day-name">ЧТ</div><div class="day-date" id="wd-3">4 ОКТ</div></div>
-    <div class="week-day" data-day="4" onclick="selectDay(4)"><div class="day-name">ПТ</div><div class="day-date" id="wd-4">5 ОКТ</div></div>
-    <div class="week-day" data-day="5" onclick="selectDay(5)"><div class="day-name">СБ</div><div class="day-date" id="wd-5">6 ОКТ</div></div>
-    <button class="calendar-btn" title="Открыть календарь"></button>
+    <div class="week-day active" data-day="0" onclick="selectDay(0)"><div class="day-name">ПН</div><div class="day-date" id="wd-0">2 НОЯ</div></div>
+    <div class="week-day" data-day="1" onclick="selectDay(1)"><div class="day-name">ВТ</div><div class="day-date" id="wd-1">3 НОЯ</div></div>
+    <div class="week-day" data-day="2" onclick="selectDay(2)"><div class="day-name">СР</div><div class="day-date" id="wd-2">4 НОЯ</div></div>
+    <div class="week-day" data-day="3" onclick="selectDay(3)"><div class="day-name">ЧТ</div><div class="day-date" id="wd-3">5 НОЯ</div></div>
+    <div class="week-day" data-day="4" onclick="selectDay(4)"><div class="day-name">ПТ</div><div class="day-date" id="wd-4">6 НОЯ</div></div>
+    <div class="week-day" data-day="5" onclick="selectDay(5)"><div class="day-name">СБ</div><div class="day-date" id="wd-5">7 НОЯ</div></div>
+    <div class="week-day" data-day="6" onclick="selectDay(6)"><div class="day-name">ВС</div><div class="day-date" id="wd-6">8 НОЯ</div></div>
+    <button class="calendar-icon-btn" title="Открыть календарь">📅</button>
   </div>
-  <div class="week-divider"></div>
   <div class="booking-layout">
     <div class="rooms-list">
       <div class="room-list-item active" data-room="0" onclick="selectBookingRoom(0)">Актовый зал</div>
@@ -427,13 +479,52 @@ body {
 </div>
 
 <!-- ===== МОИ БРОНИ ===== -->
-<div class="page active" id="page-my-bookings">
+<div class="page" id="page-my-bookings">
   <div class="my-bookings-layout">
     <div class="bookings-list" id="bookingsList"></div>
     <div class="booking-actions" id="bookingActions" style="display: none;">
       <button class="booking-action-btn" onclick="openCancelModalFromMyBookings()">Отменить бронь</button>
       <button class="booking-action-btn" onclick="openRescheduleModalFromMyBookings()">Перенести бронь</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== ПОДВАЛ ===== -->
+<footer class="footer">
+  <a href="#" class="footer-logo">
+    <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="6" width="32" height="30" rx="4" fill="none" stroke="#2563EB" stroke-width="2.5"/>
+      <path d="M12 6 V3 M28 6 V3" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="20" cy="22" r="10" fill="none" stroke="#2563EB" stroke-width="2"/>
+      <polyline points="20,16 20,22 25,25" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    ТаймРум
+  </a>
+  <div class="footer-content">
+    <div class="footer-col">
+      <p>Общество с ограниченной ответственностью «ТаймРум»</p>
+      <p>Юридический адрес: Нижний Новгород, ул. Рабочая, 17 оф. 55</p>
+      <p>ИНН: 7453350133</p>
+      <p>Контактный телефон: 8 (800) 123-45-67</p>
+    </div>
+    <div class="footer-col">
+      <p>ОКВЭД: 62.01</p>
+      <p>Коды видов деятельности: 1.01, 1.02 (в соответствии с Приказом министерства цифрового развития, связи и массовых коммуникаций РФ от 11 мая 2023 г. № 449)</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    Ждем ваших предложений для сотрудничества: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a>
+  </div>
+</footer>
+
+<!-- ===== МОДАЛКА: ИНФОРМАЦИЯ ===== -->
+<div class="modal-overlay" id="infoModal">
+  <div class="modal info-modal">
+    <button class="close-only" onclick="closeModal('infoModal')">&times;</button>
+    <h2>Система бронирования помещений</h2>
+    <p>Версия: 1.2.0</p>
+    <p>Сборка: 01.11.2026</p>
+    <p>Техническая поддержка: support@booking-system.ru</p>
   </div>
 </div>
 
@@ -466,11 +557,11 @@ body {
   </div>
 </div>
 
-<!-- ===== МОДАЛКА: БРОНИРОВАНИЕ (упрощённая) ===== -->
+<!-- ===== МОДАЛКА: БРОНИРОВАНИЕ ===== -->
 <div class="modal-overlay" id="bookingModal">
   <div class="modal booking-simple-modal">
     <button class="modal-close" onclick="closeModal('bookingModal')">&times;</button>
-    <h2 id="bookingModalTitle">Забронировать (какое помещение) на (время)</h2>
+    <h2 id="bookingModalTitle">Забронировать помещение</h2>
     <button class="booking-simple-btn" onclick="submitBooking()">Забронировать</button>
   </div>
 </div>
@@ -527,30 +618,61 @@ body {
 </div>
 
 <script>
-// ===== ДАННЫЕ =====
-const roomNames = [
-  'Актовый зал', 'Переговорная комната № 1', 'Переговорная комната № 2',
-  'Конференц-зал', 'Комната для звонков № 1', 'Комната для звонков № 2'
+// ===== ДАННЫЕ ПОМЕЩЕНИЙ =====
+const roomsData = [
+  {
+    name: 'Актовый зал',
+    size: '12 × 8 м',
+    area: '96 кв. м',
+    capacity: 'до 80 человек',
+    equipment: 'Трибуна, проектор, экран, звуковая система, микрофон',
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop'
+  },
+  {
+    name: 'Переговорная комната № 1',
+    size: '6 × 4 м',
+    area: '24 кв. м',
+    capacity: 'до 10 человек',
+    equipment: 'Маркерная доска, ТВ-панель, видеоконференцсвязь',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop'
+  },
+  {
+    name: 'Переговорная комната № 2',
+    size: '5 × 4 м',
+    area: '20 кв. м',
+    capacity: 'до 8 человек',
+    equipment: 'Маркерная доска, ТВ-панель',
+    image: 'https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=600&h=400&fit=crop'
+  },
+  {
+    name: 'Конференц-зал',
+    size: '10 × 7 м',
+    area: '70 кв. м',
+    capacity: 'до 40 человек',
+    equipment: 'Проектор, экран, звуковая система, микрофоны, видеоконференцсвязь',
+    image: 'https://images.unsplash.com/photo-1517502884422-41e157d25225?w=600&h=400&fit=crop'
+  },
+  {
+    name: 'Комната для звонков № 1',
+    size: '3 × 2 м',
+    area: '6 кв. м',
+    capacity: 'до 2 человек',
+    equipment: 'Шумоизоляция, телефон, гарнитура',
+    image: 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&h=400&fit=crop'
+  },
+  {
+    name: 'Комната для звонков № 2',
+    size: '3 × 2 м',
+    area: '6 кв. м',
+    capacity: 'до 2 человек',
+    equipment: 'Шумоизоляция, телефон, гарнитура',
+    image: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600&h=400&fit=crop'
+  }
 ];
-const roomImages = [
-  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1517502884422-41e157d25225?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400&h=300&fit=crop'
-];
-const monthNames = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
+
 const monthNamesGenitive = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const dayNamesShort = ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
-let weekStart = new Date(2026, 9, 1);
-function getMonday(d) {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(date.setDate(diff));
-}
-weekStart = getMonday(new Date(2026, 9, 1));
+
 let currentDayIndex = 0;
 let selectedRoomIndex = 0;
 let selectedSlot = null;
@@ -558,14 +680,73 @@ let miniCalDate = new Date(2026, 10, 1);
 let miniCalSelectedDay = 8;
 let myBookings = [];
 let selectedBookingIndex = null;
+let currentUser = null;
+
+// ===== ИНИЦИАЛИЗАЦИЯ ГЛАВНОЙ СТРАНИЦЫ =====
+function renderRoomDetail(index) {
+  const room = roomsData[index];
+  document.getElementById('roomSpecs').innerHTML = `
+    <div class="spec-row"><span class="spec-label">Размер:</span><span class="spec-value">${room.size}</span></div>
+    <div class="spec-row"><span class="spec-label">Площадь:</span><span class="spec-value">${room.area}</span></div>
+    <div class="spec-row"><span class="spec-label">Вместимость:</span><span class="spec-value">${room.capacity}</span></div>
+    <div class="spec-row"><span class="spec-label">Оборудование:</span><span class="spec-value">${room.equipment}</span></div>
+  `;
+  document.getElementById('roomPhoto').src = room.image;
+  document.querySelectorAll('.room-thumb').forEach((el, i) => el.classList.toggle('active', i === index));
+}
+
+function selectRoom(index) {
+  selectedRoomIndex = index;
+  renderRoomDetail(index);
+}
+
+// ===== КАЛЕНДАРЬ НЕДЕЛИ =====
+function updateWeekCalendar() {
+  const now = new Date(2026, 10, 2); // 2 ноября 2026 - понедельник
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + i);
+    const dayNum = d.getDate();
+    const monthShort = monthNamesGenitive[d.getMonth()].substring(0, 3).toUpperCase();
+    document.getElementById('wd-' + i).textContent = dayNum + ' ' + monthShort;
+  }
+}
+
+function selectDay(index) {
+  currentDayIndex = index;
+  document.querySelectorAll('.week-day').forEach((el, i) => el.classList.toggle('active', i === index));
+}
+
+// ===== ВЫБОР ПОМЕЩЕНИЯ И СЛОТА =====
+function selectBookingRoom(index) {
+  selectedRoomIndex = index;
+  document.querySelectorAll('.room-list-item').forEach((el, i) => el.classList.toggle('active', i === index));
+  selectedSlot = null;
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+}
+
+function selectSlot(el) {
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = el.textContent.trim();
+}
+
+// ===== НАВИГАЦИЯ =====
+function showPage(pageName, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + pageName).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (pageName === 'my-bookings') renderMyBookings();
+  window.scrollTo(0, 0);
+}
 
 // ===== АВТОРИЗАЦИЯ =====
-let currentUser = null;
 function getUsers() {
-  try { return JSON.parse(localStorage.getItem('roomBookingUsers') || '[]'); }
+  try { return JSON.parse(localStorage.getItem('timeRoomUsers') || '[]'); }
   catch { return []; }
 }
-function saveUsers(users) { localStorage.setItem('roomBookingUsers', JSON.stringify(users)); }
+function saveUsers(users) { localStorage.setItem('timeRoomUsers', JSON.stringify(users)); }
 function findUser(fio, phone) {
   const users = getUsers();
   const fioNorm = fio.trim().toLowerCase();
@@ -608,15 +789,9 @@ function showWarning(text) {
 }
 function handleRegister() {
   const { fio, phone, valid } = validateAuthFields();
-  if (!valid) {
-    showWarning('Вы ввели не все данные или они не корректны');
-    return;
-  }
+  if (!valid) { showWarning('Вы ввели не все данные или они не корректны'); return; }
   const existing = findUser(fio, phone);
-  if (existing) {
-    showWarning('Вы уже зарегистрированы! Пожалуйста, нажмите кнопку Войти');
-    return;
-  }
+  if (existing) { showWarning('Вы уже зарегистрированы! Пожалуйста, нажмите кнопку Войти'); return; }
   const users = getUsers();
   users.push({ fio, phone });
   saveUsers(users);
@@ -627,80 +802,31 @@ function handleRegister() {
 }
 function handleLogin() {
   const { fio, phone, valid } = validateAuthFields();
-  if (!valid) {
-    showWarning('Вы ввели не все данные или они не корректны');
-    return;
-  }
+  if (!valid) { showWarning('Вы ввели не все данные или они не корректны'); return; }
   const existing = findUser(fio, phone);
-  if (!existing) {
-    showWarning('Вы еще не зарегистрированы! Пожалуйста, нажмите кнопку Зарегистрироваться');
-    return;
-  }
+  if (!existing) { showWarning('Вы еще не зарегистрированы! Пожалуйста, нажмите кнопку Зарегистрироваться'); return; }
   currentUser = { fio, phone };
   updateAuthButton();
   closeModal('authModal');
   alert('Добро пожаловать, ' + fio + '!');
 }
 
-// ===== НАВИГАЦИЯ =====
-function showPage(pageName, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + pageName).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (pageName === 'my-bookings') renderMyBookings();
-  window.scrollTo(0, 0);
-}
-
-// ===== НЕДЕЛЬНЫЙ КАЛЕНДАРЬ =====
-function updateWeekCalendar() {
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    document.getElementById('wd-' + i).textContent =
-      d.getDate() + ' ' + monthNamesGenitive[d.getMonth()].substring(0, 3).toUpperCase();
-  }
-}
-function selectDay(index) {
-  currentDayIndex = index;
-  document.querySelectorAll('.week-day').forEach((el, i) => el.classList.toggle('active', i === index));
-}
-
-// ===== ВЫБОР ПОМЕЩЕНИЯ И СЛОТА =====
-function selectBookingRoom(index) {
-  selectedRoomIndex = index;
-  document.querySelectorAll('.room-list-item').forEach((el, i) => el.classList.toggle('active', i === index));
-  selectedSlot = null;
-  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-}
-function selectSlot(el) {
-  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedSlot = el.textContent.trim();
-}
-
-// ===== ОБРАБОТЧИК КНОПКИ "БРОНИРОВАТЬ" =====
+// ===== БРОНИРОВАНИЕ =====
 function handleBookingClick() {
-  if (!currentUser) {
-    openAuthModal();
-  } else {
-    openBookingModal();
-  }
+  if (!currentUser) { openAuthModal(); }
+  else { openBookingModal(); }
 }
-
-// ===== МОДАЛКА БРОНИРОВАНИЯ =====
 function openBookingModal() {
-  const room = roomNames[selectedRoomIndex];
+  const room = roomsData[selectedRoomIndex].name;
   const time = selectedSlot || 'не выбрано';
-  document.getElementById('bookingModalTitle').textContent =
-    'Забронировать ' + room + ' на ' + time;
+  document.getElementById('bookingModalTitle').textContent = 'Забронировать ' + room + ' на ' + time;
   document.getElementById('bookingModal').classList.add('active');
 }
 function submitBooking() {
   myBookings.push({
     roomIndex: selectedRoomIndex,
-    roomName: roomNames[selectedRoomIndex],
-    roomImage: roomImages[selectedRoomIndex],
+    roomName: roomsData[selectedRoomIndex].name,
+    roomImage: roomsData[selectedRoomIndex].image,
     time: selectedSlot || 'не выбрано',
     name: currentUser.fio,
     phone: currentUser.phone,
@@ -709,10 +835,10 @@ function submitBooking() {
   closeModal('bookingModal');
   selectedSlot = null;
   document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-  alert('Бронь оформлена!\nПомещение: ' + roomNames[selectedRoomIndex] + '\nВремя: ' + (selectedSlot || 'не выбрано'));
+  alert('Бронь оформлена!\nПомещение: ' + roomsData[selectedRoomIndex].name + '\nВремя: ' + (selectedSlot || 'не выбрано'));
 }
 
-// ===== РЕНДЕР МОИХ БРОНЕЙ =====
+// ===== МОИ БРОНИ =====
 function renderMyBookings() {
   const list = document.getElementById('bookingsList');
   const actions = document.getElementById('bookingActions');
@@ -731,7 +857,7 @@ function renderMyBookings() {
       <div class="booking-card-info">
         <h3>${booking.roomName} на ${booking.time}</h3>
         <p>📅 ${booking.date}</p>
-        <p> ${booking.name}</p>
+        <p>👤 ${booking.name}</p>
         <p>📞 ${booking.phone}</p>
       </div>
     `;
@@ -745,13 +871,10 @@ function selectBooking(index) {
     card.style.borderColor = i === index ? '#2563EB' : '#E0E0E0';
   });
 }
-
-// ===== ОТМЕНА И ПЕРЕНОС =====
 function openCancelModalFromMyBookings() {
   if (selectedBookingIndex === null) { alert('Пожалуйста, выберите бронь'); return; }
   const b = myBookings[selectedBookingIndex];
-  document.getElementById('cancelModalText').textContent =
-    'Вы точно хотите отменить бронь ' + b.roomName + ' на ' + b.time + '?';
+  document.getElementById('cancelModalText').textContent = 'Вы точно хотите отменить бронь ' + b.roomName + ' на ' + b.time + '?';
   document.getElementById('cancelModal').classList.add('active');
 }
 function confirmCancel() {
@@ -784,6 +907,7 @@ function confirmReschedule() {
 function renderMiniCalendar() {
   const year = miniCalDate.getFullYear();
   const month = miniCalDate.getMonth();
+  const monthNames = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
   document.getElementById('miniCalMonthYear').textContent = monthNames[month] + ' ' + year;
   const grid = document.getElementById('miniCalGrid');
   grid.innerHTML = '';
@@ -813,8 +937,7 @@ function renderMiniCalendar() {
       miniCalSelectedDay = d;
       document.querySelectorAll('.mini-calendar-grid .day-cell').forEach(c => c.classList.remove('selected'));
       el.classList.add('selected');
-      document.getElementById('rescheduleDate').value =
-        year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      document.getElementById('rescheduleDate').value = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
     };
     grid.appendChild(el);
   }
@@ -833,8 +956,10 @@ function changeMonth(offset) {
   renderMiniCalendar();
 }
 
-// ===== ОБЩИЕ ФУНКЦИИ МОДАЛОК =====
+// ===== ОБЩИЕ ФУНКЦИИ =====
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function openInfoModal() { document.getElementById('infoModal').classList.add('active'); }
+
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.classList.remove('active');
@@ -845,9 +970,12 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 updateWeekCalendar();
 renderMiniCalendar();
 updateAuthButton();
+renderRoomDetail(0);
+
+// Демо-бронь
 myBookings.push({
   roomIndex: 0, roomName: 'Актовый зал',
-  roomImage: roomImages[0], time: '17:00 - 18:00',
+  roomImage: roomsData[0].image, time: '17:00 - 18:00',
   name: 'Иван Иванович', phone: '+7 999 999 99 99', date: '12.10.2026'
 });
 renderMyBookings();
