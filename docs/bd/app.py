@@ -23,16 +23,15 @@ CANCELLED = "CANCELLED"
 # Сведения о сборке — для попапа «i» на фронте и для баг-репортов
 # («на какой версии найден дефект»). Единственный источник версии в коде:
 # отсюда же берётся version= у FastAPI (Swagger).
-# ⚠ BUILD_DATE обновлять вручную при каждом релизе (YYYY-MM-DD).
-API_VERSION = "0.8.0"
+# ⚠ BUILD_DATE обновлять вручную при каждом релизе (ISO, YYYY-MM-DD);
+#   человекочитаемая дата для попапа (ДД.ММ.ГГГГ) считается из неё.
+VERSION = "1.0.0"
 BUILD_DATE = "2026-11-01"
+BUILD_DATE_LABEL = datetime.strptime(BUILD_DATE, "%Y-%m-%d").strftime("%d.%m.%Y")
 PRODUCT_NAME = "Система бронирования помещений"
 SUPPORT = {
-    # Заглушка: заменить на реальные контакты, когда их даст Тимур/PO.
-    "name": "Служба поддержки «Бронирование»",
-    "email": "support@booking.example",
-    "phone": "+7 (999) 123-45-67",
-    "hours": "Пн–Пт, 09:00–18:00",
+    "name": "Техническая поддержка",
+    "email": "support@booking-system.ru",
 }
 
 
@@ -90,7 +89,7 @@ app = FastAPI(
         "Несколько периодов подряд (time_ids или starts_at+ends_at) создаются "
         "атомарно — все или ни один. Свободное время на дату — GET /availability."
     ),
-    version=API_VERSION,
+    version=VERSION,
     lifespan=lifespan,
 )
 
@@ -296,8 +295,9 @@ def get_version():
     # на пустой базе (нет запросов к таблицам).
     return {
         "product": PRODUCT_NAME,
-        "version": API_VERSION,
+        "version": VERSION,
         "build_date": BUILD_DATE,
+        "build_date_label": BUILD_DATE_LABEL,
         "support": SUPPORT,
     }
 
