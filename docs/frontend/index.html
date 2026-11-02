@@ -28,7 +28,7 @@ body {
     justify-content: space-between;
     padding: 0 60px;
     z-index: 1000;
-    border-bottom: 1px solid #E0E0E0;
+    border-bottom: none;
 }
 
 /* Логотип слева в 1-й строке (только изображение Логотип.png) */
@@ -75,26 +75,25 @@ body {
 }
 .auth-btn:hover { background: #EFF6FF; }
 
-/* Иконка «i» во 2-й строке навигации справа */
+/* Иконка «i» во 2-й строке навигации справа (статична, без увеличения и тени) */
 .nav-info-btn {
     position: absolute;
     right: 60px;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #38b6ff;
+    background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s, box-shadow 0.2s;
     flex-shrink: 0;
 }
 .nav-info-btn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 3px 10px rgba(56, 182, 255, 0.4);
+    transform: none;
+    box-shadow: none;
 }
 .nav-info-btn img {
     width: 100%;
@@ -117,7 +116,7 @@ body {
     gap: 40px;
     padding: 0 60px;
     z-index: 999;
-    border-bottom: 1px solid #E0E0E0;
+    border-bottom: none;
 }
 .nav-tab {
     padding: 12px 40px;
@@ -412,17 +411,24 @@ body {
     margin-bottom: 0;
     display: flex;
     gap: 20px;
-    align-items: center;
+    align-items: flex-start;
     transition: all 0.2s ease;
     cursor: pointer;
 }
 .booking-card:hover { border-color: #5B9BFF; }
 .booking-card.selected { border-color: #2B7DE9; }
 .booking-card-img { width: 200px; height: 150px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-.booking-card-info h3 { font-size: 18px; color: #333; margin-bottom: 8px; }
+.booking-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 2px;
+}
+.booking-card-info h3 { font-size: 18px; color: #333; margin-bottom: 8px; line-height: 1.4; }
 .booking-card-info p { font-size: 15px; color: #666; margin-bottom: 5px; }
 
-/* Кнопки привязаны к конкретной выбранной карточке брони */
+/* Кнопки привязаны к конкретной выбранной карточке брони (без плавной анимации) */
 .booking-item-actions {
     min-width: 190px;
     flex-shrink: 0;
@@ -430,11 +436,6 @@ body {
     flex-direction: column;
     gap: 12px;
     justify-content: center;
-    animation: fadeInActions 0.2s ease;
-}
-@keyframes fadeInActions {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
 }
 .booking-action-btn {
     padding: 14px 24px;
@@ -683,54 +684,61 @@ body {
 
 /* ===== ПОДВАЛ (FOOTER) ИЗ ДИЗАЙНА ===== */
 .footer {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 40px 60px;
-    border-top: 1px solid #E0E0E0;
+    background: #fff;
+    padding: 30px 80px 40px 80px;
+    border-top: none;
     margin-top: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 .footer-logo {
     display: inline-flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     text-decoration: none;
     cursor: pointer;
 }
 .footer-logo img {
-    height: 48px;
+    height: 52px;
     width: auto;
     object-fit: contain;
     display: block;
 }
 .footer-content {
     display: flex;
-    gap: 60px;
-    flex-wrap: wrap;
-    font-size: 14px;
-    color: #555;
-    line-height: 1.8;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 80px;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.5;
 }
 .footer-col {
     flex: 1;
-    min-width: 250px;
 }
-.footer-col strong {
-    color: #333;
+.footer-col-left {
+    max-width: 480px;
+}
+.footer-col-right {
+    max-width: 520px;
+}
+.footer-col p {
+    margin-bottom: 6px;
+}
+.footer-col-group {
+    margin-top: 24px;
+}
+.footer-col-group p {
+    margin-bottom: 6px;
 }
 .footer-bottom {
     text-align: center;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #E0E0E0;
-    font-size: 14px;
-    color: #333;
+    margin-top: 45px;
+    padding-top: 0;
+    font-size: 16px;
+    color: #111;
 }
-.footer-bottom a {
-    color: #2B7DE9;
-    text-decoration: none;
-}
-.footer-bottom a:hover {
-    text-decoration: underline;
+.footer-bottom strong {
+    font-weight: 700;
 }
 
 /* ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ (КНОПКА 'i') ===== */
@@ -770,7 +778,7 @@ body {
 <!-- ===== 1-Я СТРОКА ШАПКИ: ТОЛЬКО ЛОГОТИП.PNG И ВХОД/РЕГИСТРАЦИЯ ===== -->
 <header class="header">
     <a href="#" class="logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
-        <img src="assets/Логотип.png" alt="Логотип">
+        <img src="src/images/logos/logo.png" alt="Логотип">
     </a>
 
     <div class="auth-wrapper">
@@ -783,9 +791,9 @@ body {
 <nav class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('home', this)">Главная</button>
     <button class="nav-tab" onclick="showPage('booking', this)">Бронирование</button>
-    <button class="nav-tab" id="myBookingsNavBtn" style="display: none;" onclick="showPage('my-bookings', this)">Мои брони</button>
+    <button class="nav-tab" id="myBookingsNavBtn" onclick="showPage('my-bookings', this)">Мои брони</button>
     <button class="nav-info-btn" id="headerInfoBtn" title="Информация о системе" onclick="openSystemInfoModal()">
-        <img src="assets/Информация (иконка).png" alt="Информация" onerror="this.onerror=null; this.src='assets/Информационная иконка.png';">
+        <img src="src/icons/info.png" alt="Информация">
     </button>
 </nav>
 
@@ -934,32 +942,34 @@ body {
 <div class="modal-overlay" id="systemInfoModal">
     <div class="modal info-modal">
         <button class="modal-close" onclick="closeModal('systemInfoModal')">&times;</button>
-        <h2 id="sysInfoProduct">Система бронирования помещений</h2>
-        <p id="sysInfoVersion">Версия: 1.2.0</p>
-        <p id="sysInfoBuild">Сборка: 01.11.2026</p>
-        <p id="sysInfoSupport">Техническая поддержка: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a></p>
+        <h2 id="sysInfoProduct"></h2>
+        <p id="sysInfoVersion"></p>
+        <p id="sysInfoBuild"></p>
+        <p id="sysInfoSupport"></p>
     </div>
 </div>
 
 <!-- ===== ПОДВАЛ (FOOTER) ===== -->
 <footer class="footer">
     <a href="#" class="footer-logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
-        <img src="assets/Логотип.png" alt="Логотип">
+        <img src="src/images/logos/logo.png" alt="Логотип">
     </a>
     <div class="footer-content">
-        <div class="footer-col">
+        <div class="footer-col footer-col-left">
             <p>Общество с ограниченной ответственностью «ТаймРум»</p>
             <p>Юридический адрес: Нижний Новгород, ул. Рабочая, 17 оф. 55</p>
-            <p>ИНН: 7453350133</p>
-            <p>Контактный телефон: 8 (800) 123-45-67</p>
+            <div class="footer-col-group">
+                <p>ИНН: 7453350133</p>
+                <p>Контактный телефон: 8 (800) 123- 45-67</p>
+            </div>
         </div>
-        <div class="footer-col">
+        <div class="footer-col footer-col-right">
             <p>ОКВЭД: 62.01</p>
-            <p>Коды видов деятельности: 1.01, 1.02 (в соответствии с Приказом министерства цифрового развития, связи и массовых коммуникаций РФ от 11 мая 2023 г. № 449)</p>
+            <p>Коды видов деятельности: 1.01, 1.02 (в соответствие с Приказом министерства цифрового развития, связи и массовых коммуникаций РФ от 11 мая 2023 г. № 449)</p>
         </div>
     </div>
     <div class="footer-bottom">
-        Ждем ваших предложений для сотрудничества: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a>
+        <strong>Ждем ваших предложений для сотрудничества:</strong> <strong>support@booking-system.ru</strong>
     </div>
 </footer>
 
@@ -996,45 +1006,47 @@ const fallbackRoomNames = [
     'Актовый зал', 'Переговорная А', 'Переговорная Б'
 ];
 
-// Картинки для помещений (приоритет: локальные изображения помещений из папки дизайна)
-const roomImagesMap = {
-    'Актовый зал': 'assets/Фото комнат/Актовый зал.png',
-    'Переговорная комната № 1': 'assets/Фото комнат/Переговорная комната № 1.png',
-    'Переговорная А': 'assets/Фото комнат/Переговорная комната № 1.png',
-    'Переговорная комната № 2': 'assets/Фото комнат/Переговорная комната № 2.png',
-    'Переговорная Б': 'assets/Фото комнат/Переговорная комната № 2.png',
-    'Конференц-зал': 'assets/Фото комнат/Конференц-зал.png',
-    'Комната для звонков № 1': 'assets/Фото комнат/Комната для звонков № 1.png',
-    'Комната для звонков № 2': 'assets/Фото комнат/Комната для звонков № 2.png'
+// Строгий маппинг: какое фото строго к какому ID комнаты в БД относится (src/images/rooms)
+const roomImagesById = {
+    1: 'src/images/rooms/meeting-room-1.png',   // ID 1: Переговорная А / Переговорная комната № 1
+    2: 'src/images/rooms/meeting-room-2.png',   // ID 2: Переговорная Б / Переговорная комната № 2
+    3: 'src/images/rooms/assembly-hall.png',    // ID 3: Актовый зал
+    4: 'src/images/rooms/conference-hall.png',  // ID 4: Конференц-зал
+    5: 'src/images/rooms/call-room-1.png',      // ID 5: Комната для звонков № 1
+    6: 'src/images/rooms/call-room-2.png'       // ID 6: Комната для звонков № 2
 };
 
-const roomImagesList = [
-    'assets/Фото комнат/Актовый зал.png',
-    'assets/Фото комнат/Переговорная комната № 1.png',
-    'assets/Фото комнат/Переговорная комната № 2.png',
-    'assets/Фото комнат/Конференц-зал.png',
-    'assets/Фото комнат/Комната для звонков № 1.png',
-    'assets/Фото комнат/Комната для звонков № 2.png'
-];
+const roomImagesByName = {
+    'переговорная а': 'src/images/rooms/meeting-room-1.png',
+    'переговорная комната № 1': 'src/images/rooms/meeting-room-1.png',
+    'переговорная б': 'src/images/rooms/meeting-room-2.png',
+    'переговорная комната № 2': 'src/images/rooms/meeting-room-2.png',
+    'актовый зал': 'src/images/rooms/assembly-hall.png',
+    'конференц-зал': 'src/images/rooms/conference-hall.png',
+    'конференц зал': 'src/images/rooms/conference-hall.png',
+    'комната для звонков № 1': 'src/images/rooms/call-room-1.png',
+    'комната для звонков 1': 'src/images/rooms/call-room-1.png',
+    'комната для звонков № 2': 'src/images/rooms/call-room-2.png',
+    'комната для звонков 2': 'src/images/rooms/call-room-2.png'
+};
 
-function getRoomImageUrl(roomName, index = 0) {
-    if (roomName && roomImagesMap[roomName]) {
-        return roomImagesMap[roomName];
+function getRoomImageUrl(roomId, roomName) {
+    const id = parseInt(roomId, 10);
+    if (id && roomImagesById[id]) {
+        return roomImagesById[id];
     }
-    // Поиск по подстроке
-    if (roomName) {
-        const lower = roomName.toLowerCase();
-        if (lower.includes('актов')) return 'assets/Фото комнат/Актовый зал.png';
-        if (lower.includes('№ 1') || lower.includes('№1') || lower.includes('а') || lower.includes('a')) return 'assets/Фото комнат/Переговорная комната № 1.png';
-        if (lower.includes('№ 2') || lower.includes('№2') || lower.includes('б') || lower.includes('b')) return 'assets/Фото комнат/Переговорная комната № 2.png';
-        if (lower.includes('конференц')) return 'assets/Фото комнат/Конференц-зал.png';
-        if (lower.includes('звонк')) return 'assets/Фото комнат/Комната для звонков № 1.png';
+    if (roomName && typeof roomName === 'string') {
+        const cleanName = roomName.trim().toLowerCase();
+        if (roomImagesByName[cleanName]) {
+            return roomImagesByName[cleanName];
+        }
+        for (const [key, val] of Object.entries(roomImagesByName)) {
+            if (cleanName.includes(key)) return val;
+        }
     }
-    const idx = (index >= 0 ? index : 0) % roomImagesList.length;
-    return roomImagesList[idx] || 'assets/Фото комнат/Актовый зал.png';
+    return 'src/images/rooms/assembly-hall.png';
 }
 
-const roomImages = roomImagesList;
 const monthNames = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
 const monthNamesGenitive = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const dayNamesShort = ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
@@ -1301,7 +1313,6 @@ function saveStoredUser(user) {
 function updateAuthButton() {
     const btn = document.getElementById('authBtn');
     const nameEl = document.getElementById('userNameDisplay');
-    const myBookingsBtn = document.getElementById('myBookingsNavBtn');
 
     if (currentUser) {
         if (nameEl) {
@@ -1317,15 +1328,11 @@ function updateAuthButton() {
                 updateAuthButton();
                 showToast('Вы вышли из аккаунта', 'success');
                 if (document.getElementById('page-my-bookings').classList.contains('active')) {
-                    const homeNavBtn = document.querySelector('.nav-btn');
-                    showPage('home', homeNavBtn);
+                    renderMyBookings();
                 }
                 loadScheduleGrid();
             }
         };
-        if (myBookingsBtn) {
-            myBookingsBtn.style.display = '';
-        }
     } else {
         if (nameEl) {
             nameEl.textContent = '';
@@ -1333,10 +1340,6 @@ function updateAuthButton() {
         }
         btn.textContent = 'Войти / Зарегистрироваться';
         btn.onclick = openAuthModal;
-
-        if (myBookingsBtn) {
-            myBookingsBtn.style.display = 'none';
-        }
     }
 }
 
@@ -1510,10 +1513,10 @@ function renderHomeCarousel() {
         const thumb = document.createElement('div');
         thumb.className = 'room-thumb' + (idx === selectedHomeRoomIndex ? ' active' : '');
         thumb.dataset.room = idx;
-        const imgUrl = getRoomImageUrl(room.name, idx);
+        const imgUrl = getRoomImageUrl(room.id);
 
         thumb.innerHTML = `
-            <img src="${imgUrl}" alt="${room.name || '???'}" onerror="this.onerror=null; this.src='assets/Фото комнат/Актовый зал.png';">
+            <img src="${imgUrl}" alt="${room.name || '???'}" onerror="this.onerror=null; this.src='src/images/rooms/assembly-hall.png';">
             <span>${room.name || '???'}</span>
         `;
         thumb.onclick = () => selectHomeRoom(idx);
@@ -1562,7 +1565,7 @@ function renderHomeRoomDetail(index) {
     // Оборудование из API (room.equipment):
     const equipmentText = (room.equipment !== undefined && room.equipment !== null && room.equipment !== '') ? room.equipment : '???';
     
-    const imgUrl = getRoomImageUrl(room.name, index);
+    const imgUrl = getRoomImageUrl(room.id);
 
     specsEl.innerHTML = `
         <div class="spec-row"><span class="spec-label">Размер:</span><span class="spec-value">${sizeText}</span></div>
@@ -2066,7 +2069,9 @@ async function submitBooking() {
 async function renderMyBookings() {
     const list = document.getElementById('bookingsList');
     if (!currentUser) {
-        list.innerHTML = '<div class="no-bookings">Войдите в аккаунт, чтобы просмотреть свои бронирования</div>';
+        // Если пользователь не вошел, просто пустое белое полотно (без надписей и ошибок)
+        list.innerHTML = '';
+        selectedBookingIndex = null;
         return;
     }
 
@@ -2083,7 +2088,7 @@ async function renderMyBookings() {
     myBookings = activeBookings;
 
     if (activeBookings.length === 0) {
-        list.innerHTML = '<div class="no-bookings">У вас пока нет активных бронирований</div>';
+        list.innerHTML = '';
         selectedBookingIndex = null;
         return;
     }
@@ -2096,28 +2101,19 @@ async function renderMyBookings() {
 
         const isSelected = selectedBookingIndex === index;
 
-        // Изображение и данные о помещении
-        const imgUrl = getRoomImageUrl(b.resource, b.resource_id ? b.resource_id - 1 : index);
+        // Изображение строго по ID или названию комнаты из БД
+        const imgUrl = getRoomImageUrl(b.resource_id, b.resource);
         const timeLabel = (b.start_time && b.end_time)
             ? `${b.start_time.substring(0,5)} - ${b.end_time.substring(0,5)}`
             : '';
 
         const dateFormatted = b.date ? new Date(b.date).toLocaleDateString('ru-RU') : (b.booking_date || '');
 
-        // Ищем характеристики помещения из roomsData
-        const roomMeta = roomsData.find(r => r.id === b.resource_id || r.name === b.resource) || {};
-        const areaText = roomMeta.area ? `${roomMeta.area} м²` : '—';
-        const capacityText = roomMeta.capacity ? `до ${roomMeta.capacity} чел.` : '—';
-        const equipmentText = roomMeta.equipment || 'Стандартное оснащение';
-
         row.innerHTML = `
             <div class="booking-card ${isSelected ? 'selected' : ''}" onclick="selectBooking(${index})">
-                <img src="${imgUrl}" alt="${b.resource || ''}" class="booking-card-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop'">
+                <img src="${imgUrl}" alt="${b.resource || ''}" class="booking-card-img" onerror="this.onerror=null; this.src='src/images/rooms/assembly-hall.png'">
                 <div class="booking-card-info">
                     <h3>${b.resource || 'Помещение'} на ${dateFormatted} (${timeLabel})</h3>
-                    <p>👥 Вместимость: ${capacityText}</p>
-                    <p>📐 Площадь: ${areaText}</p>
-                    <p>💻 Оборудование: ${equipmentText}</p>
                 </div>
             </div>
             ${isSelected ? `
@@ -2137,7 +2133,33 @@ function selectBooking(index) {
     } else {
         selectedBookingIndex = index;
     }
-    renderMyBookings();
+
+    // Обновляем визуальное выделение и отображение кнопок действий без полной перерисовки и без сброса прокрутки
+    document.querySelectorAll('#bookingsList .booking-row').forEach((row, idx) => {
+        const card = row.querySelector('.booking-card');
+        const existingActions = row.querySelector('.booking-item-actions');
+        const isSelected = selectedBookingIndex === idx;
+
+        if (card) {
+            card.classList.toggle('selected', isSelected);
+        }
+
+        if (isSelected) {
+            if (!existingActions) {
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'booking-item-actions';
+                actionsDiv.innerHTML = `
+                    <button class="booking-action-btn" onclick="openCancelModalFromMyBookings()">Отменить бронь</button>
+                    <button class="booking-action-btn" onclick="openRescheduleModalFromMyBookings()">Перенести бронь</button>
+                `;
+                row.appendChild(actionsDiv);
+            }
+        } else {
+            if (existingActions) {
+                existingActions.remove();
+            }
+        }
+    });
 }
 
 // ===== ОТМЕНА БРОНИ =====
@@ -2438,33 +2460,29 @@ async function openSystemInfoModal() {
     const modal = document.getElementById('systemInfoModal');
     if (!modal) return;
 
-    // Дефолтные значения (как на 2-м скриншоте) на случай недоступности API
-    let product = 'Система бронирования помещений';
-    let version = '1.2.0';
-    let buildDateLabel = '01.11.2026';
-    let supportEmail = 'support@booking-system.ru';
-
-    // Запрос к новому эндпоинту GET /version (или /api/version)
-    const res = await apiFetch('/version');
-    if (res.ok && res.data) {
-        if (res.data.product) product = res.data.product;
-        if (res.data.version) version = res.data.version;
-        if (res.data.build_date_label) {
-            buildDateLabel = res.data.build_date_label;
-        } else if (res.data.build_date) {
-            buildDateLabel = res.data.build_date;
-        }
-        if (res.data.support && res.data.support.email) {
-            supportEmail = res.data.support.email;
-        }
-    }
-
-    document.getElementById('sysInfoProduct').textContent = product;
-    document.getElementById('sysInfoVersion').textContent = `Версия: ${version}`;
-    document.getElementById('sysInfoBuild').textContent = `Сборка: ${buildDateLabel}`;
-    document.getElementById('sysInfoSupport').innerHTML = `Техническая поддержка: <a href="mailto:${supportEmail}">${supportEmail}</a>`;
+    // Сбрасываем в ожидание/заглушки перед вызовом API
+    document.getElementById('sysInfoProduct').textContent = 'Загрузка...';
+    document.getElementById('sysInfoVersion').textContent = 'Версия: ???';
+    document.getElementById('sysInfoBuild').textContent = 'Сборка: ???';
+    document.getElementById('sysInfoSupport').textContent = 'Техническая поддержка: ???';
 
     modal.classList.add('active');
+
+    // Данные строго из API GET /version
+    const res = await apiFetch('/version');
+    if (res.ok && res.data) {
+        document.getElementById('sysInfoProduct').textContent = res.data.product || '???';
+        document.getElementById('sysInfoVersion').textContent = `Версия: ${res.data.version || '???'}`;
+        const build = res.data.build_date_label || res.data.build_date || '???';
+        document.getElementById('sysInfoBuild').textContent = `Сборка: ${build}`;
+        const email = (res.data.support && res.data.support.email) ? res.data.support.email : '???';
+        document.getElementById('sysInfoSupport').textContent = `Техническая поддержка: ${email}`;
+    } else {
+        document.getElementById('sysInfoProduct').textContent = '???';
+        document.getElementById('sysInfoVersion').textContent = 'Версия: ???';
+        document.getElementById('sysInfoBuild').textContent = 'Сборка: ???';
+        document.getElementById('sysInfoSupport').textContent = 'Техническая поддержка: ???';
+    }
 }
 
 // ===== ОБЩИЕ ФУНКЦИИ МОДАЛОК =====
