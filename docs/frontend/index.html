@@ -10,42 +10,46 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: #fff;
     color: #333;
-    padding-top: 120px;
+    padding-top: 140px; /* Отступ под двухстрочную фиксированную шапку (70px + 70px) */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-/* ===== ФИКСИРОВАННАЯ НАВИГАЦИЯ ===== */
-.nav {
+/* ===== 1-Я СТРОКА: ШАПКА (HEADER) ===== */
+.header {
     position: fixed;
     top: 0; left: 0; right: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 40px;
-    padding: 30px 60px;
-    background: #fff;
+    justify-content: space-between;
+    padding: 0 60px;
     z-index: 1000;
+    border-bottom: 1px solid #E0E0E0;
 }
-.nav-btn {
-    padding: 14px 40px;
-    border: none;
-    border-radius: 30px;
-    background: #5B9BFF;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.nav-btn:hover { background: #4A8AEE; }
-.nav-btn.active { background: #5B9BFF; }
 
-/* Контейнер справа: имя пользователя и кнопка входа/выхода */
-.auth-wrapper {
-    position: absolute;
-    right: 40px;
+/* Логотип слева в 1-й строке (только изображение Логотип.png) */
+.logo {
     display: flex;
     align-items: center;
-    gap: 16px;
-    max-width: 420px;
+    text-decoration: none;
+    cursor: pointer;
+}
+.logo img {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* Правая часть 1-й строки: имя пользователя, кнопка входа и иконка 'i' */
+.auth-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 .user-name-display {
     font-size: 15px;
@@ -58,18 +62,164 @@ body {
     display: inline-block;
 }
 .auth-btn {
-    padding: 12px 28px;
-    border: 2px solid #5B9BFF;
+    padding: 10px 24px;
+    border: 2px solid #2563EB;
     border-radius: 30px;
     background: #fff;
-    color: #5B9BFF;
+    color: #2563EB;
     font-size: 15px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+}
+.auth-btn:hover { background: #EFF6FF; }
+
+/* Иконка «i» во 2-й строке навигации справа */
+.nav-info-btn {
+    position: absolute;
+    right: 60px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #38b6ff;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
     flex-shrink: 0;
 }
-.auth-btn:hover { background: #F0F6FF; }
+.nav-info-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 3px 10px rgba(56, 182, 255, 0.4);
+}
+.nav-info-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+    display: block;
+}
+
+/* ===== 2-Я СТРОКА: НАВИГАЦИЯ (ВКЛАДКИ) ===== */
+.nav-tabs {
+    position: fixed;
+    top: 70px; left: 0; right: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    padding: 0 60px;
+    z-index: 999;
+    border-bottom: 1px solid #E0E0E0;
+}
+.nav-tab {
+    padding: 12px 40px;
+    border: none;
+    border-radius: 30px;
+    background: #2563EB;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.nav-tab:hover { background: #1D4ED8; }
+.nav-tab.active { background: #2563EB; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+
+/* Контейнер для контента с карточкой из HTML.html */
+.content-card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(5px);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    max-width: 1200px;
+    margin: 0 auto;
+    border: 1px solid #EFEFEF;
+}
+
+/* ===== ГЛАВНАЯ СТРАНИЦА (КАРУСЕЛЬ И ОПИСАНИЕ ИЗ HTML.HTML) ===== */
+.rooms-carousel {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    margin-bottom: 40px;
+    scrollbar-width: thin;
+}
+.room-thumb {
+    flex-shrink: 0;
+    width: 160px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.room-thumb:hover { opacity: 0.85; }
+.room-thumb.active { opacity: 1; }
+.room-thumb img {
+    width: 160px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 2px solid transparent;
+    display: block;
+}
+.room-thumb.active img { border-color: #2563EB; }
+.room-thumb span { font-size: 14px; color: #333; display: block; font-weight: 500; }
+
+.room-detail {
+    display: flex;
+    gap: 40px;
+    align-items: stretch;
+}
+.room-specs {
+    flex: 1;
+    border: 2px solid #E0E0E0;
+    padding: 30px;
+    border-radius: 12px;
+    background: #fff;
+}
+.spec-row {
+    display: flex;
+    margin-bottom: 20px;
+    align-items: baseline;
+}
+.spec-row:last-child { margin-bottom: 0; }
+.spec-label {
+    width: 160px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #555;
+    flex-shrink: 0;
+}
+.spec-value {
+    font-size: 16px;
+    color: #333;
+    line-height: 1.5;
+    font-weight: 500;
+}
+.room-photo {
+    flex: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    max-height: 400px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.room-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
 
 /* ===== СТРАНИЦЫ ===== */
 .page { display: none; padding: 20px 60px 60px 60px; }
@@ -530,30 +680,131 @@ body {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* ===== ПОДВАЛ (FOOTER) ИЗ ДИЗАЙНА ===== */
+.footer {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 40px 60px;
+    border-top: 1px solid #E0E0E0;
+    margin-top: auto;
+}
+.footer-logo {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 20px;
+    text-decoration: none;
+    cursor: pointer;
+}
+.footer-logo img {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+.footer-content {
+    display: flex;
+    gap: 60px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.8;
+}
+.footer-col {
+    flex: 1;
+    min-width: 250px;
+}
+.footer-col strong {
+    color: #333;
+}
+.footer-bottom {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #E0E0E0;
+    font-size: 14px;
+    color: #333;
+}
+.footer-bottom a {
+    color: #2B7DE9;
+    text-decoration: none;
+}
+.footer-bottom a:hover {
+    text-decoration: underline;
+}
+
+/* ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ (КНОПКА 'i') ===== */
+.info-modal {
+    max-width: 480px;
+    text-align: left;
+    padding: 35px 40px;
+    border-radius: 12px;
+}
+.info-modal h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #222;
+    line-height: 1.4;
+}
+.info-modal p {
+    font-size: 16px;
+    color: #444;
+    margin-bottom: 12px;
+    line-height: 1.6;
+}
+.info-modal p:last-child {
+    margin-bottom: 0;
+}
+.info-modal a {
+    color: #2B7DE9;
+    text-decoration: none;
+}
+.info-modal a:hover {
+    text-decoration: underline;
+}
 </style>
 </head>
 <body>
 
-<!-- ===== НАВИГАЦИЯ ===== -->
-<nav class="nav">
-    <button class="nav-btn active" onclick="showPage('home', this)">Главная</button>
-    <button class="nav-btn" onclick="showPage('booking', this)">Бронирование</button>
-    <button class="nav-btn" id="myBookingsNavBtn" style="display: none;" onclick="showPage('my-bookings', this)">Мои брони</button>
+<!-- ===== 1-Я СТРОКА ШАПКИ: ТОЛЬКО ЛОГОТИП.PNG И ВХОД/РЕГИСТРАЦИЯ ===== -->
+<header class="header">
+    <a href="#" class="logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
+        <img src="assets/Логотип.png" alt="Логотип">
+    </a>
+
     <div class="auth-wrapper">
         <span class="user-name-display" id="userNameDisplay" style="display: none;"></span>
         <button class="auth-btn" id="authBtn" onclick="openAuthModal()">Войти / Зарегистрироваться</button>
     </div>
+</header>
+
+<!-- ===== 2-Я СТРОКА ШАПКИ: НАВИГАЦИОННЫЕ ВКЛАДКИ (ПО ЦЕНТРУ) + КНОПКА ИНФО (СПРАВА) ===== -->
+<nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home', this)">Главная</button>
+    <button class="nav-tab" onclick="showPage('booking', this)">Бронирование</button>
+    <button class="nav-tab" id="myBookingsNavBtn" style="display: none;" onclick="showPage('my-bookings', this)">Мои брони</button>
+    <button class="nav-info-btn" id="headerInfoBtn" title="Информация о системе" onclick="openSystemInfoModal()">
+        <img src="assets/Информация (иконка).png" alt="Информация" onerror="this.onerror=null; this.src='assets/Информационная иконка.png';">
+    </button>
 </nav>
 
-<!-- ===== ГЛАВНАЯ ===== -->
+<!-- ===== ГЛАВНАЯ СТРАНИЦА (С КАРУСЕЛЬЮ И ХАРАКТЕРИСТИКАМИ ИЗ HTML.HTML) ===== -->
 <div class="page active" id="page-home">
-    <div class="home-content">
-        <h1>Система бронирования помещений</h1>
-        <p>Добро пожаловать! Здесь вы можете забронировать любое помещение для ваших нужд: от небольших комнат для звонков до просторного актового зала.</p>
-        <div class="home-features">
-            <div class="feature-card"><h3>3 помещения</h3><p>Различные по размеру и оснащению</p></div>
-            <div class="feature-card"><h3>Удобное бронирование</h3><p>Выбирайте дату и время онлайн</p></div>
-            <div class="feature-card"><h3>Быстрое подтверждение</h3><p>Мгновенное одобрение заявки</p></div>
+    <div class="content-card">
+        <!-- Карусель помещений -->
+        <div class="rooms-carousel" id="roomsCarousel">
+            <!-- Заполняется динамически через JS -->
+        </div>
+
+        <!-- Характеристики выбранного помещения -->
+        <div class="room-detail" id="roomDetail">
+            <div class="room-specs" id="roomSpecs">
+                <!-- Заполняется через JS -->
+            </div>
+            <div class="room-photo">
+                <img id="roomPhoto" src="" alt="Фото помещения">
+            </div>
         </div>
     </div>
 </div>
@@ -679,6 +930,39 @@ body {
     </div>
 </div>
 
+<!-- ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ ===== -->
+<div class="modal-overlay" id="systemInfoModal">
+    <div class="modal info-modal">
+        <button class="modal-close" onclick="closeModal('systemInfoModal')">&times;</button>
+        <h2 id="sysInfoProduct">Система бронирования помещений</h2>
+        <p id="sysInfoVersion">Версия: 1.2.0</p>
+        <p id="sysInfoBuild">Сборка: 01.11.2026</p>
+        <p id="sysInfoSupport">Техническая поддержка: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a></p>
+    </div>
+</div>
+
+<!-- ===== ПОДВАЛ (FOOTER) ===== -->
+<footer class="footer">
+    <a href="#" class="footer-logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
+        <img src="assets/Логотип.png" alt="Логотип">
+    </a>
+    <div class="footer-content">
+        <div class="footer-col">
+            <p>Общество с ограниченной ответственностью «ТаймРум»</p>
+            <p>Юридический адрес: Нижний Новгород, ул. Рабочая, 17 оф. 55</p>
+            <p>ИНН: 7453350133</p>
+            <p>Контактный телефон: 8 (800) 123-45-67</p>
+        </div>
+        <div class="footer-col">
+            <p>ОКВЭД: 62.01</p>
+            <p>Коды видов деятельности: 1.01, 1.02 (в соответствии с Приказом министерства цифрового развития, связи и массовых коммуникаций РФ от 11 мая 2023 г. № 449)</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        Ждем ваших предложений для сотрудничества: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a>
+    </div>
+</footer>
+
 <!-- Всплывающее уведомление об успехе -->
 <div class="toast-notice" id="toastNotice"></div>
 
@@ -711,14 +995,46 @@ let currentDayBookings = [];
 const fallbackRoomNames = [
     'Актовый зал', 'Переговорная А', 'Переговорная Б'
 ];
-const roomImages = [
-    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1517502884422-41e157d25225?w=400&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400&h=300&fit=crop'
+
+// Картинки для помещений (приоритет: локальные изображения помещений из папки дизайна)
+const roomImagesMap = {
+    'Актовый зал': 'assets/Фото комнат/Актовый зал.png',
+    'Переговорная комната № 1': 'assets/Фото комнат/Переговорная комната № 1.png',
+    'Переговорная А': 'assets/Фото комнат/Переговорная комната № 1.png',
+    'Переговорная комната № 2': 'assets/Фото комнат/Переговорная комната № 2.png',
+    'Переговорная Б': 'assets/Фото комнат/Переговорная комната № 2.png',
+    'Конференц-зал': 'assets/Фото комнат/Конференц-зал.png',
+    'Комната для звонков № 1': 'assets/Фото комнат/Комната для звонков № 1.png',
+    'Комната для звонков № 2': 'assets/Фото комнат/Комната для звонков № 2.png'
+};
+
+const roomImagesList = [
+    'assets/Фото комнат/Актовый зал.png',
+    'assets/Фото комнат/Переговорная комната № 1.png',
+    'assets/Фото комнат/Переговорная комната № 2.png',
+    'assets/Фото комнат/Конференц-зал.png',
+    'assets/Фото комнат/Комната для звонков № 1.png',
+    'assets/Фото комнат/Комната для звонков № 2.png'
 ];
+
+function getRoomImageUrl(roomName, index = 0) {
+    if (roomName && roomImagesMap[roomName]) {
+        return roomImagesMap[roomName];
+    }
+    // Поиск по подстроке
+    if (roomName) {
+        const lower = roomName.toLowerCase();
+        if (lower.includes('актов')) return 'assets/Фото комнат/Актовый зал.png';
+        if (lower.includes('№ 1') || lower.includes('№1') || lower.includes('а') || lower.includes('a')) return 'assets/Фото комнат/Переговорная комната № 1.png';
+        if (lower.includes('№ 2') || lower.includes('№2') || lower.includes('б') || lower.includes('b')) return 'assets/Фото комнат/Переговорная комната № 2.png';
+        if (lower.includes('конференц')) return 'assets/Фото комнат/Конференц-зал.png';
+        if (lower.includes('звонк')) return 'assets/Фото комнат/Комната для звонков № 1.png';
+    }
+    const idx = (index >= 0 ? index : 0) % roomImagesList.length;
+    return roomImagesList[idx] || 'assets/Фото комнат/Актовый зал.png';
+}
+
+const roomImages = roomImagesList;
 const monthNames = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
 const monthNamesGenitive = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const dayNamesShort = ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
@@ -1150,24 +1466,119 @@ async function handleLogin() {
 async function loadResources() {
     const res = await apiFetch('/resources');
     const roomsContainer = document.querySelector('.rooms-list');
-    if (!roomsContainer) return;
 
     if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
         roomsData = res.data;
+    } else {
+        // Если API недоступно, оставляем пустой список (без захардкоженных данных)
+        roomsData = [];
+    }
+
+    // Рендерим список для страницы бронирования
+    if (roomsContainer) {
         roomsContainer.innerHTML = '';
         roomsData.forEach((room, idx) => {
             const item = document.createElement('div');
             item.className = 'room-list-item' + (idx === selectedRoomIndex ? ' active' : '');
             item.dataset.room = idx;
-            item.textContent = room.name;
-            item.title = `Вместимость: ${room.capacity || '—'}, Площадь: ${room.area || '—'} м²`;
+            item.textContent = room.name || '???';
+            item.title = `Вместимость: ${room.capacity !== undefined && room.capacity !== null ? room.capacity : '???'}, Площадь: ${room.area !== undefined && room.area !== null ? room.area + ' м²' : '???'}`;
             item.onclick = () => selectBookingRoom(idx);
             roomsContainer.appendChild(item);
         });
-    } else {
-        // Fallback на дефолтные имена, если бэкенд не запущен
-        roomsData = fallbackRoomNames.map((name, i) => ({ id: i + 1, name }));
     }
+
+    // Рендерим карусель и детали для главной страницы
+    renderHomeCarousel();
+}
+
+// ===== ГЛАВНАЯ СТРАНИЦА: КАРУСЕЛЬ И ХАРАКТЕРИСТИКИ ПОМЕЩЕНИЙ =====
+let selectedHomeRoomIndex = 0;
+
+function renderHomeCarousel() {
+    const carousel = document.getElementById('roomsCarousel');
+    if (!carousel) return;
+    carousel.innerHTML = '';
+
+    if (roomsData.length === 0) {
+        carousel.innerHTML = '<div style="color: #888; padding: 20px;">Загрузка списка помещений из API...</div>';
+        renderHomeRoomDetail(-1);
+        return;
+    }
+
+    roomsData.forEach((room, idx) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'room-thumb' + (idx === selectedHomeRoomIndex ? ' active' : '');
+        thumb.dataset.room = idx;
+        const imgUrl = getRoomImageUrl(room.name, idx);
+
+        thumb.innerHTML = `
+            <img src="${imgUrl}" alt="${room.name || '???'}" onerror="this.onerror=null; this.src='assets/Фото комнат/Актовый зал.png';">
+            <span>${room.name || '???'}</span>
+        `;
+        thumb.onclick = () => selectHomeRoom(idx);
+        carousel.appendChild(thumb);
+    });
+
+    renderHomeRoomDetail(selectedHomeRoomIndex);
+}
+
+function selectHomeRoom(index) {
+    selectedHomeRoomIndex = index;
+    renderHomeRoomDetail(index);
+}
+
+function renderHomeRoomDetail(index) {
+    const specsEl = document.getElementById('roomSpecs');
+    const photoEl = document.getElementById('roomPhoto');
+    if (!specsEl) return;
+
+    if (!roomsData || roomsData.length === 0 || index < 0 || !roomsData[index]) {
+        specsEl.innerHTML = `
+            <div class="spec-row"><span class="spec-label">Размер:</span><span class="spec-value">???</span></div>
+            <div class="spec-row"><span class="spec-label">Площадь:</span><span class="spec-value">???</span></div>
+            <div class="spec-row"><span class="spec-label">Вместимость:</span><span class="spec-value">???</span></div>
+            <div class="spec-row"><span class="spec-label">Оборудование:</span><span class="spec-value">???</span></div>
+        `;
+        if (photoEl) {
+            photoEl.src = '';
+            photoEl.alt = '???';
+        }
+        return;
+    }
+
+    const room = roomsData[index];
+
+    // Поля строго из API (GET /resources):
+    // В БД нет поля "Размер" (длина × ширина), поэтому строго "???"
+    const sizeText = (room.size !== undefined && room.size !== null && room.size !== '') ? room.size : '???';
+    
+    // Площадь из API (room.area):
+    const areaText = (room.area !== undefined && room.area !== null && room.area !== '') ? `${room.area} кв. м` : '???';
+    
+    // Вместимость из API (room.capacity):
+    const capacityText = (room.capacity !== undefined && room.capacity !== null && room.capacity !== '') ? `до ${room.capacity} человек` : '???';
+    
+    // Оборудование из API (room.equipment):
+    const equipmentText = (room.equipment !== undefined && room.equipment !== null && room.equipment !== '') ? room.equipment : '???';
+    
+    const imgUrl = getRoomImageUrl(room.name, index);
+
+    specsEl.innerHTML = `
+        <div class="spec-row"><span class="spec-label">Размер:</span><span class="spec-value">${sizeText}</span></div>
+        <div class="spec-row"><span class="spec-label">Площадь:</span><span class="spec-value">${areaText}</span></div>
+        <div class="spec-row"><span class="spec-label">Вместимость:</span><span class="spec-value">${capacityText}</span></div>
+        <div class="spec-row"><span class="spec-label">Оборудование:</span><span class="spec-value">${equipmentText}</span></div>
+    `;
+
+    if (photoEl) {
+        photoEl.src = imgUrl;
+        photoEl.alt = room.name || '???';
+    }
+
+    document.querySelectorAll('.room-thumb').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+    });
 }
 
 async function loadPeriods() {
@@ -1304,9 +1715,12 @@ function updateTimeSlotsWithBookings() {
 // ===== НАВИГАЦИЯ =====
 function showPage(pageName, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('page-' + pageName).classList.add('active');
+    const targetPage = document.getElementById('page-' + pageName);
+    if (targetPage) targetPage.classList.add('active');
     if (btn) btn.classList.add('active');
+    if (pageName === 'home') renderHomeCarousel();
     if (pageName === 'my-bookings') renderMyBookings();
     if (pageName === 'booking') loadScheduleGrid();
     window.scrollTo(0, 0);
@@ -1683,8 +2097,7 @@ async function renderMyBookings() {
         const isSelected = selectedBookingIndex === index;
 
         // Изображение и данные о помещении
-        const rIndex = (b.resource_id ? b.resource_id - 1 : 0) % roomImages.length;
-        const imgUrl = roomImages[rIndex] || roomImages[0];
+        const imgUrl = getRoomImageUrl(b.resource, b.resource_id ? b.resource_id - 1 : index);
         const timeLabel = (b.start_time && b.end_time)
             ? `${b.start_time.substring(0,5)} - ${b.end_time.substring(0,5)}`
             : '';
@@ -1699,7 +2112,7 @@ async function renderMyBookings() {
 
         row.innerHTML = `
             <div class="booking-card ${isSelected ? 'selected' : ''}" onclick="selectBooking(${index})">
-                <img src="${imgUrl}" alt="${b.resource || ''}" class="booking-card-img" onerror="this.src='https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop'">
+                <img src="${imgUrl}" alt="${b.resource || ''}" class="booking-card-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop'">
                 <div class="booking-card-info">
                     <h3>${b.resource || 'Помещение'} на ${dateFormatted} (${timeLabel})</h3>
                     <p>👥 Вместимость: ${capacityText}</p>
@@ -2018,6 +2431,40 @@ function changeRescheduleMonth(offset) {
     rescheduleCalDate.setMonth(rescheduleCalDate.getMonth() + offset);
     rescheduleSelectedDay = 1;
     renderRescheduleMiniCalendar();
+}
+
+// ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ (GET /version) =====
+async function openSystemInfoModal() {
+    const modal = document.getElementById('systemInfoModal');
+    if (!modal) return;
+
+    // Дефолтные значения (как на 2-м скриншоте) на случай недоступности API
+    let product = 'Система бронирования помещений';
+    let version = '1.2.0';
+    let buildDateLabel = '01.11.2026';
+    let supportEmail = 'support@booking-system.ru';
+
+    // Запрос к новому эндпоинту GET /version (или /api/version)
+    const res = await apiFetch('/version');
+    if (res.ok && res.data) {
+        if (res.data.product) product = res.data.product;
+        if (res.data.version) version = res.data.version;
+        if (res.data.build_date_label) {
+            buildDateLabel = res.data.build_date_label;
+        } else if (res.data.build_date) {
+            buildDateLabel = res.data.build_date;
+        }
+        if (res.data.support && res.data.support.email) {
+            supportEmail = res.data.support.email;
+        }
+    }
+
+    document.getElementById('sysInfoProduct').textContent = product;
+    document.getElementById('sysInfoVersion').textContent = `Версия: ${version}`;
+    document.getElementById('sysInfoBuild').textContent = `Сборка: ${buildDateLabel}`;
+    document.getElementById('sysInfoSupport').innerHTML = `Техническая поддержка: <a href="mailto:${supportEmail}">${supportEmail}</a>`;
+
+    modal.classList.add('active');
 }
 
 // ===== ОБЩИЕ ФУНКЦИИ МОДАЛОК =====
