@@ -402,13 +402,24 @@ def list_bookings(
     date_from: date | None = None,
     date_to: date | None = None,
     resource_id: int | None = None,
+    search: str | None = None,
+    sort: str = "start",
 ):
     # все параметры необязательные: без них — все брони;
     # ?user_id=1 — «мои брони», ?booking_date=... — расписание дня,
     # ?date_from=...&date_to=... — диапазон (вкладка «неделя» / «месяц»),
-    # ?resource_id=2 — одно помещение
+    # ?resource_id=2 — одно помещение (можно вместе с date_from/date_to),
+    # ?search=иван — подстрока имени заказчика (регистр не важен),
+    # ?sort=start|start_desc — порядок по времени начала (по умолчанию — по возрастанию)
     if date_from is not None and date_to is not None and date_from > date_to:
         raise HTTPException(400, "date_from должен быть не позже date_to")
+
+    sort_sql = {
+        "start": 'b."Дата", v."ВремяНачала"',
+        "start_desc": 'b."Дата" DESC, v."ВремяНачала" DESC',
+    }
+    if sort not in sort_sql:
+        raise HTTPException(400, "sort должен быть start или start_desc")
 
     sql = """
         SELECT b."ID_Бронь"        AS id,
@@ -443,15 +454,58 @@ def list_bookings(
     if resource_id is not None:
         where.append('b."ID_Ресурс" = %s')
         params.append(resource_id)
+    if search is not None and search.strip():
+        where.append('u."Имя" ILIKE %s')
+        params.append(f"%{search.strip()}%")
     if where:
         sql += " WHERE " + " AND ".join(where)
-    sql += ' ORDER BY b."ID_Бронь"'
+    sql += f' ORDER BY {sort_sql[sort]}, b."ID_Бронь"'
     rows = query(sql, tuple(params))
     for row in rows:
         # Плюс к date/start_time/end_time — полные временные метки ISO 8601
         row["starts_at"] = _iso_local(row["date"], row["start_time"])
         row["ends_at"] = _iso_local(row["date"], row["end_time"])
     return rows
+
+
+@app.get("/summary", summary="Сводка занятых часов по ресурсам за период")
+def summary(
+    date_from: date,
+    date_to: date,
+    resource_id: int | None = None,
+):
+    # Сумма часов броней по каждому помещению за период (обе даты включительно).
+    # Час = длительность периода из справочника "Время" (сейчас 60 мин).
+    # Учитываются PENDING и CONFIRMED; CANCELLED не входит.
+    # ?resource_id=2 — сводка по одному помещению.
+    # Помещения без броней в период (0 часов) в ответ не попадают.
+    if date_from > date_to:
+        raise HTTPException(400, "date_from должен быть не позже date_to")
+
+    sql = """
+        SELECT r."ID_Ресурс" AS resource_id,
+               r."Название"  AS resource,
+               COALESCE(SUM(
+                   EXTRACT(EPOCH FROM (v."ВремяОкончания" - v."ВремяНачала")) / 3600.0
+               ), 0)        AS hours,
+               COUNT(*)     AS bookings_count
+        FROM "Бронь" b
+        JOIN "Ресурс" r ON b."ID_Ресурс" = r."ID_Ресурс"
+        JOIN "Время"  v ON b."ID_Время"  = v."ID_Время"
+        JOIN "Статус" s ON b."ID_Статус" = s."ID_Статус"
+        WHERE b."Дата" BETWEEN %s AND %s
+          AND s."Название" <> %s
+    """
+    params = [date_from, date_to, CANCELLED]
+    if resource_id is not None:
+        sql += ' AND b."ID_Ресурс" = %s'
+        params.append(resource_id)
+    sql += ' GROUP BY r."ID_Ресурс", r."Название" ORDER BY r."ID_Ресурс"'
+
+    rows = query(sql, tuple(params))
+    for row in rows:
+        row["hours"] = float(row["hours"])
+    return [row for row in rows if row["hours"] > 0]
 
 
 # ---------------------------------------------------------------- запись

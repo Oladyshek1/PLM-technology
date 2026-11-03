@@ -1,7 +1,7 @@
 # API Contract — Система бронирования
 
-**Версия:** 1.2  
-**Дата:** 2026-10-26  
+**Версия:** 1.3  
+**Дата:** 2026-11-03  
 **Базовый URL:** `http://127.0.0.1:8000` (без префикса `/api/v1`)  
 **Реализация:** `docs/bd/app.py` (API `0.7.0`)  
 **Swagger:** `http://127.0.0.1:8000/docs`  
@@ -71,10 +71,18 @@
 201 — создан; 409 — телефон уже есть.
 
 ### `GET /bookings`
-Query (все необязательные): `user_id`, `booking_date`, `date_from`, `date_to`, `resource_id`.  
+Query (все необязательные): `user_id`, `booking_date`, `date_from`, `date_to`, `resource_id`, `search`, `sort`.  
+`search` — подстрока в имени заказчика, регистр не важен (`ILIKE %…%`). Ресурс и диапазон дат можно комбинировать.  
+`sort` — `start` (по умолчанию, по возрастанию) или `start_desc`; сортировка по дате, затем по времени начала.  
 200: `{ id, user_id, user, resource, status, time_id, start_time, end_time, date, starts_at, ends_at }[]`  
 **Нет** поля `resource_id` в строке — только имя `resource`.  
-400 если `date_from` > `date_to`.
+400 если `date_from` > `date_to` или `sort` не из списка.
+
+### `GET /summary?date_from=&date_to=[&resource_id=]`
+Сводка занятых часов по каждому ресурсу за период; обе даты включительно.  
+Часы = сумма длительностей периодов из «Время» (`end_time − start_time`). Учитываются `PENDING` и `CONFIRMED`, `CANCELLED` не входит. Ресурсы с 0 часов не возвращаются.  
+200: `{ resource_id, resource, hours, bookings_count }[]`  
+400 если `date_from` > `date_to`; 422 если параметры дат не переданы/невалидны.
 
 ### `POST /bookings`
 Тело (минимум):
@@ -140,3 +148,4 @@ PENDING → CONFIRMED. `user_id` обязателен.
 | 1.0 | 2026-10-25 | Первичная фиксация |
 | 1.1 | 2026-10-25 | Синхронизация с ранним кодом (ACTIVE/CANCELLED) |
 | 1.2 | 2026-10-26 | PENDING/CONFIRMED/CANCELLED; confirm; cancel+user_id 403/409; availability; time_ids / starts_at/ends_at; working_hours start_time/end_time/slot_minutes |
+| 1.3 | 2026-11-03 | `GET /bookings`: параметры `search` (по имени заказчика) и `sort` (`start` / `start_desc`); новый `GET /summary` — сводка часов по ресурсам за период без `CANCELLED` |
