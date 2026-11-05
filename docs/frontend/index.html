@@ -8,7 +8,12 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #fff;
+    background-color: #fff;
+    background-image: url('src/images/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: #333;
     padding-top: 140px; /* Отступ под двухстрочную фиксированную шапку (70px + 70px) */
     display: flex;
@@ -21,14 +26,14 @@ body {
     position: fixed;
     top: 0; left: 0; right: 0;
     height: 70px;
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 60px;
     z-index: 1000;
-    border-bottom: none;
+    border-bottom: 1px solid #E0E0E0;
 }
 
 /* Логотип слева в 1-й строке (только изображение Логотип.png) */
@@ -39,7 +44,7 @@ body {
     cursor: pointer;
 }
 .logo img {
-    height: 48px;
+    height: 60px;
     width: auto;
     object-fit: contain;
     display: block;
@@ -54,7 +59,7 @@ body {
 .user-name-display {
     font-size: 15px;
     font-weight: 500;
-    color: #333;
+    color: #000;
     max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -63,24 +68,22 @@ body {
 }
 .auth-btn {
     padding: 10px 24px;
-    border: 2px solid #2563EB;
+    border: 2px solid #B02E61;
     border-radius: 30px;
-    background: #fff;
-    color: #2563EB;
+    background: rgba(255, 255, 255, 0.85);
+    color: #B02E61;
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
 }
-.auth-btn:hover { background: #EFF6FF; }
+.auth-btn:hover { background: rgba(249, 233, 240, 0.85); }
 
-/* Иконка «i» во 2-й строке навигации справа (статична, без увеличения и тени) */
+/* Иконка «i» в 1-й строке справа от кнопки входа */
 .nav-info-btn {
-    position: absolute;
-    right: 60px;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: transparent;
     border: none;
@@ -89,18 +92,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.2s;
     flex-shrink: 0;
 }
 .nav-info-btn:hover {
-    transform: none;
-    box-shadow: none;
+    transform: scale(1.08);
 }
 .nav-info-btn img {
-    width: 100%;
-    height: 100%;
+    width: 44px;
+    height: 44px;
     object-fit: contain;
     border-radius: 50%;
     display: block;
+    flex-shrink: 0;
 }
 
 /* ===== 2-Я СТРОКА: НАВИГАЦИЯ (ВКЛАДКИ) ===== */
@@ -108,8 +112,7 @@ body {
     position: fixed;
     top: 70px; left: 0; right: 0;
     height: 70px;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
+    background: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -122,19 +125,20 @@ body {
     padding: 12px 40px;
     border: none;
     border-radius: 30px;
-    background: #2563EB;
+    background: #B02E61;
     color: #fff;
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
+    box-shadow: 0 0 0 7px #fff;
     transition: background 0.2s, box-shadow 0.2s;
 }
-.nav-tab:hover { background: #1D4ED8; }
-.nav-tab.active { background: #2563EB; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+.nav-tab:hover { background: #8E254E; }
+.nav-tab.active { background: #B02E61; box-shadow: 0 0 0 7px #fff, 0 4px 12px rgba(176, 46, 97, 0.3); }
 
 /* Контейнер для контента с карточкой из HTML.html */
 .content-card {
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(5px);
     border-radius: 16px;
     padding: 40px;
@@ -172,8 +176,8 @@ body {
     border: 2px solid transparent;
     display: block;
 }
-.room-thumb.active img { border-color: #2563EB; }
-.room-thumb span { font-size: 14px; color: #333; display: block; font-weight: 500; }
+.room-thumb.active img { border-color: #B02E61; }
+.room-thumb span { font-size: 14px; color: #000; display: block; font-weight: 500; }
 
 .room-detail {
     display: flex;
@@ -185,7 +189,7 @@ body {
     border: 2px solid #E0E0E0;
     padding: 30px;
     border-radius: 12px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.85);
 }
 .spec-row {
     display: flex;
@@ -197,12 +201,12 @@ body {
     width: 160px;
     font-weight: 600;
     font-size: 16px;
-    color: #555;
+    color: #000;
     flex-shrink: 0;
 }
 .spec-value {
     font-size: 16px;
-    color: #333;
+    color: #000;
     line-height: 1.5;
     font-weight: 500;
 }
@@ -224,6 +228,19 @@ body {
 .page { display: none; padding: 20px 60px 60px 60px; }
 .page.active { display: block; }
 
+/* Подложка страницы бронирования */
+#page-booking {
+    width: 100%;
+    max-width: 1260px;
+    margin: 0 auto 50px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    border: 1px solid #EFEFEF;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
 /* ===== ГЛАВНАЯ ===== */
 .home-content { max-width: 800px; margin: 0 auto; text-align: center; }
 .home-content h1 { font-size: 36px; margin-bottom: 20px; color: #333; }
@@ -240,17 +257,18 @@ body {
     border-radius: 12px;
     transition: transform 0.2s;
 }
-.feature-card:hover { transform: translateY(-5px); border-color: #5B9BFF; }
+.feature-card:hover { transform: translateY(-5px); border-color: #B02E61; }
 .feature-card h3 { font-size: 20px; margin-bottom: 10px; color: #333; }
 .feature-card p { font-size: 16px; color: #666; }
 
 /* ===== БРОНИРОВАНИЕ ===== */
 .week-calendar {
     display: flex;
-    background: #F0F0F0;
+    background: rgba(240, 240, 240, 0.85);
     border-radius: 8px 8px 0 0;
     overflow: hidden;
     max-width: 960px;
+    margin: 0 auto;
 }
 .week-day {
     flex: 1;
@@ -261,8 +279,8 @@ body {
     transition: background 0.2s, color 0.2s;
     user-select: none;
 }
-.week-day:hover { background: #E8E8E8; }
-.week-day.active { background: #fff; font-weight: 600; }
+.week-day:hover { background: rgba(232, 232, 232, 0.85); }
+.week-day.active { background: rgba(255, 255, 255, 0.85); font-weight: 600; }
 .week-day .day-name { font-size: 13px; color: #888; margin-bottom: 4px; }
 .week-day.active .day-name { color: #333; }
 .week-day .day-date { font-size: 15px; color: #555; }
@@ -270,16 +288,16 @@ body {
 
 /* Прошедшие дни: некликабельные с соответствующим курсором */
 .week-day.past-day {
-    background: #EAEAEA;
+    background: rgba(234, 234, 234, 0.85);
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 0.8;
 }
 .week-day.past-day:hover {
-    background: #EAEAEA;
+    background: rgba(234, 234, 234, 0.85);
 }
 .week-day.past-day .day-name,
 .week-day.past-day .day-date {
-    color: #999;
+    color: #333;
 }
 
 .calendar-btn {
@@ -288,27 +306,32 @@ body {
     justify-content: center;
     padding: 14px 22px;
     cursor: pointer;
-    background: #F0F0F0;
+    background: rgba(240, 240, 240, 0.85);
     border: none;
     border-left: 1px solid #E0E0E0;
-    font-size: 22px;
     transition: background 0.2s;
 }
-.calendar-btn:hover { background: #E2E2E2; }
+.calendar-btn:hover { background: rgba(226, 226, 226, 0.85); }
+.calendar-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    display: block;
+}
 
-.week-divider { height: 3px; background: #C0C0C0; max-width: 960px; margin-bottom: 30px; }
-.booking-layout { display: flex; gap: 30px; align-items: flex-start; max-width: 1200px; }
+.week-divider { height: 3px; background: #C0C0C0; max-width: 960px; margin: 0 auto 30px; }
+.booking-layout { display: flex; gap: 30px; align-items: flex-start; max-width: 1200px; margin: 0 auto; }
 .rooms-list { min-width: 220px; flex-shrink: 0; }
 .room-list-item {
     padding: 14px 10px;
     cursor: pointer;
     font-size: 15px;
-    color: #AAA;
+    color: #000;
     transition: color 0.2s;
     border-left: 3px solid transparent;
 }
-.room-list-item:hover { color: #666; }
-.room-list-item.active { color: #2B7DE9; font-weight: 600; border-left-color: #2B7DE9; }
+.room-list-item:hover { color: #000; }
+.room-list-item.active { color: #B02E61; font-weight: 600; border-left-color: #B02E61; }
 .time-slots {
     flex: 1;
     display: grid;
@@ -318,74 +341,75 @@ body {
 }
 .time-slot {
     padding: 14px 20px;
-    border: 2px solid #2B7DE9;
+    border: 2px solid #B02E61;
     border-radius: 30px;
     text-align: center;
     font-size: 16px;
     cursor: pointer;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.85);
     color: #333;
     transition: all 0.2s;
     user-select: none;
 }
-.time-slot:hover { background: #F0F6FF; }
-.time-slot.selected { background: #2B7DE9; color: #fff; }
+.time-slot:hover { background: rgba(249, 233, 240, 0.85); }
+.time-slot.selected { background: #B02E61; color: #fff; }
 
 /* Прошедшее время: серая обводка и некликабельно */
 .time-slot.past-slot {
     border: 2px solid #CCC !important;
-    background: #F8F8F8 !important;
+    background: rgba(248, 248, 248, 0.85) !important;
     color: #BBB !important;
     cursor: not-allowed !important;
     box-shadow: none !important;
 }
 .time-slot.past-slot:hover {
-    background: #F8F8F8 !important;
+    background: rgba(248, 248, 248, 0.85) !important;
 }
 
 /* Занято другим пользователем (красный) */
 .time-slot.occupied-other {
     border: 2px solid #E53935 !important;
-    background: #FFEBEE !important;
+    background: rgba(255, 235, 238, 0.85) !important;
     color: #C62828 !important;
     cursor: not-allowed !important;
 }
 .time-slot.occupied-other:hover {
-    background: #FFCDD2 !important;
+    background: rgba(255, 205, 210, 0.85) !important;
 }
 
 /* Занято текущим пользователем (синий) */
 .time-slot.occupied-mine {
-    border: 2px solid #1E88E5 !important;
-    background: #E3F2FD !important;
-    color: #1565C0 !important;
+    border: 2px solid #B02E61 !important;
+    background: rgba(245, 220, 231, 0.85) !important;
+    color: #B02E61 !important;
     font-weight: 600;
     cursor: pointer;
 }
 .time-slot.occupied-mine:hover {
-    background: #BBDEFB !important;
+    background: rgba(239, 199, 216, 0.85) !important;
 }
 
 .action-buttons { min-width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; padding-top: 10px; }
 .action-btn {
     padding: 14px 24px;
-    border: 2px solid #2B7DE9;
+    border: 2px solid #B02E61;
     border-radius: 30px;
-    background: #fff;
-    color: #2B7DE9;
+    background: rgba(255, 255, 255, 0.85);
+    color: #B02E61;
     font-size: 15px;
     cursor: pointer;
     transition: all 0.2s;
     text-align: center;
 }
-.action-btn:hover { background: #F0F6FF; }
-.action-btn.primary { background: #2B7DE9; color: #fff; }
-.action-btn.primary:hover { background: #1E6AD4; }
+.action-btn:hover { background: rgba(249, 233, 240, 0.85); }
+.action-btn.primary { background: #B02E61; color: #fff; }
+.action-btn.primary:hover { background: #8E254E; }
+#page-booking .action-btn.primary { border: 2px solid #B02E61; box-shadow: 0 0 0 7px #fff; }
 
 /* Инлайн-подсказка при бронировании */
 .booking-hint {
     color: #E53935;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1.4;
     text-align: center;
     display: none;
@@ -405,30 +429,26 @@ body {
 }
 .booking-card {
     flex: 1;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
     border: 2px solid #E0E0E0;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 0;
     display: flex;
     gap: 20px;
-    align-items: flex-start;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
     cursor: pointer;
 }
-.booking-card:hover { border-color: #5B9BFF; }
-.booking-card.selected { border-color: #2B7DE9; }
+.booking-card:hover { border-color: #B02E61; }
+.booking-card.selected { border-color: #B02E61; }
 .booking-card-img { width: 200px; height: 150px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-.booking-card-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding-top: 2px;
-}
-.booking-card-info h3 { font-size: 18px; color: #333; margin-bottom: 8px; line-height: 1.4; }
-.booking-card-info p { font-size: 15px; color: #666; margin-bottom: 5px; }
+.booking-card-info h3 { font-size: 18px; color: #000; margin-bottom: 8px; }
+.booking-card-info p { font-size: 15px; color: #333; margin-bottom: 5px; }
 
-/* Кнопки привязаны к конкретной выбранной карточке брони (без плавной анимации) */
+/* Кнопки привязаны к конкретной выбранной карточке брони */
 .booking-item-actions {
     min-width: 190px;
     flex-shrink: 0;
@@ -436,19 +456,27 @@ body {
     flex-direction: column;
     gap: 12px;
     justify-content: center;
+    animation: fadeInActions 0.2s ease;
+}
+@keyframes fadeInActions {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 .booking-action-btn {
     padding: 14px 24px;
-    border: 2px solid #2B7DE9;
+    border: 2px solid #B02E61;
     border-radius: 30px;
-    background: #fff;
-    color: #2B7DE9;
+    background: #B02E61;
+    color: #fff;
     font-size: 15px;
     cursor: pointer;
+    box-shadow: 0 0 0 7px #fff;
     transition: all 0.2s;
     text-align: center;
 }
-.booking-action-btn:hover { background: #F0F6FF; }
+.booking-action-btn:hover {
+    background: #8E254E;
+}
 .no-bookings { text-align: center; padding: 60px 20px; color: #999; font-size: 18px; }
 
 /* ===== МОДАЛЬНЫЕ ОКНА ===== */
@@ -497,7 +525,7 @@ body {
     outline: none;
     transition: border-color 0.2s;
 }
-.modal input:focus, .modal select:focus { border-color: #2B7DE9; }
+.modal input:focus, .modal select:focus { border-color: #B02E61; }
 
 /* ===== МОДАЛКА РЕГИСТРАЦИИ И ВХОДА ===== */
 .auth-modal { max-width: 520px; text-align: center; }
@@ -509,7 +537,7 @@ body {
 /* Красная строка ошибки над кнопками */
 .auth-error-line {
     color: #E53935;
-    font-size: 14px;
+    font-size: 17px;
     line-height: 1.4;
     text-align: center;
     margin-top: -6px;
@@ -524,16 +552,16 @@ body {
 .auth-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 5px; }
 .auth-action-btn {
     padding: 14px 30px;
-    border: 2px solid #2B7DE9;
+    border: 2px solid #B02E61;
     border-radius: 30px;
-    background: #fff;
-    color: #2B7DE9;
+    background: rgba(255, 255, 255, 0.85);
+    color: #B02E61;
     font-size: 15px;
     cursor: pointer;
     transition: all 0.2s;
     min-width: 180px;
 }
-.auth-action-btn:hover { background: #F0F6FF; }
+.auth-action-btn:hover { background: rgba(249, 233, 240, 0.85); }
 
 /* ===== МОДАЛКА БРОНИРОВАНИЯ ===== */
 .booking-simple-modal {
@@ -549,15 +577,15 @@ body {
 }
 .booking-simple-btn {
     padding: 14px 40px;
-    border: 2px solid #2B7DE9;
+    border: 2px solid #B02E61;
     border-radius: 30px;
-    background: #fff;
-    color: #2B7DE9;
+    background: rgba(255, 255, 255, 0.85);
+    color: #B02E61;
     font-size: 16px;
     cursor: pointer;
     transition: all 0.2s;
 }
-.booking-simple-btn:hover { background: #F0F6FF; }
+.booking-simple-btn:hover { background: rgba(249, 233, 240, 0.85); }
 
 /* ===== МОДАЛКА ПОДТВЕРЖДЕНИЯ ОТМЕНЫ ===== */
 .confirm-modal { text-align: center; }
@@ -567,7 +595,7 @@ body {
 .confirm-btn {
     padding: 12px 30px;
     border-radius: 30px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.85);
     font-size: 15px;
     cursor: pointer;
     transition: all 0.2s;
@@ -578,18 +606,18 @@ body {
     color: #E53935;
 }
 .confirm-btn.danger:hover {
-    background: #FFEBEE;
+    background: rgba(255, 235, 238, 0.85);
 }
 
 /* Кнопка "Нет" с зелёной рамкой */
 .confirm-btn.btn-no-green {
     border: 2px solid #2E7D32;
     color: #2E7D32;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.85);
     font-weight: 500;
 }
 .confirm-btn.btn-no-green:hover {
-    background: #E8F5E9;
+    background: rgba(232, 245, 233, 0.85);
     border-color: #1B5E20;
     color: #1B5E20;
 }
@@ -600,15 +628,15 @@ body {
 .mini-calendar { margin-bottom: 25px; }
 .mini-calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .mini-calendar-header button { background: none; border: none; font-size: 18px; cursor: pointer; color: #555; padding: 4px 8px; }
-.mini-calendar-header button:hover { color: #2B7DE9; }
+.mini-calendar-header button:hover { color: #B02E61; }
 .mini-calendar-header span { font-size: 15px; font-weight: 600; text-transform: uppercase; color: #333; }
 .mini-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
 .mini-calendar-grid .day-header { font-size: 12px; font-weight: 600; color: #888; padding: 6px 0; }
 .mini-calendar-grid .day-cell { font-size: 13px; padding: 8px 4px; cursor: pointer; border-radius: 4px; color: #333; transition: background 0.15s; }
-.mini-calendar-grid .day-cell:hover { background: #F0F6FF; }
-.mini-calendar-grid .day-cell.other-month { color: #CCC; }
-.mini-calendar-grid .day-cell.selected { background: #2B7DE9; color: #fff; }
-.mini-calendar-grid .day-cell.past-mini-day { color: #DDD; cursor: not-allowed; }
+.mini-calendar-grid .day-cell:hover { background: rgba(249, 233, 240, 0.85); }
+.mini-calendar-grid .day-cell.other-month { color: #333; }
+.mini-calendar-grid .day-cell.selected { background: #B02E61; color: #fff; }
+.mini-calendar-grid .day-cell.past-mini-day { color: #333; cursor: not-allowed; }
 .mini-calendar-grid .day-cell.past-mini-day:hover { background: none; }
 
 .reschedule-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 18px; }
@@ -617,9 +645,9 @@ body {
 .reschedule-fields select {
     margin-bottom: 0;
     border-radius: 30px;
-    border: 2px solid #2B7DE9;
+    border: 2px solid #B02E61;
     padding: 12px 18px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.85);
     color: #333;
     font-size: 14px;
     outline: none;
@@ -627,12 +655,12 @@ body {
     transition: all 0.2s;
 }
 .reschedule-fields select:focus {
-    border-color: #1E6AD4;
+    border-color: #8E254E;
 }
 
 .reschedule-error-line {
     color: #E53935;
-    font-size: 14px;
+    font-size: 17px;
     line-height: 1.4;
     text-align: center;
     margin-bottom: 18px;
@@ -646,16 +674,16 @@ body {
 .reschedule-buttons, .calendar-modal-buttons { display: flex; gap: 20px; justify-content: center; }
 .reschedule-btn {
     padding: 12px 30px;
-    border: 2px solid #2B7DE9;
+    border: 2px solid #B02E61;
     border-radius: 30px;
-    background: #fff;
-    color: #2B7DE9;
+    background: rgba(255, 255, 255, 0.85);
+    color: #B02E61;
     font-size: 15px;
     cursor: pointer;
     transition: all 0.2s;
     min-width: 160px;
 }
-.reschedule-btn:hover { background: #F0F6FF; }
+.reschedule-btn:hover { background: rgba(249, 233, 240, 0.85); }
 
 /* Всплывающее уведомление (без теней, цвет меняется по классу) */
 .toast-notice {
@@ -676,6 +704,7 @@ body {
 }
 .toast-notice.error {
     background: #E53935; /* красный только для ошибок/предупреждений */
+    font-size: 18px;
 }
 .toast-notice.show {
     opacity: 1;
@@ -684,61 +713,62 @@ body {
 
 /* ===== ПОДВАЛ (FOOTER) ИЗ ДИЗАЙНА ===== */
 .footer {
-    background: #fff;
-    padding: 30px 80px 40px 80px;
-    border-top: none;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #E0E0E0;
     margin-top: auto;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 60px 0;
 }
 .footer-logo {
-    display: inline-flex;
+    display: flex;
+    width: fit-content;
     align-items: center;
-    margin-bottom: 24px;
+    padding-top: 7px;
+    margin-bottom: 0;
     text-decoration: none;
     cursor: pointer;
 }
 .footer-logo img {
-    height: 52px;
+    height: 50px;
     width: auto;
     object-fit: contain;
     display: block;
 }
 .footer-content {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 80px;
-    font-size: 15px;
-    color: #333;
-    line-height: 1.5;
+    gap: 60px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.8;
 }
 .footer-col {
     flex: 1;
+    min-width: 250px;
 }
-.footer-col-left {
-    max-width: 480px;
-}
-.footer-col-right {
-    max-width: 520px;
-}
-.footer-col p {
-    margin-bottom: 6px;
-}
-.footer-col-group {
-    margin-top: 24px;
-}
-.footer-col-group p {
-    margin-bottom: 6px;
+.footer-col strong {
+    color: #333;
 }
 .footer-bottom {
     text-align: center;
-    margin-top: 45px;
-    padding-top: 0;
-    font-size: 16px;
-    color: #111;
-}
-.footer-bottom strong {
+    margin-top: 7px;
+    padding-top: 7px;
+    padding-bottom: 15px;
+    border-top: 1px solid #E0E0E0;
+    font-size: 14px;
     font-weight: 700;
+    color: #333;
+}
+.footer-bottom a {
+    color: #B02E61;
+    text-decoration: none;
+}
+.footer-bottom a:hover {
+    text-decoration: underline;
 }
 
 /* ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ (КНОПКА 'i') ===== */
@@ -765,7 +795,7 @@ body {
     margin-bottom: 0;
 }
 .info-modal a {
-    color: #2B7DE9;
+    color: #B02E61;
     text-decoration: none;
 }
 .info-modal a:hover {
@@ -784,6 +814,9 @@ body {
     <div class="auth-wrapper">
         <span class="user-name-display" id="userNameDisplay" style="display: none;"></span>
         <button class="auth-btn" id="authBtn" onclick="openAuthModal()">Войти / Зарегистрироваться</button>
+        <button class="nav-info-btn" id="headerInfoBtn" title="Информация о системе" onclick="openSystemInfoModal()">
+            <img src="src/icons/info.png" alt="Информация" onerror="this.onerror=null; this.src='src/icons/info-alt.png';">
+        </button>
     </div>
 </header>
 
@@ -791,10 +824,7 @@ body {
 <nav class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('home', this)">Главная</button>
     <button class="nav-tab" onclick="showPage('booking', this)">Бронирование</button>
-    <button class="nav-tab" id="myBookingsNavBtn" onclick="showPage('my-bookings', this)">Мои брони</button>
-    <button class="nav-info-btn" id="headerInfoBtn" title="Информация о системе" onclick="openSystemInfoModal()">
-        <img src="src/icons/info.png" alt="Информация">
-    </button>
+    <button class="nav-tab" id="myBookingsNavBtn" style="display: none;" onclick="showPage('my-bookings', this)">Мои брони</button>
 </nav>
 
 <!-- ===== ГЛАВНАЯ СТРАНИЦА (С КАРУСЕЛЬЮ И ХАРАКТЕРИСТИКАМИ ИЗ HTML.HTML) ===== -->
@@ -821,7 +851,9 @@ body {
 <div class="page" id="page-booking">
     <div class="week-calendar" id="weekCalendar">
         <div id="weekDaysContainer" style="display: flex; flex: 1;"></div>
-        <button class="calendar-btn" title="Открыть календарь" onclick="openCalendarPickerModal()">📅</button>
+        <button class="calendar-btn" title="Открыть календарь" onclick="openCalendarPickerModal()">
+            <img src="src/icons/calendar.png" alt="Календарь">
+        </button>
     </div>
     <div class="week-divider"></div>
     <div class="booking-layout">
@@ -942,34 +974,34 @@ body {
 <div class="modal-overlay" id="systemInfoModal">
     <div class="modal info-modal">
         <button class="modal-close" onclick="closeModal('systemInfoModal')">&times;</button>
-        <h2 id="sysInfoProduct"></h2>
-        <p id="sysInfoVersion"></p>
-        <p id="sysInfoBuild"></p>
-        <p id="sysInfoSupport"></p>
+        <h2 id="sysInfoProduct">Система бронирования помещений</h2>
+        <p id="sysInfoVersion">Версия: 1.2.0</p>
+        <p id="sysInfoBuild">Сборка: 01.11.2026</p>
+        <p id="sysInfoSupport">Техническая поддержка: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a></p>
     </div>
 </div>
 
 <!-- ===== ПОДВАЛ (FOOTER) ===== -->
 <footer class="footer">
-    <a href="#" class="footer-logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
-        <img src="src/images/logos/logo.png" alt="Логотип">
-    </a>
-    <div class="footer-content">
-        <div class="footer-col footer-col-left">
-            <p>Общество с ограниченной ответственностью «ТаймРум»</p>
-            <p>Юридический адрес: Нижний Новгород, ул. Рабочая, 17 оф. 55</p>
-            <div class="footer-col-group">
+    <div class="footer-inner">
+        <a href="#" class="footer-logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
+            <img src="src/images/logos/logo.png" alt="Логотип">
+        </a>
+        <div class="footer-content">
+            <div class="footer-col">
+                <p>Общество с ограниченной ответственностью «ТаймРум»</p>
+                <p>Юридический адрес: Нижний Новгород, ул. Рабочая, 17 оф. 55</p>
                 <p>ИНН: 7453350133</p>
-                <p>Контактный телефон: 8 (800) 123- 45-67</p>
+                <p>Контактный телефон: 8 (800) 123-45-67</p>
+            </div>
+            <div class="footer-col">
+                <p>ОКВЭД: 62.01</p>
+                <p>Коды видов деятельности: 1.01, 1.02 (в соответствии с Приказом министерства цифрового развития, связи и массовых коммуникаций РФ от 11 мая 2023 г. № 449)</p>
             </div>
         </div>
-        <div class="footer-col footer-col-right">
-            <p>ОКВЭД: 62.01</p>
-            <p>Коды видов деятельности: 1.01, 1.02 (в соответствие с Приказом министерства цифрового развития, связи и массовых коммуникаций РФ от 11 мая 2023 г. № 449)</p>
+        <div class="footer-bottom">
+            Ждем ваших предложений для сотрудничества: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a>
         </div>
-    </div>
-    <div class="footer-bottom">
-        <strong>Ждем ваших предложений для сотрудничества:</strong> <strong>support@booking-system.ru</strong>
     </div>
 </footer>
 
@@ -1001,26 +1033,27 @@ async function apiFetch(path, options = {}) {
 let roomsData = [];
 let periodsData = [];
 let currentDayBookings = [];
+let resourcesLoadState = 'loading';
 
 const fallbackRoomNames = [
     'Актовый зал', 'Переговорная А', 'Переговорная Б'
 ];
 
-// Строгий маппинг: какое фото строго к какому ID комнаты в БД относится (src/images/rooms)
+// Строгий маппинг: какое фото строго к какому ID комнаты в БД относится
 const roomImagesById = {
-    1: 'src/images/rooms/meeting-room-1.png',   // ID 1: Переговорная А / Переговорная комната № 1
-    2: 'src/images/rooms/meeting-room-2.png',   // ID 2: Переговорная Б / Переговорная комната № 2
-    3: 'src/images/rooms/assembly-hall.png',    // ID 3: Актовый зал
-    4: 'src/images/rooms/conference-hall.png',  // ID 4: Конференц-зал
-    5: 'src/images/rooms/call-room-1.png',      // ID 5: Комната для звонков № 1
-    6: 'src/images/rooms/call-room-2.png'       // ID 6: Комната для звонков № 2
+    1: 'src/images/rooms/meeting-room-1.png',
+    2: 'src/images/rooms/meeting-room-2.png',
+    3: 'src/images/rooms/assembly-hall.png',
+    4: 'src/images/rooms/conference-hall.png',
+    5: 'src/images/rooms/call-room-1.png',
+    6: 'src/images/rooms/call-room-2.png'
 };
 
 const roomImagesByName = {
-    'переговорная а': 'src/images/rooms/meeting-room-1.png',
     'переговорная комната № 1': 'src/images/rooms/meeting-room-1.png',
-    'переговорная б': 'src/images/rooms/meeting-room-2.png',
+    'переговорная а': 'src/images/rooms/meeting-room-1.png',
     'переговорная комната № 2': 'src/images/rooms/meeting-room-2.png',
+    'переговорная б': 'src/images/rooms/meeting-room-2.png',
     'актовый зал': 'src/images/rooms/assembly-hall.png',
     'конференц-зал': 'src/images/rooms/conference-hall.png',
     'конференц зал': 'src/images/rooms/conference-hall.png',
@@ -1029,6 +1062,8 @@ const roomImagesByName = {
     'комната для звонков № 2': 'src/images/rooms/call-room-2.png',
     'комната для звонков 2': 'src/images/rooms/call-room-2.png'
 };
+
+const DEFAULT_ROOM_IMAGE = 'src/images/rooms/assembly-hall.png';
 
 function getRoomImageUrl(roomId, roomName) {
     const id = parseInt(roomId, 10);
@@ -1044,9 +1079,8 @@ function getRoomImageUrl(roomId, roomName) {
             if (cleanName.includes(key)) return val;
         }
     }
-    return 'src/images/rooms/assembly-hall.png';
+    return DEFAULT_ROOM_IMAGE;
 }
-
 const monthNames = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
 const monthNamesGenitive = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const dayNamesShort = ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
@@ -1313,6 +1347,7 @@ function saveStoredUser(user) {
 function updateAuthButton() {
     const btn = document.getElementById('authBtn');
     const nameEl = document.getElementById('userNameDisplay');
+    const myBookingsBtn = document.getElementById('myBookingsNavBtn');
 
     if (currentUser) {
         if (nameEl) {
@@ -1328,11 +1363,15 @@ function updateAuthButton() {
                 updateAuthButton();
                 showToast('Вы вышли из аккаунта', 'success');
                 if (document.getElementById('page-my-bookings').classList.contains('active')) {
-                    renderMyBookings();
+                    const homeNavBtn = document.querySelector('.nav-btn');
+                    showPage('home', homeNavBtn);
                 }
                 loadScheduleGrid();
             }
         };
+        if (myBookingsBtn) {
+            myBookingsBtn.style.display = '';
+        }
     } else {
         if (nameEl) {
             nameEl.textContent = '';
@@ -1340,6 +1379,10 @@ function updateAuthButton() {
         }
         btn.textContent = 'Войти / Зарегистрироваться';
         btn.onclick = openAuthModal;
+
+        if (myBookingsBtn) {
+            myBookingsBtn.style.display = 'none';
+        }
     }
 }
 
@@ -1467,14 +1510,17 @@ async function handleLogin() {
 
 // ===== ЗАГРУЗКА РЕСУРСОВ И ПЕРИОДОВ ИЗ БД =====
 async function loadResources() {
+    resourcesLoadState = 'loading';
     const res = await apiFetch('/resources');
     const roomsContainer = document.querySelector('.rooms-list');
 
     if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
         roomsData = res.data;
+        resourcesLoadState = 'ready';
     } else {
         // Если API недоступно, оставляем пустой список (без захардкоженных данных)
         roomsData = [];
+        resourcesLoadState = res.isNetworkError ? 'error' : 'empty';
     }
 
     // Рендерим список для страницы бронирования
@@ -1504,7 +1550,13 @@ function renderHomeCarousel() {
     carousel.innerHTML = '';
 
     if (roomsData.length === 0) {
-        carousel.innerHTML = '<div style="color: #888; padding: 20px;">Загрузка списка помещений из API...</div>';
+        let emptyMessage = 'Загрузка списка помещений...';
+        if (resourcesLoadState === 'error') {
+            emptyMessage = 'Не удалось загрузить список помещений. Проверьте, что сервер запущен.';
+        } else if (resourcesLoadState === 'empty') {
+            emptyMessage = 'Нет доступных помещений.';
+        }
+        carousel.innerHTML = `<div style="color: #888; padding: 20px;">${emptyMessage}</div>`;
         renderHomeRoomDetail(-1);
         return;
     }
@@ -1513,7 +1565,7 @@ function renderHomeCarousel() {
         const thumb = document.createElement('div');
         thumb.className = 'room-thumb' + (idx === selectedHomeRoomIndex ? ' active' : '');
         thumb.dataset.room = idx;
-        const imgUrl = getRoomImageUrl(room.id);
+        const imgUrl = getRoomImageUrl(room.id, room.name);
 
         thumb.innerHTML = `
             <img src="${imgUrl}" alt="${room.name || '???'}" onerror="this.onerror=null; this.src='src/images/rooms/assembly-hall.png';">
@@ -1538,7 +1590,6 @@ function renderHomeRoomDetail(index) {
 
     if (!roomsData || roomsData.length === 0 || index < 0 || !roomsData[index]) {
         specsEl.innerHTML = `
-            <div class="spec-row"><span class="spec-label">Размер:</span><span class="spec-value">???</span></div>
             <div class="spec-row"><span class="spec-label">Площадь:</span><span class="spec-value">???</span></div>
             <div class="spec-row"><span class="spec-label">Вместимость:</span><span class="spec-value">???</span></div>
             <div class="spec-row"><span class="spec-label">Оборудование:</span><span class="spec-value">???</span></div>
@@ -1552,10 +1603,6 @@ function renderHomeRoomDetail(index) {
 
     const room = roomsData[index];
 
-    // Поля строго из API (GET /resources):
-    // В БД нет поля "Размер" (длина × ширина), поэтому строго "???"
-    const sizeText = (room.size !== undefined && room.size !== null && room.size !== '') ? room.size : '???';
-    
     // Площадь из API (room.area):
     const areaText = (room.area !== undefined && room.area !== null && room.area !== '') ? `${room.area} кв. м` : '???';
     
@@ -1565,10 +1612,9 @@ function renderHomeRoomDetail(index) {
     // Оборудование из API (room.equipment):
     const equipmentText = (room.equipment !== undefined && room.equipment !== null && room.equipment !== '') ? room.equipment : '???';
     
-    const imgUrl = getRoomImageUrl(room.id);
+    const imgUrl = getRoomImageUrl(room.id, room.name);
 
     specsEl.innerHTML = `
-        <div class="spec-row"><span class="spec-label">Размер:</span><span class="spec-value">${sizeText}</span></div>
         <div class="spec-row"><span class="spec-label">Площадь:</span><span class="spec-value">${areaText}</span></div>
         <div class="spec-row"><span class="spec-label">Вместимость:</span><span class="spec-value">${capacityText}</span></div>
         <div class="spec-row"><span class="spec-label">Оборудование:</span><span class="spec-value">${equipmentText}</span></div>
@@ -1656,6 +1702,14 @@ async function loadScheduleGrid() {
     updateTimeSlotsWithBookings();
 }
 
+function clearSelectedSlot(periodId) {
+    const idx = selectedSlots.findIndex(s => s.id === periodId);
+    if (idx !== -1) {
+        selectedSlots.splice(idx, 1);
+    }
+    selectedSlot = selectedSlots.length > 0 ? selectedSlots[0] : null;
+}
+
 function updateTimeSlotsWithBookings() {
     const now = new Date();
     const today = new Date();
@@ -1695,8 +1749,8 @@ function updateTimeSlotsWithBookings() {
             slot.style.display = 'none';
             if (slot.classList.contains('selected')) {
                 slot.classList.remove('selected');
-                selectedSlot = null;
             }
+            clearSelectedSlot(periodId);
             return;
         }
 
@@ -1707,8 +1761,8 @@ function updateTimeSlotsWithBookings() {
             slot.style.display = 'none';
             if (slot.classList.contains('selected')) {
                 slot.classList.remove('selected');
-                selectedSlot = null;
             }
+            clearSelectedSlot(periodId);
         } else {
             slot.style.display = '';
         }
@@ -2069,8 +2123,7 @@ async function submitBooking() {
 async function renderMyBookings() {
     const list = document.getElementById('bookingsList');
     if (!currentUser) {
-        // Если пользователь не вошел, просто пустое белое полотно (без надписей и ошибок)
-        list.innerHTML = '';
+        list.innerHTML = '<div class="no-bookings">Войдите в аккаунт, чтобы просмотреть свои бронирования</div>';
         selectedBookingIndex = null;
         return;
     }
@@ -2078,8 +2131,14 @@ async function renderMyBookings() {
     list.innerHTML = '<div class="no-bookings">Загрузка броней из базы данных...</div>';
 
     const res = await apiFetch(`/bookings?user_id=${currentUser.id}`);
+
+    if (res.isNetworkError) {
+        list.innerHTML = '<div class="no-bookings">Сервер недоступен. Не удалось загрузить брони</div>';
+        return;
+    }
+
     if (!res.ok || !Array.isArray(res.data)) {
-        list.innerHTML = '<div class="no-bookings">Не удалось загрузить брони из базы данных</div>';
+        list.innerHTML = '<div class="no-bookings">Ошибка загрузки броней. Попробуйте позже</div>';
         return;
     }
 
@@ -2088,7 +2147,7 @@ async function renderMyBookings() {
     myBookings = activeBookings;
 
     if (activeBookings.length === 0) {
-        list.innerHTML = '';
+        list.innerHTML = '<div class="no-bookings">У вас пока нет активных бронирований</div>';
         selectedBookingIndex = null;
         return;
     }
@@ -2101,7 +2160,7 @@ async function renderMyBookings() {
 
         const isSelected = selectedBookingIndex === index;
 
-        // Изображение строго по ID или названию комнаты из БД
+        // Изображение и данные о помещении
         const imgUrl = getRoomImageUrl(b.resource_id, b.resource);
         const timeLabel = (b.start_time && b.end_time)
             ? `${b.start_time.substring(0,5)} - ${b.end_time.substring(0,5)}`
@@ -2109,11 +2168,20 @@ async function renderMyBookings() {
 
         const dateFormatted = b.date ? new Date(b.date).toLocaleDateString('ru-RU') : (b.booking_date || '');
 
+        // Ищем характеристики помещения из roomsData
+        const roomMeta = roomsData.find(r => r.id === b.resource_id || r.name === b.resource) || {};
+        const areaText = roomMeta.area ? `${roomMeta.area} м²` : '—';
+        const capacityText = roomMeta.capacity ? `до ${roomMeta.capacity} чел.` : '—';
+        const equipmentText = roomMeta.equipment || 'Стандартное оснащение';
+
         row.innerHTML = `
             <div class="booking-card ${isSelected ? 'selected' : ''}" onclick="selectBooking(${index})">
                 <img src="${imgUrl}" alt="${b.resource || ''}" class="booking-card-img" onerror="this.onerror=null; this.src='src/images/rooms/assembly-hall.png'">
                 <div class="booking-card-info">
                     <h3>${b.resource || 'Помещение'} на ${dateFormatted} (${timeLabel})</h3>
+                    <p>Вместимость: ${capacityText}</p>
+                    <p>Площадь: ${areaText}</p>
+                    <p>Оборудование: ${equipmentText}</p>
                 </div>
             </div>
             ${isSelected ? `
@@ -2134,7 +2202,7 @@ function selectBooking(index) {
         selectedBookingIndex = index;
     }
 
-    // Обновляем визуальное выделение и отображение кнопок действий без полной перерисовки и без сброса прокрутки
+    // Точечное обновление DOM без повторной загрузки и без сброса прокрутки
     document.querySelectorAll('#bookingsList .booking-row').forEach((row, idx) => {
         const card = row.querySelector('.booking-card');
         const existingActions = row.querySelector('.booking-item-actions');
@@ -2154,10 +2222,8 @@ function selectBooking(index) {
                 `;
                 row.appendChild(actionsDiv);
             }
-        } else {
-            if (existingActions) {
-                existingActions.remove();
-            }
+        } else if (existingActions) {
+            existingActions.remove();
         }
     });
 }
@@ -2460,28 +2526,39 @@ async function openSystemInfoModal() {
     const modal = document.getElementById('systemInfoModal');
     if (!modal) return;
 
-    // Сбрасываем в ожидание/заглушки перед вызовом API
-    document.getElementById('sysInfoProduct').textContent = 'Загрузка...';
-    document.getElementById('sysInfoVersion').textContent = 'Версия: ???';
-    document.getElementById('sysInfoBuild').textContent = 'Сборка: ???';
-    document.getElementById('sysInfoSupport').textContent = 'Техническая поддержка: ???';
+    const productEl = document.getElementById('sysInfoProduct');
+    const versionEl = document.getElementById('sysInfoVersion');
+    const buildEl = document.getElementById('sysInfoBuild');
+    const supportEl = document.getElementById('sysInfoSupport');
 
+    // Состояние загрузки
+    productEl.textContent = 'Загрузка...';
+    versionEl.textContent = 'Версия: —';
+    buildEl.textContent = 'Сборка: —';
+    supportEl.textContent = 'Техническая поддержка: —';
     modal.classList.add('active');
 
-    // Данные строго из API GET /version
     const res = await apiFetch('/version');
-    if (res.ok && res.data) {
-        document.getElementById('sysInfoProduct').textContent = res.data.product || '???';
-        document.getElementById('sysInfoVersion').textContent = `Версия: ${res.data.version || '???'}`;
-        const build = res.data.build_date_label || res.data.build_date || '???';
-        document.getElementById('sysInfoBuild').textContent = `Сборка: ${build}`;
-        const email = (res.data.support && res.data.support.email) ? res.data.support.email : '???';
-        document.getElementById('sysInfoSupport').textContent = `Техническая поддержка: ${email}`;
+
+    if (res.isNetworkError) {
+        productEl.textContent = 'Сервер недоступен';
+        return;
+    }
+
+    if (!res.ok || !res.data) {
+        productEl.textContent = 'Нет данных о системе';
+        return;
+    }
+
+    productEl.textContent = res.data.product || '—';
+    versionEl.textContent = `Версия: ${res.data.version || '—'}`;
+    const build = res.data.build_date_label || res.data.build_date || '—';
+    buildEl.textContent = `Сборка: ${build}`;
+    const email = (res.data.support && res.data.support.email) ? res.data.support.email : '';
+    if (email) {
+        supportEl.innerHTML = `Техническая поддержка: <a href="mailto:${email}">${email}</a>`;
     } else {
-        document.getElementById('sysInfoProduct').textContent = '???';
-        document.getElementById('sysInfoVersion').textContent = 'Версия: ???';
-        document.getElementById('sysInfoBuild').textContent = 'Сборка: ???';
-        document.getElementById('sysInfoSupport').textContent = 'Техническая поддержка: ???';
+        supportEl.textContent = 'Техническая поддержка: —';
     }
 }
 
