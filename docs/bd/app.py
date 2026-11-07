@@ -20,6 +20,11 @@ PENDING = "PENDING"
 CONFIRMED = "CONFIRMED"
 CANCELLED = "CANCELLED"
 
+# Роли пользователей. USER регистрируется сам; ADMIN создаётся init_db.py и
+# может отменять брони любых пользователей (слот освобождается так же).
+ROLE_USER = "USER"
+ROLE_ADMIN = "ADMIN"
+
 # Сведения о сборке — для попапа «i» на фронте и для баг-репортов
 # («на какой версии найден дефект»). Единственный источник версии в коде:
 # отсюда же берётся version= у FastAPI (Swagger).
@@ -153,6 +158,15 @@ def status_id(cur, name):
     if row is None:
         raise HTTPException(500, f"статус {name} не найден — запустите init_db.py")
     return row["ID_Статус"]
+
+
+def user_role(cur, user_id: int) -> str | None:
+    # Роль пользователя или None, если такого пользователя нет.
+    # Авторизации в проекте нет: роль берётся по переданному user_id.
+    cur.execute('SELECT "Роль" FROM "Пользователь" WHERE "ID_Пользователь" = %s',
+                (user_id,))
+    row = cur.fetchone()
+    return None if row is None else row["Роль"]
 
 
 def _period_label(p):
@@ -378,7 +392,8 @@ def list_resources():
 def list_users(phone: str | None = None, name: str | None = None):
     # фильтры необязательные: для «входа» фронт ищет аккаунт по телефону и/или имени
     sql = (
-        'SELECT "ID_Пользователь" AS id, "Имя" AS name, "Телефон" AS phone '
+        'SELECT "ID_Пользователь" AS id, "Имя" AS name, "Телефон" AS phone, '
+        '\"Роль\" AS role '
         'FROM "Пользователь"'
     )
     where = []
@@ -519,9 +534,9 @@ def create_user(body: UserIn):
         if cur.fetchone() is not None:
             raise HTTPException(409, "аккаунт с таким телефоном уже есть")
         cur.execute(
-            'INSERT INTO "Пользователь" ("Имя","Телефон") VALUES (%s,%s) '
+            'INSERT INTO "Пользователь" ("Имя","Телефон","Роль") VALUES (%s,%s,%s) '
             'RETURNING "ID_Пользователь"',
-            (body.name, body.phone),
+            (body.name, body.phone, ROLE_USER),
         )
         new_id = cur.fetchone()["ID_Пользователь"]
         conn.commit()
@@ -534,7 +549,7 @@ def create_user(body: UserIn):
         raise
     finally:
         conn.close()
-    return {"id": new_id, "name": body.name, "phone": body.phone}
+    return {"id": new_id, "name": body.name, "phone": body.phone, "role": ROLE_USER}
 
 
 @app.post("/bookings", status_code=201, summary="Создать бронь (атомарно, можно несколько периодов)")
@@ -741,11 +756,12 @@ def confirm_booking(booking_id: int, user_id: int):
     }
 
 
-@app.post("/bookings/{booking_id}/cancel", summary="Отменить бронь (только владелец)")
+@app.post("/bookings/{booking_id}/cancel", summary="Отменить бронь (владелец или администратор)")
 def cancel_booking(booking_id: int, user_id: int):
-    # Отменить бронь может только её владелец. Повторная отмена — 409,
-    # чужая бронь — 403. Период уже начался (в том числе идёт прямо сейчас,
-    # например 08:01 для 08:00-09:00) — 409: прошедшее не отменяем.
+    # Отменить бронь может её владелец ИЛИ администратор (роль ADMIN).
+    # Повторная отмена — 409, чужая бронь — 403. Период уже начался (в том числе
+    # идёт прямо сейчас, например 08:01 для 08:00-09:00) — 409: прошедшее
+    # не отменяем, в том числе администратором.
     # Перенос на фронте = «создать новую → отменить старую», поэтому прошедшую
     # бронь нельзя и перенести: шаг отмены упадёт, клиент откатит новую.
     # Строка брони блокируется до COMMIT, гонки безопасны.
@@ -754,7 +770,7 @@ def cancel_booking(booking_id: int, user_id: int):
         cur = conn.cursor(cursor_factory=RealDictCursor)
         booking = _booking_row(cur, booking_id)
 
-        if booking["user_id"] != user_id:
+        if booking["user_id"] != user_id and user_role(cur, user_id) != ROLE_ADMIN:
             raise HTTPException(403, "это не ваша бронь")
         if booking["status"] == CANCELLED:
             raise HTTPException(409, "бронь уже отменена")

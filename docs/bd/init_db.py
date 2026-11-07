@@ -22,11 +22,23 @@ PENDING = "PENDING"
 CONFIRMED = "CONFIRMED"
 CANCELLED = "CANCELLED"
 
+# Роли пользователей: обычный пользователь и администратор (может видеть
+# и отменять брони всех пользователей). При регистрации всегда USER —
+# администратор создаётся только сидом init_db.py.
+ROLE_USER = "USER"
+ROLE_ADMIN = "ADMIN"
+
+# Учётная запись администратора: создаётся этим скриптом (ensure_admin),
+# через регистрацию её не получить — телефон занят, POST /users вернёт 409.
+ADMIN_NAME = "admin"
+ADMIN_PHONE = "89000000000"
+
 DDL = """
 CREATE TABLE IF NOT EXISTS "Пользователь" (
     "ID_Пользователь" SERIAL PRIMARY KEY,
     "Имя"             TEXT NOT NULL,
-    "Телефон"         TEXT NOT NULL
+    "Телефон"         TEXT NOT NULL,
+    "Роль"            TEXT NOT NULL DEFAULT 'USER'
 );
 
 CREATE TABLE IF NOT EXISTS "Ресурс" (
@@ -214,6 +226,51 @@ def ensure_active_slot_index(cur):
     )
 
 
+def migrate_roles(cur):
+    # Миграция старых баз: колонки "Роль" может ещё не быть. Добавляем её
+    # со значением по умолчанию USER, затем ставим ограничение на значения.
+    cur.execute(
+        'ALTER TABLE "Пользователь" '
+        'ADD COLUMN IF NOT EXISTS "Роль" TEXT NOT NULL DEFAULT %s',
+        (ROLE_USER,),
+    )
+    cur.execute(
+        'SELECT 1 FROM pg_constraint WHERE conname = %s',
+        ("chk_пользователь_роль",),
+    )
+    if cur.fetchone() is None:
+        cur.execute(
+            'ALTER TABLE "Пользователь" ADD CONSTRAINT "chk_пользователь_роль" '
+            f"CHECK (\"Роль\" IN ('{ROLE_USER}', '{ROLE_ADMIN}'))"
+        )
+
+
+def ensure_admin(cur):
+    # Администратор с фиксированными именем и телефоном должен существовать
+    # всегда: его ищут на входе по телефону (POST /users → 409 на дубль), поэтому
+    # заводить его можно только здесь. Идемпотентно: если такой телефон уже есть —
+    # только поднимаем роль до ADMIN (старые базы, где Иван был админом).
+    cur.execute(
+        'SELECT "ID_Пользователь", "Роль" FROM "Пользователь" WHERE "Телефон" = %s',
+        (ADMIN_PHONE,),
+    )
+    row = cur.fetchone()
+    if row is not None:
+        if row[1] != ROLE_ADMIN:
+            cur.execute('UPDATE "Пользователь" SET "Роль" = %s WHERE "ID_Пользователь" = %s',
+                        (ROLE_ADMIN, row[0]))
+            print(f"Роль ADMIN выдана существующему аккаунту {ADMIN_PHONE} (id {row[0]})")
+        return
+
+    cur.execute(
+        'INSERT INTO "Пользователь" ("Имя","Телефон","Роль") VALUES (%s,%s,%s) '
+        'RETURNING "ID_Пользователь"',
+        (ADMIN_NAME, ADMIN_PHONE, ROLE_ADMIN),
+    )
+    print(f"Создан администратор {ADMIN_NAME} (id {cur.fetchone()[0]}, "
+          f"телефон {ADMIN_PHONE})")
+
+
 def main():
     print("Embedded PostgreSQL: первый запуск может занять несколько секунд...")
     db.get_server()
@@ -225,6 +282,7 @@ def main():
         cur.execute(DDL)  # несколько операторов в одной транзакции
 
         ensure_statuses(cur)
+        migrate_roles(cur)
 
         cur.execute('SELECT COUNT(*) FROM "Ресурс"')
         if cur.fetchone()[0] == 0:
@@ -242,9 +300,12 @@ def main():
         cur.execute('SELECT COUNT(*) FROM "Пользователь"')
         if cur.fetchone()[0] == 0:
             cur.executemany(
-                'INSERT INTO "Пользователь" ("Имя","Телефон") VALUES (%s,%s)',
-                [("Иван", "+79001112233"), ("Мария", "+79004445566")],
+                'INSERT INTO "Пользователь" ("Имя","Телефон","Роль") VALUES (%s,%s,%s)',
+                [("Иван", "+79001112233", ROLE_USER),
+                 ("Мария", "+79004445566", ROLE_USER)],
             )
+
+        ensure_admin(cur)
 
         periods = seed_periods(cur)
         migrate_active_status(cur)
@@ -252,7 +313,7 @@ def main():
 
         conn.commit()
         print(f"OK: таблицы созданы, залиты статусы ({PENDING}, {CONFIRMED}, {CANCELLED}), "
-              f"3 переговорные, 2 пользователя, "
+              f"3 переговорные, 3 пользователя (админ {ADMIN_NAME} / {ADMIN_PHONE}), "
               f"{periods} периодов брони ({WORKING_START.strftime('%H:%M')}-"
               f"{WORKING_END.strftime('%H:%M')}, шаг {PERIOD_MINUTES} мин).")
         print("Подключение:", db.get_uri())
