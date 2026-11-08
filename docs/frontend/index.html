@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Бронирование помещений</title>
+<title>ТаймРум</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;700;900&display=swap" rel="stylesheet">
@@ -93,8 +93,8 @@ body {
 
 /* Иконка «i» в 1-й строке справа от кнопки входа */
 .nav-info-btn {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: transparent;
     border: none;
@@ -103,18 +103,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.2s;
     flex-shrink: 0;
 }
 .nav-info-btn:hover {
-    transform: none;
-    box-shadow: none;
+    transform: scale(1.08);
 }
 .nav-info-btn img {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     object-fit: contain;
     border-radius: 50%;
     display: block;
+    flex-shrink: 0;
 }
 
 /* ===== 2-Я СТРОКА: НАВИГАЦИЯ (ВКЛАДКИ) ===== */
@@ -238,7 +239,7 @@ body {
 .page { display: none; padding: 20px 60px 60px 60px; }
 .page.active { display: block; }
 #page-my-bookings {
-    padding: 0 0 60px 0; /* Убираем боковые отступы, чтобы панель фильтров шла строго от края до края страницы */
+    padding: 20px 60px 60px 60px;
 }
 
 /* Подложка страницы бронирования */
@@ -440,53 +441,47 @@ body {
     display: block;
 }
 
-/* ===== МОИ БРОНИ ===== */
+/* ===== МОИ БРОНИ / БРОНИ ===== */
 .my-bookings-layout { max-width: 1200px; margin: 0 auto; }
+.admin-bookings-layout { max-width: 1400px; margin: 0 auto; }
 
-/* ===== СТРАНИЦА МОИ БРОНИ (КАРТОЧКА ВО ВСЮ ШИРИНУ КАК НА СКРИНШОТЕ) ===== */
-.my-bookings-full-bar {
-    width: 100%;
-    background: #fff;
-    padding: 16px 0;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-.my-bookings-filters-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
+/* ===== ПАНЕЛЬ ФИЛЬТРОВ (ОБЩАЯ ДЛЯ СТРАНИЦ) ===== */
+.bookings-filters {
     display: flex;
-    gap: 24px;
-    align-items: center; /* Центрирование кнопки по вертикали всего блока */
+    gap: 20px;
+    align-items: flex-end;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    padding: 20px 30px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid #EFEFEF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
 }
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-}
-.filter-group-room {
-    flex: 1.3;
-    min-width: 200px;
-}
-.filter-group-date {
+    gap: 6px;
     flex: 1;
     min-width: 160px;
 }
 .filter-group label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
-    color: #111;
+    color: #333;
     font-family: inherit;
 }
 .filter-group select,
-.filter-group input[type="date"] {
+.filter-group input[type="date"],
+.filter-group input[type="text"] {
     width: 100%;
-    height: 38px;
-    padding: 6px 12px;
-    border: 1px solid #D0D0D0;
-    border-radius: 4px;
-    font-size: 13px;
-    color: #555;
+    height: 40px;
+    padding: 10px 14px;
+    border: 1px solid #CCC;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
     background-color: #fff;
     outline: none;
     box-sizing: border-box;
@@ -499,37 +494,56 @@ body {
     -moz-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px;
+    background-position: right 12px center;
+    padding-right: 34px;
     cursor: pointer;
 }
 .filter-group select:focus,
-.filter-group input[type="date"]:focus {
-    border-color: #5199ff;
+.filter-group input[type="date"]:focus,
+.filter-group input[type="text"]:focus {
+    border-color: #B02E61;
 }
 .filter-apply-btn {
-    min-width: 170px;
-    height: 48px;
-    background: #5199ff;
+    height: 40px;
+    padding: 10px 28px;
+    background: #B02E61;
     color: #fff;
     border: none;
-    border-radius: 24px 24px 0 24px; /* скругление всех углов, кроме правого нижнего */
+    border-radius: 30px;
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s;
     white-space: nowrap;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     font-family: inherit;
     box-shadow: none;
-    align-self: center;
+    align-self: flex-end;
     margin: 0;
 }
 .filter-apply-btn:hover {
-    background: #3d88f5;
+    background: #8E254E;
+}
+.filter-reset-btn {
+    height: 40px;
+    padding: 10px 20px;
+    background: transparent;
+    color: #B02E61;
+    border: 2px solid #B02E61;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    align-self: flex-end;
+    font-family: inherit;
+}
+.filter-reset-btn:hover {
+    background: rgba(249, 233, 240, 0.85);
 }
 
 .bookings-list { width: 100%; display: flex; flex-direction: column; gap: 20px; }
@@ -591,20 +605,10 @@ body {
 .booking-action-btn:hover { background: #8E254E; }
 .no-bookings { text-align: center; padding: 60px 20px; color: #999; font-size: 17px; }
 
-/* ===== СТРАНИЦА АДМИНА: БРОНИ (ПО СКРИНШОТУ) ===== */
+/* ===== СТРАНИЦА АДМИНА: БРОНИ ===== */
 #page-admin-bookings {
-    padding: 0 0 60px 0;
-    background: #ffffff; /* Полностью белое полотно страницы без рамок */
+    padding: 20px 60px 60px 60px;
     min-height: calc(100vh - 140px);
-}
-#page-admin-bookings .my-bookings-full-bar {
-    box-shadow: none; /* Без тени между фильтрами и остальным содержимым */
-    margin-bottom: 20px;
-}
-.admin-content-layout {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 10px 20px 40px 20px;
 }
 .admin-search-wrapper {
     position: relative;
@@ -612,11 +616,11 @@ body {
 }
 .admin-search-wrapper input {
     width: 100%;
-    height: 38px;
-    padding: 6px 36px 6px 12px;
-    border: 1px solid #D0D0D0;
-    border-radius: 4px;
-    font-size: 13px;
+    height: 40px;
+    padding: 10px 36px 10px 14px;
+    border: 1px solid #CCC;
+    border-radius: 8px;
+    font-size: 14px;
     color: #333;
     background-color: #fff;
     outline: none;
@@ -625,90 +629,109 @@ body {
     transition: border-color 0.2s;
 }
 .admin-search-wrapper input:focus {
-    border-color: #5199ff;
+    border-color: #B02E61;
 }
 .admin-search-icon {
     position: absolute;
-    right: 10px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     width: 16px;
     height: 16px;
     pointer-events: none;
-    color: #888;
+    color: #999;
 }
 .admin-summary-card {
-    margin-bottom: 35px;
-    padding: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    padding: 24px 30px;
+    margin-bottom: 24px;
+    border: 1px solid #EFEFEF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 .admin-summary-title {
     font-size: 18px;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
 }
 .admin-summary-period {
-    font-size: 15px;
-    color: #333;
-    margin-bottom: 25px;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
 }
 .admin-summary-bars {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
 }
 .admin-bar-row {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
 }
 .admin-bar-label {
-    min-width: 220px;
+    min-width: 200px;
     font-size: 15px;
-    color: #111;
+    color: #333;
     font-weight: 500;
 }
 .admin-bar-track {
     flex: 1;
     max-width: 650px;
-    height: 28px;
-    background: transparent;
+    height: 24px;
+    background: rgba(240, 240, 240, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
     display: flex;
     align-items: center;
 }
 .admin-bar-fill {
     height: 100%;
-    border-radius: 6px;
-    transition: width 0.3s ease;
+    border-radius: 12px;
+    background-image: linear-gradient(90deg, #B02E61 0%, #D4457A 100%);
+    transition: width 0.5s ease;
 }
 .admin-table-container {
     padding: 0;
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
 }
 .admin-table-wrapper {
-    flex: 1;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    border: 1px solid #EFEFEF;
+    border-radius: 12px;
     overflow: hidden;
-    background: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+.admin-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: #B02E61;
+    color: #fff;
+}
+.admin-table-header h3 {
+    font-size: 16px;
+    font-weight: 600;
 }
 .admin-table {
     width: 100%;
     border-collapse: collapse;
-    text-align: center;
+    text-align: left;
     font-size: 14px;
 }
 .admin-table thead {
-    background: #782FEF; /* Точный фиолетовый цвет шапки со скриншота */
-    color: #fff;
+    background: rgba(245, 245, 245, 0.5);
+    color: #333;
 }
 .admin-table th {
-    padding: 14px 16px;
+    padding: 14px 20px;
     font-weight: 600;
-    font-size: 15px;
-    letter-spacing: 0.2px;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 2px solid #E0E0E0;
 }
 .admin-table th.th-sortable {
     cursor: pointer;
@@ -718,77 +741,63 @@ body {
     display: inline-block;
     vertical-align: middle;
     margin-left: 6px;
-    font-size: 14px;
+    font-size: 20px;
+    line-height: 1;
+    color: #B02E61;
 }
 .admin-table tbody tr {
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #F0F0F0;
     transition: background 0.15s;
     cursor: pointer;
 }
-.admin-table tbody tr:nth-child(odd) {
-    background: #ffffff;
-}
 .admin-table tbody tr:nth-child(even) {
-    background: #F7F2FF; /* Точный светло-фиолетовый цвет фона четных строк со скриншота */
+    background: rgba(249, 233, 240, 0.15);
 }
 .admin-table tbody tr:hover {
-    background: #EDE4FF;
+    background: rgba(249, 233, 240, 0.3);
 }
 .admin-table tbody tr.selected {
-    background: #E3D2FF !important;
-    outline: 2px solid #782FEF;
+    background: rgba(176, 46, 97, 0.1) !important;
+    border-left: 3px solid #B02E61;
 }
 .admin-table td {
-    padding: 14px 16px;
+    padding: 14px 20px;
     color: #333;
     vertical-align: middle;
 }
 .admin-status-badge {
     display: inline-block;
-    padding: 3px 0;
-    width: 100px;   /* Одинаковая фиксированная ширина 100px */
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    line-height: 1.2;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
     white-space: nowrap;
     box-sizing: border-box;
 }
 .admin-status-badge.confirmed {
-    background: #62f78a; /* Точный фон для Подтверждено */
-    color: #0a570a;      /* Точный цвет текста */
+    background: rgba(46, 125, 50, 0.1);
+    color: #2E7D32;
+    border: 1px solid rgba(46, 125, 50, 0.3);
 }
 .admin-status-badge.cancelled {
-    background: #f77378; /* Точный фон для Отклонено / Отменена */
-    color: #900e07;      /* Точный цвет текста */
-}
-.admin-actions-sidebar {
-    width: 160px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    padding-top: 0;
+    background: rgba(229, 57, 53, 0.1);
+    color: #E53935;
+    border: 1px solid rgba(229, 57, 53, 0.3);
 }
 .admin-cancel-btn {
-    width: 100%;
-    height: 48px;
-    background: #5199FF;
+    padding: 8px 20px;
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
-    border: none;
-    border-radius: 24px 24px 0 24px;
-    font-size: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: background 0.2s;
     font-family: inherit;
-    opacity: 1; /* Полная непрозрачность как на скриншоте */
 }
 .admin-cancel-btn:hover {
-    background: #3d88f5;
+    background: rgba(255, 255, 255, 0.3);
 }
 .admin-cancel-btn:active {
     transform: scale(0.98);
@@ -852,11 +861,11 @@ body {
 /* Красная строка ошибки над кнопками */
 .auth-error-line {
     color: #E53935;
-    font-size: 15px;
+    font-size: 17px;
     line-height: 1.4;
     text-align: center;
     margin-top: -6px;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
     min-height: 20px;
     display: none;
 }
@@ -1155,9 +1164,8 @@ body {
 .footer-bottom strong {
     font-weight: 700;
 }
-.footer-bottom .footer-email,
 .footer-bottom a {
-    color: #ba4c77;
+    color: #B02E61;
     text-decoration: none;
 }
 .footer-bottom a:hover {
@@ -1208,7 +1216,7 @@ body {
         <span class="user-name-display" id="userNameDisplay" style="display: none;"></span>
         <button class="auth-btn" id="authBtn" onclick="openAuthModal()">Войти / Зарегистрироваться</button>
         <button class="nav-info-btn" id="headerInfoBtn" title="Информация о системе" onclick="openSystemInfoModal()">
-            <img src="src/icons/info.png" alt="Информация">
+            <img src="src/icons/info.png" alt="Информация" onerror="this.onerror=null; this.src='src/icons/info-alt.png';">
         </button>
     </div>
 </header>
@@ -1262,51 +1270,51 @@ body {
 
 <!-- ===== МОИ БРОНИ ===== -->
 <div class="page" id="page-my-bookings">
-    <!-- Белая карточка/рамка во всю ширину экрана как на скриншоте -->
-    <div class="my-bookings-full-bar">
-        <div class="my-bookings-filters-inner">
-            <div class="filter-group filter-group-room">
+    <div class="my-bookings-layout">
+        <!-- ===== ПАНЕЛЬ ФИЛЬТРОВ ===== -->
+        <div class="bookings-filters">
+            <div class="filter-group">
                 <label for="filterRoom">Помещение:</label>
                 <select id="filterRoom">
                     <option value="">Все помещения</option>
                 </select>
             </div>
-            <div class="filter-group filter-group-date">
+            <div class="filter-group">
                 <label for="filterDateFrom">С:</label>
                 <input type="date" id="filterDateFrom">
             </div>
-            <div class="filter-group filter-group-date">
+            <div class="filter-group">
                 <label for="filterDateTo">По:</label>
                 <input type="date" id="filterDateTo">
             </div>
             <button class="filter-apply-btn" onclick="applyMyBookingsFilters()">Применить</button>
+            <button class="filter-reset-btn" onclick="resetMyBookingsFilters()">Сбросить</button>
         </div>
-    </div>
-    <div class="my-bookings-layout">
+        <!-- ===== СПИСОК БРОНЕЙ ===== -->
         <div class="bookings-list" id="bookingsList"></div>
     </div>
 </div>
 
-<!-- ===== АДМИН-ПАНЕЛЬ: БРОНИ (ПО СКРИНШОТУ) ===== -->
+<!-- ===== АДМИН-ПАНЕЛЬ: БРОНИ ===== -->
 <div class="page" id="page-admin-bookings">
-    <!-- Белая карточка/рамка во всю ширину экрана с фильтрами -->
-    <div class="my-bookings-full-bar">
-        <div class="my-bookings-filters-inner">
-            <div class="filter-group filter-group-room">
+    <div class="admin-bookings-layout">
+        <!-- Панель фильтров -->
+        <div class="bookings-filters">
+            <div class="filter-group">
                 <label for="adminFilterRoom">Помещение:</label>
                 <select id="adminFilterRoom">
                     <option value="">Все помещения</option>
                 </select>
             </div>
-            <div class="filter-group filter-group-date">
+            <div class="filter-group">
                 <label for="adminFilterDateFrom">С:</label>
                 <input type="date" id="adminFilterDateFrom">
             </div>
-            <div class="filter-group filter-group-date">
+            <div class="filter-group">
                 <label for="adminFilterDateTo">По:</label>
                 <input type="date" id="adminFilterDateTo">
             </div>
-            <div class="filter-group" style="flex: 1.2; min-width: 180px;">
+            <div class="filter-group">
                 <label for="adminFilterSearch">Поиск по заказчику:</label>
                 <div class="admin-search-wrapper">
                     <input type="text" id="adminFilterSearch" placeholder="Введите имя" onkeydown="if(event.key==='Enter') applyAdminFilters()">
@@ -1317,11 +1325,9 @@ body {
                 </div>
             </div>
             <button class="filter-apply-btn" onclick="applyAdminFilters()">Применить</button>
+            <button class="filter-reset-btn" onclick="resetAdminFilters()">Сбросить</button>
         </div>
-    </div>
 
-    <!-- Основная часть контента на сплошном белом полотне страницы без рамок -->
-    <div class="admin-content-layout">
         <!-- Сводка по загруженности -->
         <div class="admin-summary-card">
             <div class="admin-summary-title">Сводка по загруженности</div>
@@ -1331,9 +1337,13 @@ body {
             </div>
         </div>
 
-        <!-- Таблица броней и кнопка действия -->
+        <!-- Таблица броней -->
         <div class="admin-table-container">
             <div class="admin-table-wrapper">
+                <div class="admin-table-header">
+                    <h3>Список броней</h3>
+                    <button class="admin-cancel-btn" id="adminCancelBtn" onclick="handleAdminCancelBooking()">Отменить</button>
+                </div>
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -1351,9 +1361,6 @@ body {
                     </tbody>
                 </table>
             </div>
-            <div class="admin-actions-sidebar">
-                <button class="admin-cancel-btn" id="adminCancelBtn" onclick="handleAdminCancelBooking()">Отменить</button>
-            </div>
         </div>
     </div>
 </div>
@@ -1365,7 +1372,7 @@ body {
         <h2>Регистрация</h2>
         <div class="form-group">
             <label for="authFio">ФИО:</label>
-            <input type="text" id="authFio" placeholder="Иванов Иван Иванович" oninput="clearAuthError()">
+            <input type="text" id="authFio" placeholder="Иванов Иван Иванович" oninput="handleFioInput()">
         </div>
         <div class="form-group">
             <label for="authPhone">Телефон:</label>
@@ -1459,10 +1466,10 @@ body {
 <div class="modal-overlay" id="systemInfoModal">
     <div class="modal info-modal">
         <button class="modal-close" onclick="closeModal('systemInfoModal')">&times;</button>
-        <h2 id="sysInfoProduct"></h2>
-        <p id="sysInfoVersion"></p>
-        <p id="sysInfoBuild"></p>
-        <p id="sysInfoSupport"></p>
+        <h2 id="sysInfoProduct">Система бронирования помещений</h2>
+        <p id="sysInfoVersion">Версия: 1.2.0</p>
+        <p id="sysInfoBuild">Сборка: 01.11.2026</p>
+        <p id="sysInfoSupport">Техническая поддержка: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a></p>
     </div>
 </div>
 
@@ -1498,7 +1505,7 @@ body {
             </div>
         </div>
         <div class="footer-bottom">
-            <strong>Ждем ваших предложений для сотрудничества:</strong> <strong class="footer-email">support@booking-system.ru</strong>
+            Ждем ваших предложений для сотрудничества: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a>
         </div>
     </div>
 </footer>
@@ -1932,16 +1939,10 @@ function showErrorModal(htmlMessage, sizeClass = 'modal-size-large') {
     }
 }
 
-function showAuthError(typeOrMessage) {
-    if (typeOrMessage === 'invalid_data') {
-        showErrorModal('Вы ввели не все данные<br>или они не корректны', 'modal-size-compact');
-    } else if (typeOrMessage === 'not_registered') {
-        showErrorModal('Вы еще не зарегистрированы!<br>Пожалуйста, нажмите кнопку<br>Зарегистрироваться', 'modal-size-large');
-    } else if (typeOrMessage === 'already_registered') {
-        showErrorModal('Вы уже зарегистрированы!<br>Пожалуйста, нажмите кнопку<br>Войти', 'modal-size-large');
-    } else {
-        showErrorModal(typeOrMessage, 'modal-size-compact');
-    }
+function showAuthError(message) {
+    const errEl = document.getElementById('authError');
+    errEl.textContent = message;
+    errEl.classList.add('active');
 }
 
 function clearAuthError() {
@@ -1959,24 +1960,41 @@ function openAuthModal() {
     document.getElementById('authModal').classList.add('active');
 }
 
+function handleFioInput() {
+    clearAuthError();
+    const fio = document.getElementById('authFio').value.trim();
+    if (!fio) return;
+    if (!/^[a-zA-Zа-яА-ЯёЁ\s\-]+$/.test(fio)) {
+        showAuthError('В ФИО допустимы только буквы кириллицы и латиницы (без цифр и спецсимволов)');
+    }
+}
+
 function validateAuthFields() {
     const fio = document.getElementById('authFio').value.trim();
+    const rawPhoneDigits = document.getElementById('authPhone').value.replace(/\D/g, '');
     const phoneNormalized = getNormalizedPhone();
 
     // Проверка ФИО: разрешены только буквы кириллицы и латиницы, а также пробелы и дефис
-    const fioLettersOnly = /^[a-zA-Zа-яА-ЯёЁ\s\-]+$/.test(fio);
+    const fioAllowedChars = /^[a-zA-Zа-яА-ЯёЁ\s\-]+$/.test(fio);
+    const fioHasLetters = /[a-zA-Zа-яА-ЯёЁ]/.test(fio);
     const fioLengthValid = fio.length >= 2;
-    const fioValid = fioLengthValid && fioLettersOnly;
+    const fioValid = fioLengthValid && fioAllowedChars && fioHasLetters;
 
     const phoneValid = phoneNormalized.length === 12; // +7 + 10 цифр
 
     let errorMessage = '';
-    if (!fio || !phoneNormalized) {
+    if (!fio && !rawPhoneDigits) {
         errorMessage = 'Вы ввели не все данные';
-    } else if (!fioLettersOnly) {
+    } else if (!fio) {
+        errorMessage = 'Введите ФИО';
+    } else if (!fioAllowedChars) {
         errorMessage = 'В ФИО допустимы только буквы кириллицы и латиницы (без цифр и спецсимволов)';
     } else if (!fioLengthValid) {
         errorMessage = 'ФИО должно содержать не менее 2 символов';
+    } else if (!fioHasLetters) {
+        errorMessage = 'ФИО должно содержать буквы';
+    } else if (!rawPhoneDigits) {
+        errorMessage = 'Введите номер телефона';
     } else if (!phoneValid) {
         errorMessage = 'Введите корректный номер телефона';
     }
@@ -1993,9 +2011,9 @@ function validateAuthFields() {
 
 async function handleRegister() {
     clearAuthError();
-    const { fio, phone, valid } = validateAuthFields();
+    const { fio, phone, valid, errorMessage } = validateAuthFields();
     if (!valid) {
-        showAuthError('invalid_data');
+        showAuthError(errorMessage || 'Вы ввели не все данные или они некорректны');
         return;
     }
 
@@ -2010,7 +2028,7 @@ async function handleRegister() {
     }
 
     if (res.status === 409) {
-        showAuthError('already_registered');
+        showAuthError('Аккаунт с таким телефоном уже существует! Нажмите «Войти»');
         return;
     }
 
@@ -2028,9 +2046,9 @@ async function handleRegister() {
 
 async function handleLogin() {
     clearAuthError();
-    const { fio, phone, valid } = validateAuthFields();
+    const { fio, phone, valid, errorMessage } = validateAuthFields();
     if (!valid) {
-        showAuthError('invalid_data');
+        showAuthError(errorMessage || 'Вы ввели не все данные или они некорректны');
         return;
     }
 
@@ -2051,7 +2069,7 @@ async function handleLogin() {
 
     const users = res.data || [];
     if (users.length === 0) {
-        showAuthError('not_registered');
+        showAuthError('Аккаунт не найден! Пожалуйста, нажмите «Зарегистрироваться»');
         return;
     }
 
@@ -2838,6 +2856,14 @@ async function applyMyBookingsFilters() {
     await renderMyBookings();
 }
 
+async function resetMyBookingsFilters() {
+    document.getElementById('filterRoom').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    selectedBookingIndex = null;
+    await renderMyBookings();
+}
+
 function selectBooking(index) {
     if (selectedBookingIndex === index) {
         selectedBookingIndex = null; // Повторный клик снимает выбор
@@ -2935,15 +2961,6 @@ async function confirmCancel() {
 let adminBookings = [];
 let adminSelectedBookingId = null;
 let adminCurrentSort = 'start'; // 'start' | 'start_desc'
-
-const adminRoomBarColors = [
-    '#92D2FF', // 1-й: светло-голубой как на скриншоте (Переговорная А)
-    '#0D7BFF', // 2-й: синий как на скриншоте (Переговорная Б)
-    '#122FBC', // 3-й: глубокий тёмно-синий как на скриншоте (Актовый зал)
-    '#38BDF8', // 4-й
-    '#2563EB', // 5-й
-    '#1D4ED8'  // 6-й
-];
 
 function populateAdminRoomFilter() {
     const select = document.getElementById('adminFilterRoom');
@@ -3083,6 +3100,20 @@ async function applyAdminFilters() {
     renderAdminBookingsTable();
 }
 
+async function resetAdminFilters() {
+    const roomSelect = document.getElementById('adminFilterRoom');
+    const dateFromInput = document.getElementById('adminFilterDateFrom');
+    const dateToInput = document.getElementById('adminFilterDateTo');
+    const searchInput = document.getElementById('adminFilterSearch');
+
+    if (roomSelect) roomSelect.value = '';
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
+    if (searchInput) searchInput.value = '';
+
+    await applyAdminFilters();
+}
+
 function renderAdminSummary(summaryItems) {
     const barsContainer = document.getElementById('adminSummaryBars');
     if (!barsContainer) return;
@@ -3096,11 +3127,10 @@ function renderAdminSummary(summaryItems) {
     // Вычисляем максимум часов для процентной ширины бара
     const maxHours = Math.max(...summaryItems.map(item => item.hours || 0), 1);
 
-    summaryItems.forEach((item, index) => {
+    summaryItems.forEach(item => {
         const row = document.createElement('div');
         row.className = 'admin-bar-row';
 
-        const color = adminRoomBarColors[index % adminRoomBarColors.length];
         const hours = item.hours || 0;
         const hoursLabel = formatHoursText(hours);
         const roomName = item.resource || `Помещение #${item.resource_id}`;
@@ -3111,7 +3141,7 @@ function renderAdminSummary(summaryItems) {
         row.innerHTML = `
             <div class="admin-bar-label">${roomName} - ${hoursLabel}</div>
             <div class="admin-bar-track">
-                <div class="admin-bar-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+                <div class="admin-bar-fill" style="width: ${percentage}%;"></div>
             </div>
         `;
         barsContainer.appendChild(row);
@@ -3161,7 +3191,7 @@ function renderAdminBookingsTable() {
         // Статус: зеленый для подтвержденных/ожидающих, красный для отмененных
         const isCancelled = b.status === 'CANCELLED';
         const statusClass = isCancelled ? 'cancelled' : 'confirmed';
-        const statusText = isCancelled ? 'Отменена' : 'Подтверждение';
+        const statusText = isCancelled ? 'Отменена' : 'Подтверждена';
 
         tr.innerHTML = `
             <td>${roomName}</td>
@@ -3189,7 +3219,6 @@ function selectAdminBookingRow(bookingId) {
 }
 
 function updateAdminCancelBtn() {
-    // Кнопка «Отменить» на скриншоте всегда непрозрачная и активная (#5199FF)
     const btn = document.getElementById('adminCancelBtn');
     if (!btn) return;
     btn.disabled = false;
@@ -3482,28 +3511,39 @@ async function openSystemInfoModal() {
     const modal = document.getElementById('systemInfoModal');
     if (!modal) return;
 
-    // Сбрасываем в ожидание/заглушки перед вызовом API
-    document.getElementById('sysInfoProduct').textContent = 'Загрузка...';
-    document.getElementById('sysInfoVersion').textContent = 'Версия: ???';
-    document.getElementById('sysInfoBuild').textContent = 'Сборка: ???';
-    document.getElementById('sysInfoSupport').textContent = 'Техническая поддержка: ???';
+    const productEl = document.getElementById('sysInfoProduct');
+    const versionEl = document.getElementById('sysInfoVersion');
+    const buildEl = document.getElementById('sysInfoBuild');
+    const supportEl = document.getElementById('sysInfoSupport');
 
+    // Состояние загрузки
+    productEl.textContent = 'Загрузка...';
+    versionEl.textContent = 'Версия: —';
+    buildEl.textContent = 'Сборка: —';
+    supportEl.textContent = 'Техническая поддержка: —';
     modal.classList.add('active');
 
-    // Данные строго из API GET /version
     const res = await apiFetch('/version');
-    if (res.ok && res.data) {
-        document.getElementById('sysInfoProduct').textContent = res.data.product || '???';
-        document.getElementById('sysInfoVersion').textContent = `Версия: ${res.data.version || '???'}`;
-        const build = res.data.build_date_label || res.data.build_date || '???';
-        document.getElementById('sysInfoBuild').textContent = `Сборка: ${build}`;
-        const email = (res.data.support && res.data.support.email) ? res.data.support.email : '???';
-        document.getElementById('sysInfoSupport').textContent = `Техническая поддержка: ${email}`;
+
+    if (res.isNetworkError) {
+        productEl.textContent = 'Сервер недоступен';
+        return;
+    }
+
+    if (!res.ok || !res.data) {
+        productEl.textContent = 'Нет данных о системе';
+        return;
+    }
+
+    productEl.textContent = res.data.product || '—';
+    versionEl.textContent = `Версия: ${res.data.version || '—'}`;
+    const build = res.data.build_date_label || res.data.build_date || '—';
+    buildEl.textContent = `Сборка: ${build}`;
+    const email = (res.data.support && res.data.support.email) ? res.data.support.email : '';
+    if (email) {
+        supportEl.innerHTML = `Техническая поддержка: <a href="mailto:${email}">${email}</a>`;
     } else {
-        document.getElementById('sysInfoProduct').textContent = '???';
-        document.getElementById('sysInfoVersion').textContent = 'Версия: ???';
-        document.getElementById('sysInfoBuild').textContent = 'Сборка: ???';
-        document.getElementById('sysInfoSupport').textContent = 'Техническая поддержка: ???';
+        supportEl.textContent = 'Техническая поддержка: —';
     }
 }
 
