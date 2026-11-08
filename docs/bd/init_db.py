@@ -31,7 +31,7 @@ ROLE_ADMIN = "ADMIN"
 # Учётная запись администратора: создаётся этим скриптом (ensure_admin),
 # через регистрацию её не получить — телефон занят, POST /users вернёт 409.
 ADMIN_NAME = "admin"
-ADMIN_PHONE = "89000000000"
+ADMIN_PHONE = "+70000000000"
 
 DDL = """
 CREATE TABLE IF NOT EXISTS "Пользователь" (
