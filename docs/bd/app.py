@@ -3,14 +3,17 @@
 # Swagger: http://127.0.0.1:8000/docs
 # Запуск:  python init_db.py  (один раз), затем  uvicorn app:app --reload
 from contextlib import asynccontextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
+import re
+import secrets
 
+import bcrypt
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from psycopg2.errors import UniqueViolation
 from psycopg2.extras import RealDictCursor
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 import db
 
@@ -24,6 +27,9 @@ CANCELLED = "CANCELLED"
 # может отменять брони любых пользователей (слот освобождается так же).
 ROLE_USER = "USER"
 ROLE_ADMIN = "ADMIN"
+
+# Сессии администратора: токен живёт SESSION_HOURS часов, после logout удаляется.
+SESSION_HOURS = 12
 
 # Сведения о сборке — для попапа «i» на фронте и для баг-репортов
 # («на какой версии найден дефект»). Единственный источник версии в коде:
@@ -138,8 +144,36 @@ class BookingIn(BaseModel):
 
 
 class UserIn(BaseModel):
-    name: str = Field(..., min_length=1, description="Имя")
-    phone: str = Field(..., min_length=1, description="Телефон")
+    # Те же правила, что валидирует фронт (validateAuthFields):
+    # имя — только буквы (кириллица/латиница), пробел и дефис, не короче 2 символов;
+    # телефон — ровно 10 цифр после +7 (8… приводится к +7…).
+    name: str = Field(..., min_length=2, max_length=100,
+                      pattern=r'^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё \-]*$',
+                      description="Имя (буквы, пробел, дефис; от 2 символов)")
+    phone: str = Field(..., description="Телефон в формате +7XXXXXXXXXX")
+
+    @field_validator("name")
+    @classmethod
+    def _strip_name(cls, v: str) -> str:
+        v = v.strip()
+        if not re.search(r'[A-Za-zА-Яа-яЁё]', v):
+            raise ValueError("имя должно содержать буквы")
+        return v
+
+    @field_validator("phone")
+    @classmethod
+    def _normalize_phone(cls, v: str) -> str:
+        digits = re.sub(r'\D', '', v)
+        if len(digits) == 11 and digits[0] in ('7', '8'):
+            digits = digits[1:]
+        if not re.fullmatch(r'[0-9]{10}', digits):
+            raise ValueError("телефон должен быть в формате +7XXXXXXXXXX")
+        return '+7' + digits
+
+
+class AdminLoginIn(BaseModel):
+    phone: str = Field(..., description="Телефон администратора (+7XXXXXXXXXX)")
+    password: str = Field(..., min_length=1, description="Пароль")
 
 
 def query(sql, params=()):
@@ -152,14 +186,6 @@ def query(sql, params=()):
         conn.close()
 
 
-def status_id(cur, name):
-    cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (name,))
-    row = cur.fetchone()
-    if row is None:
-        raise HTTPException(500, f"статус {name} не найден — запустите init_db.py")
-    return row["ID_Статус"]
-
-
 def user_role(cur, user_id: int) -> str | None:
     # Роль пользователя или None, если такого пользователя нет.
     # Авторизации в проекте нет: роль берётся по переданному user_id.
@@ -167,6 +193,45 @@ def user_role(cur, user_id: int) -> str | None:
                 (user_id,))
     row = cur.fetchone()
     return None if row is None else row["Роль"]
+
+
+def session_user(cur, token: str | None):
+    # Пользователь по токену сессии администратора.
+    # Возвращает {id, name, role} или None (токена нет / истёк / отозван).
+    if not token:
+        return None
+    cur.execute(
+        """
+        SELECT u."ID_Пользователь" AS id, u."Имя" AS name, u."Роль" AS role
+        FROM "Сессия" s
+        JOIN "Пользователь" u ON u."ID_Пользователь" = s."ID_Пользователь"
+        WHERE s."Токен" = %s AND s."Истекает" > NOW()
+        """,
+        (token,),
+    )
+    return cur.fetchone()
+
+
+def require_admin(cur, token: str | None):
+    # Для админских действий: без действительного токена администратора — 403.
+    user = session_user(cur, token)
+    if user is None or user["role"] != ROLE_ADMIN:
+        raise HTTPException(403, "нужен вход администратора")
+    return user
+
+
+def require_admin_or_none(cur, token: str | None):
+    # То же, но без исключения: None, если токена/роли нет.
+    user = session_user(cur, token)
+    return user if user is not None and user["role"] == ROLE_ADMIN else None
+
+
+def status_id(cur, name):
+    cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (name,))
+    row = cur.fetchone()
+    if row is None:
+        raise HTTPException(500, f"статус {name} не найден — запустите init_db.py")
+    return row["ID_Статус"]
 
 
 def _period_label(p):
@@ -419,13 +484,30 @@ def list_bookings(
     resource_id: int | None = None,
     search: str | None = None,
     sort: str = "start",
+    token: str | None = None,
 ):
-    # все параметры необязательные: без них — все брони;
+    # все параметры необязательные: без них — все брони (только с админским токеном);
     # ?user_id=1 — «мои брони», ?booking_date=... — расписание дня,
     # ?date_from=...&date_to=... — диапазон (вкладка «неделя» / «месяц»),
     # ?resource_id=2 — одно помещение (можно вместе с date_from/date_to),
     # ?search=иван — подстрока имени заказчика (регистр не важен),
-    # ?sort=start|start_desc — порядок по времени начала (по умолчанию — по возрастанию)
+    # ?sort=start|start_desc — порядок по времени начала (по умолчанию — по возрастанию),
+    # ?token=... — токен администратора: снимает ограничение «только свои», открывает
+    # поиск по заказчику и просмотр всех броней. Без токена: обязателен user_id,
+    # search запрещён (403), отдаются только брони этого пользователя.
+    conn = db.connect()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        is_admin = require_admin_or_none(cur, token) is not None
+    finally:
+        conn.close()
+
+    if not is_admin:
+        if user_id is None:
+            raise HTTPException(403, "нужен вход администратора или user_id")
+        if search is not None:
+            raise HTTPException(403, "поиск по заказчику доступен администратору")
+
     if date_from is not None and date_to is not None and date_from > date_to:
         raise HTTPException(400, "date_from должен быть не позже date_to")
 
@@ -445,7 +527,8 @@ def list_bookings(
                b."ID_Время"        AS time_id,
                v."ВремяНачала"     AS start_time,
                v."ВремяОкончания"  AS end_time,
-               b."Дата"            AS date
+               b."Дата"            AS date,
+               b."Создана"         AS created_at
         FROM "Бронь" b
         JOIN "Пользователь" u ON b."ID_Пользователь" = u."ID_Пользователь"
         JOIN "Ресурс"       r ON b."ID_Ресурс"       = r."ID_Ресурс"
@@ -483,16 +566,24 @@ def list_bookings(
     return rows
 
 
-@app.get("/summary", summary="Сводка занятых часов по ресурсам за период")
+@app.get("/summary", summary="Сводка занятых часов по ресурсам за период (только администратор)")
 def summary(
     date_from: date,
     date_to: date,
     resource_id: int | None = None,
+    token: str | None = None,
 ):
     # Сумма часов броней по каждому помещению за период (обе даты включительно).
     # Час = длительность периода из справочника "Время" (сейчас 60 мин).
     # Учитываются PENDING и CONFIRMED; CANCELLED не входит.
     # ?resource_id=2 — сводка по одному помещению.
+    # ?token=... — обязателен токен администратора (POST /auth/admin-login).
+    conn = db.connect()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        require_admin(cur, token)
+    finally:
+        conn.close()
     # Помещения без броней в период (0 часов) в ответ не попадают.
     if date_from > date_to:
         raise HTTPException(400, "date_from должен быть не позже date_to")
@@ -550,6 +641,72 @@ def create_user(body: UserIn):
     finally:
         conn.close()
     return {"id": new_id, "name": body.name, "phone": body.phone, "role": ROLE_USER}
+
+
+@app.post("/auth/admin-login", summary="Вход администратора (телефон + пароль)")
+def admin_login(body: AdminLoginIn):
+    # Пароль проверяется по bcrypt-хэшу. Успешный вход создаёт токен сессии,
+    # который принимают админские действия (GET /bookings без user_id,
+    # GET /summary, отмена чужой брони). Срок жизни — SESSION_HOURS.
+    conn = db.connect()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            'SELECT "ID_Пользователь", "Имя", "Телефон", "Роль" AS role, '
+            '       "ПарольHash" AS pw '
+            'FROM "Пользователь" WHERE "Телефон" = %s',
+            (body.phone,),
+        )
+        user = cur.fetchone()
+        # Одинаковый ответ на «нет такого» и «неверный пароль» — не подсказываем,
+        # какие аккаунты существуют.
+        if (user is None or user["role"] != ROLE_ADMIN or not user["pw"]
+                or not bcrypt.checkpw(body.password.encode("utf-8"),
+                                      user["pw"].encode("utf-8"))):
+            raise HTTPException(401, "неверный телефон или пароль")
+
+        token = secrets.token_urlsafe(32)
+        expires = datetime.now(timezone.utc) + timedelta(hours=SESSION_HOURS)
+        cur.execute(
+            'INSERT INTO "Сессия" ("Токен","ID_Пользователь","Истекает") '
+            'VALUES (%s,%s,%s)',
+            (token, user["ID_Пользователь"], expires),
+        )
+        # попутно подчищаем просроченные сессии
+        cur.execute('DELETE FROM "Сессия" WHERE "Истекает" <= NOW()')
+        conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    return {
+        "token": token,
+        "expires_at": expires.isoformat(),
+        "user": {"id": user["ID_Пользователь"], "name": user["Имя"],
+                 "role": user["role"]},
+    }
+
+
+@app.post("/auth/admin-logout", summary="Выход администратора (отзыв токена)")
+def admin_logout(token: str):
+    conn = db.connect()
+    try:
+        cur = conn.cursor()
+        cur.execute('DELETE FROM "Сессия" WHERE "Токен" = %s RETURNING "Токен"',
+                    (token,))
+        removed = cur.fetchone() is not None
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return {"logged_out": removed}
 
 
 @app.post("/bookings", status_code=201, summary="Создать бронь (атомарно, можно несколько периодов)")
@@ -636,10 +793,12 @@ def create_booking(body: BookingIn):
             '("ID_Пользователь","ID_Ресурс","ID_Статус","ID_Время","Дата") '
             'SELECT %s, %s, %s, v."ID_Время", %s FROM "Время" v '
             'WHERE v."ID_Время" = ANY(%s) '
-            'RETURNING "ID_Бронь", "ID_Время"',
+            'RETURNING "ID_Бронь", "ID_Время", "Создана"',
             (body.user_id, body.resource_id, pending_id, booking_date, requested),
         )
-        new_ids = {row["ID_Время"]: row["ID_Бронь"] for row in cur.fetchall()}
+        rows = cur.fetchall()
+        new_ids = {row["ID_Время"]: row["ID_Бронь"] for row in rows}
+        created_at = rows[0]["Создана"]
 
         conn.commit()
     except UniqueViolation:
@@ -654,7 +813,8 @@ def create_booking(body: BookingIn):
         conn.close()
 
     # Ответ: и старые поля (id/time_id/start_time/end_time), и пакет целиком,
-    # и полные метки ISO 8601 (starts_at/ends_at).
+    # и полные метки ISO 8601 (starts_at/ends_at). created_at — время создания
+    # брони по часам сервера (колонка "Создана", DEFAULT NOW() в БД).
     created = [
         {
             "id": new_ids[p["id"]],
@@ -680,6 +840,7 @@ def create_booking(body: BookingIn):
         "starts_at": created[0]["starts_at"],
         "ends_at": created[-1]["ends_at"],
         "status": PENDING,
+        "created_at": created_at.isoformat(),
         "bookings": created,
     }
 
@@ -757,8 +918,10 @@ def confirm_booking(booking_id: int, user_id: int):
 
 
 @app.post("/bookings/{booking_id}/cancel", summary="Отменить бронь (владелец или администратор)")
-def cancel_booking(booking_id: int, user_id: int):
-    # Отменить бронь может её владелец ИЛИ администратор (роль ADMIN).
+def cancel_booking(booking_id: int, user_id: int, token: str | None = None):
+    # Отменить бронь может её владелец ИЛИ администратор. Два способа войти админом:
+    #   ?token=...  — токен из POST /auth/admin-login (предпочтительно, не подделать);
+    #   ?user_id=N  — если у N роль ADMIN (совместимость со старым фронтом).
     # Повторная отмена — 409, чужая бронь — 403. Период уже начался (в том числе
     # идёт прямо сейчас, например 08:01 для 08:00-09:00) — 409: прошедшее
     # не отменяем, в том числе администратором.
@@ -770,7 +933,9 @@ def cancel_booking(booking_id: int, user_id: int):
         cur = conn.cursor(cursor_factory=RealDictCursor)
         booking = _booking_row(cur, booking_id)
 
-        if booking["user_id"] != user_id and user_role(cur, user_id) != ROLE_ADMIN:
+        is_admin = require_admin_or_none(cur, token) is not None \
+            or user_role(cur, user_id) == ROLE_ADMIN
+        if booking["user_id"] != user_id and not is_admin:
             raise HTTPException(403, "это не ваша бронь")
         if booking["status"] == CANCELLED:
             raise HTTPException(409, "бронь уже отменена")

@@ -5,10 +5,18 @@
 # python init_db.py
 
 from datetime import time
+import os
+import secrets
 
+import bcrypt
 import psycopg2
 
 import db
+
+
+def hash_password(password: str) -> str:
+    # bcrypt: соль внутри хэша, сравнивать через bcrypt.checkpw
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 # Справочник периодов брони («сеансы»): 08:00-09:00, 09:00-10:00, ..., 21:00-22:00.
 # Заливается в таблицу "Время" — одна бронь ссылается на один период.
@@ -32,13 +40,17 @@ ROLE_ADMIN = "ADMIN"
 # через регистрацию её не получить — телефон занят, POST /users вернёт 409.
 ADMIN_NAME = "admin"
 ADMIN_PHONE = "+70000000000"
+# Пароль администратора берётся из переменной окружения ADMIN_PASSWORD.
+# Если она не задана — сгенерируется случайный и будет напечатан один раз.
+ADMIN_PASSWORD_ENV = "ADMIN_PASSWORD"
 
 DDL = """
 CREATE TABLE IF NOT EXISTS "Пользователь" (
     "ID_Пользователь" SERIAL PRIMARY KEY,
     "Имя"             TEXT NOT NULL,
     "Телефон"         TEXT NOT NULL,
-    "Роль"            TEXT NOT NULL DEFAULT 'USER'
+    "Роль"            TEXT NOT NULL DEFAULT 'USER',
+    "ПарольHash"      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "Ресурс" (
@@ -67,7 +79,8 @@ CREATE TABLE IF NOT EXISTS "Бронь" (
     "ID_Ресурс"       INTEGER NOT NULL REFERENCES "Ресурс"("ID_Ресурс"),
     "ID_Статус"       INTEGER NOT NULL REFERENCES "Статус"("ID_Статус"),
     "ID_Время"        INTEGER NOT NULL REFERENCES "Время"("ID_Время"),
-    "Дата"            DATE NOT NULL
+    "Дата"            DATE NOT NULL,
+    "Создана"         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS "ix_booking_resource_date"
@@ -75,6 +88,16 @@ CREATE INDEX IF NOT EXISTS "ix_booking_resource_date"
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_user_phone"
     ON "Пользователь" ("Телефон");
+
+CREATE TABLE IF NOT EXISTS "Сессия" (
+    "Токен"    TEXT PRIMARY KEY,
+    "ID_Пользователь" INTEGER NOT NULL
+        REFERENCES "Пользователь"("ID_Пользователь") ON DELETE CASCADE,
+    "Создана"  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "Истекает" TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS "ix_session_user" ON "Сессия" ("ID_Пользователь");
 """
 
 
@@ -227,12 +250,14 @@ def ensure_active_slot_index(cur):
 
 
 def migrate_roles(cur):
-    # Миграция старых баз: колонки "Роль" может ещё не быть. Добавляем её
-    # со значением по умолчанию USER, затем ставим ограничение на значения.
+    # Миграция старых баз: колонок "Роль" и "ПарольHash" может ещё не быть.
     cur.execute(
         'ALTER TABLE "Пользователь" '
         'ADD COLUMN IF NOT EXISTS "Роль" TEXT NOT NULL DEFAULT %s',
         (ROLE_USER,),
+    )
+    cur.execute(
+        'ALTER TABLE "Пользователь" ADD COLUMN IF NOT EXISTS "ПарольHash" TEXT'
     )
     cur.execute(
         'SELECT 1 FROM pg_constraint WHERE conname = %s',
@@ -243,32 +268,104 @@ def migrate_roles(cur):
             'ALTER TABLE "Пользователь" ADD CONSTRAINT "chk_пользователь_роль" '
             f"CHECK (\"Роль\" IN ('{ROLE_USER}', '{ROLE_ADMIN}'))"
         )
+    # Время создания брони (для старых строк — момент миграции).
+    cur.execute('ALTER TABLE "Бронь" ADD COLUMN IF NOT EXISTS "Создана" '
+                'TIMESTAMPTZ NOT NULL DEFAULT NOW()')
+
+
+def migrate_user_constraints(cur):
+    # Ограничения на имя и телефон — те же правила, что валидирует фронт.
+    # Имя: только буквы (кириллица/латиница), пробел и дефис; не короче 2 символов.
+    # Телефон: '+7' и ровно 10 цифр. Перед ограничениями чистим старые данные.
+    phone_re = r'^\+7[0-9]{10}$'
+
+    # 1) телефон: ведущую 8 → +7, пробелы/скобки/дефисы убираем
+    cur.execute(
+        """
+        UPDATE "Пользователь"
+           SET "Телефон" = CASE
+                 WHEN regexp_replace("Телефон", '[^0-9]', '', 'g') ~ '^8[0-9]{10}$'
+                      THEN '+7' || substr(regexp_replace("Телефон", '[^0-9]', '', 'g'), 2)
+                 WHEN regexp_replace("Телефон", '[^0-9]', '', 'g') ~ '^7[0-9]{10}$'
+                      THEN '+' || regexp_replace("Телефон", '[^0-9]', '', 'g')
+                 WHEN regexp_replace("Телефон", '[^0-9]', '', 'g') ~ '^[0-9]{10}$'
+                      THEN '+7' || regexp_replace("Телефон", '[^0-9]', '', 'g')
+                 ELSE "Телефон"
+               END
+         WHERE "Телефон" !~ %s
+        """,
+        (phone_re,),
+    )
+    # 2) имя: обрезаем пробелы по краям
+    cur.execute('UPDATE "Пользователь" SET "Имя" = btrim("Имя") '
+                'WHERE "Имя" <> btrim("Имя")')
+
+    cur.execute('SELECT 1 FROM pg_constraint WHERE conname = %s',
+                ("chk_пользователь_имя",))
+    if cur.fetchone() is None:
+        cur.execute(
+            'ALTER TABLE "Пользователь" ADD CONSTRAINT "chk_пользователь_имя" '
+            "CHECK (char_length(\"Имя\") >= 2 AND char_length(\"Имя\") <= 100 "
+            "AND \"Имя\" !~ '[0-9]')"
+        )
+
+    cur.execute('SELECT 1 FROM pg_constraint WHERE conname = %s',
+                ("chk_пользователь_телефон",))
+    if cur.fetchone() is None:
+        cur.execute(
+            'ALTER TABLE "Пользователь" ADD CONSTRAINT "chk_пользователь_телефон" '
+            "CHECK (\"Телефон\" ~ '^\\+7[0-9]{10}$')"
+        )
 
 
 def ensure_admin(cur):
     # Администратор с фиксированными именем и телефоном должен существовать
     # всегда: его ищут на входе по телефону (POST /users → 409 на дубль), поэтому
     # заводить его можно только здесь. Идемпотентно: если такой телефон уже есть —
-    # только поднимаем роль до ADMIN (старые базы, где Иван был админом).
+    # только поднимаем роль до ADMIN и выдаём пароль, если его ещё нет.
+    password = os.environ.get(ADMIN_PASSWORD_ENV)
+    generated = False
+    if not password:
+        password = secrets.token_urlsafe(12)
+        generated = True
+
     cur.execute(
-        'SELECT "ID_Пользователь", "Роль" FROM "Пользователь" WHERE "Телефон" = %s',
+        'SELECT "ID_Пользователь", "Роль", "ПарольHash" FROM "Пользователь" '
+        'WHERE "Телефон" = %s',
         (ADMIN_PHONE,),
     )
     row = cur.fetchone()
     if row is not None:
-        if row[1] != ROLE_ADMIN:
+        admin_id, role, pw_hash = row
+        if role != ROLE_ADMIN:
             cur.execute('UPDATE "Пользователь" SET "Роль" = %s WHERE "ID_Пользователь" = %s',
-                        (ROLE_ADMIN, row[0]))
-            print(f"Роль ADMIN выдана существующему аккаунту {ADMIN_PHONE} (id {row[0]})")
+                        (ROLE_ADMIN, admin_id))
+            print(f"Роль ADMIN выдана существующему аккаунту {ADMIN_PHONE} (id {admin_id})")
+        if not pw_hash:
+            cur.execute('UPDATE "Пользователь" SET "ПарольHash" = %s '
+                        'WHERE "ID_Пользователь" = %s',
+                        (hash_password(password), admin_id))
+            print_admin_password(password, generated, created=False)
         return
 
     cur.execute(
-        'INSERT INTO "Пользователь" ("Имя","Телефон","Роль") VALUES (%s,%s,%s) '
-        'RETURNING "ID_Пользователь"',
-        (ADMIN_NAME, ADMIN_PHONE, ROLE_ADMIN),
+        'INSERT INTO "Пользователь" ("Имя","Телефон","Роль","ПарольHash") '
+        'VALUES (%s,%s,%s,%s) RETURNING "ID_Пользователь"',
+        (ADMIN_NAME, ADMIN_PHONE, ROLE_ADMIN, hash_password(password)),
     )
     print(f"Создан администратор {ADMIN_NAME} (id {cur.fetchone()[0]}, "
           f"телефон {ADMIN_PHONE})")
+    print_admin_password(password, generated, created=True)
+
+
+def print_admin_password(password, generated, created):
+    if not generated:
+        print(f"  Пароль администратора взят из ${ADMIN_PASSWORD_ENV}")
+        return
+    print("  Пароль администратора (СГЕНЕРИРОВАН, сохраните его — больше не покажется):")
+    print(f"    {password}")
+    print(f"  Чтобы задать свой: $env:{ADMIN_PASSWORD_ENV}=\"...\" и удалить пароль "
+          f"в БД (UPDATE \"Пользователь\" SET \"ПарольHash\"=NULL WHERE \"Роль\"='ADMIN')")
 
 
 def main():
@@ -283,6 +380,7 @@ def main():
 
         ensure_statuses(cur)
         migrate_roles(cur)
+        migrate_user_constraints(cur)
 
         cur.execute('SELECT COUNT(*) FROM "Ресурс"')
         if cur.fetchone()[0] == 0:

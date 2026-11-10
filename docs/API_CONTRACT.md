@@ -1,7 +1,7 @@
 # API Contract — Система бронирования
 
-**Версия:** 1.4  
-**Дата:** 2026-11-07  
+**Версия:** 1.5  
+**Дата:** 2026-11-10  
 **Базовый URL:** `http://127.0.0.1:8000` (без префикса `/api/v1`)  
 **Реализация:** `docs/bd/app.py` (API `0.7.0`)  
 **Swagger:** `http://127.0.0.1:8000/docs`  
@@ -48,10 +48,22 @@
 
 | Роль | Права |
 |------|-------|
-| `USER` | Регистрируется сам. «Мои брони» — только свои, без отменённых и прошедших. Отменяет только свои брони. |
-| `ADMIN` | Создаётся `init_db.py` (имя `admin`, телефон `+70000000000`). Видит все брони всех пользователей (включая прошедшие и отменённые), может отменить любую (кроме прошедшей). |
+| `USER` | Регистрируется сам. «Мои брони» — только свои, без отменённых и прошедших. Отменяет только свои. Поиск по заказчику и `/summary` — 403. |
+| `ADMIN` | Создаётся `init_db.py` (имя `admin`, телефон `+70000000000`, пароль из `ADMIN_PASSWORD`). Видит все брони всех пользователей (включая прошедшие и отменённые), может отменить любую (кроме прошедшей). Доступны `search` и `/summary`. |
 
 Роль отдаётся полем `role` в `GET /users` и `POST /users`; через `POST /users` выставляется только `USER`.
+
+## Вход администратора
+
+### `POST /auth/admin-login`
+Тело: `{ "phone": "+70000000000", "password": "..." }`  
+200: `{ token, expires_at, user { id, name, role } }` — токен на 12 часов.  
+401 «неверный телефон или пароль» — для неверного пароля, обычного пользователя и несуществующего аккаунта (ответ одинаковый).
+
+### `POST /auth/admin-logout?token=`
+200: `{ logged_out: true|false }` — токен отозван.
+
+Токен передаётся query-параметром `token` в: `GET /bookings` (все брони + `search`), `GET /summary`, `POST /bookings/{id}/cancel` (чужая бронь).
 
 ---
 
@@ -79,23 +91,26 @@
 `role` — `USER` (обычный) или `ADMIN` (администратор). Фронт по ней выбирает интерфейс.
 
 ### `POST /users`
-Тело: `{ "name": "...", "phone": "..." }` (`min_length=1`).  
-201 — создан (`{ id, name, phone, role }`, роль всегда **`USER`**); 409 — телефон уже есть.  
+Тело: `{ "name": "...", "phone": "..." }`.  
+`name` — буквы (кириллица/латиница), пробел и дефис, от 2 до 100 символов; `phone` — `+7XXXXXXXXXX` (`8XXXXXXXXXX` приводится к `+7…`).  
+201 — создан (`{ id, name, phone, role }`, роль всегда **`USER`**); 409 — телефон уже есть; 422 — невалидное имя/телефон.  
 Администратор создаётся только `init_db.py`, через регистрацию роль не выставить.
 
 ### `GET /bookings`
-Query (все необязательные): `user_id`, `booking_date`, `date_from`, `date_to`, `resource_id`, `search`, `sort`.  
+Query (все необязательные): `user_id`, `booking_date`, `date_from`, `date_to`, `resource_id`, `search`, `sort`, `token`.  
 `search` — подстрока в имени заказчика, регистр не важен (`ILIKE %…%`). Ресурс и диапазон дат можно комбинировать.  
 `sort` — `start` (по умолчанию, по возрастанию) или `start_desc`; сортировка по дате, затем по времени начала.  
-200: `{ id, user_id, user, resource, status, time_id, start_time, end_time, date, starts_at, ends_at }[]`  
+`token` — токен администратора: снимает ограничение «только свои» и открывает `search`.  
+200: `{ id, user_id, user, resource, status, time_id, start_time, end_time, date, starts_at, ends_at, created_at }[]`  
+`created_at` — время создания брони по часам сервера (не передаётся клиентом).  
 **Нет** поля `resource_id` в строке — только имя `resource`.  
-400 если `date_from` > `date_to` или `sort` не из списка.
+400 если `date_from` > `date_to` или `sort` не из списка; 403 если без `token` не указан `user_id` или запрошен `search`.
 
-### `GET /summary?date_from=&date_to=[&resource_id=]`
-Сводка занятых часов по каждому ресурсу за период; обе даты включительно.  
+### `GET /summary?date_from=&date_to=[&resource_id=][&token=]`
+Сводка занятых часов по каждому ресурсу за период; обе даты включительно. **Только с токеном администратора** (403 без него).  
 Часы = сумма длительностей периодов из «Время» (`end_time − start_time`). Учитываются `PENDING` и `CONFIRMED`, `CANCELLED` не входит. Ресурсы с 0 часов не возвращаются.  
 200: `{ resource_id, resource, hours, bookings_count }[]`  
-400 если `date_from` > `date_to`; 422 если параметры дат не переданы/невалидны.
+400 если `date_from` > `date_to`; 403 без токена администратора; 422 если параметры дат не переданы/невалидны.
 
 ### `POST /bookings`
 Тело (минимум):
@@ -123,8 +138,8 @@ PENDING → CONFIRMED. `user_id` обязателен.
 200: `{ id, status: "CONFIRMED", date, start_time, end_time, starts_at, ends_at }`  
 403 «это не ваша бронь»; 404 «бронь не найдена»; 409 «бронь уже отменена» / «бронь уже подтверждена».
 
-### `POST /bookings/{id}/cancel?user_id=`
-→ CANCELLED. `user_id` обязателен. Отменить может владелец **или администратор (role = `ADMIN`)** — он может отменить любую бронь.  
+### `POST /bookings/{id}/cancel?user_id=[&token=]`
+→ CANCELLED. `user_id` обязателен. Отменить может владелец **или администратор** — по `token` (предпочтительно) либо по `user_id` с ролью `ADMIN`.  
 200: `{ id, status: "CANCELLED", date, start_time, end_time, starts_at, ends_at }`  
 403 «это не ваша бронь» (обычный пользователь); 404 «бронь не найдена»; 409 «бронь уже отменена» / период уже начался (для всех ролей).  
 Без `user_id` → 422.
@@ -163,3 +178,4 @@ PENDING → CONFIRMED. `user_id` обязателен.
 | 1.2 | 2026-10-26 | PENDING/CONFIRMED/CANCELLED; confirm; cancel+user_id 403/409; availability; time_ids / starts_at/ends_at; working_hours start_time/end_time/slot_minutes |
 | 1.3 | 2026-11-03 | `GET /bookings`: параметры `search` (по имени заказчика) и `sort` (`start` / `start_desc`); новый `GET /summary` — сводка часов по ресурсам за период без `CANCELLED` |
 | 1.4 | 2026-11-07 | Роли пользователей (`USER`/`ADMIN`): поле `role` в `/users`, администратор создаётся `init_db.py`, `cancel` разрешён администратору для любой брони |
+| 1.5 | 2026-11-10 | Вход администратора по паролю (`/auth/admin-login`, `/auth/admin-logout`, `token`); ограничения на имя/телефон (API 422 + CHECK в БД); поле `created_at` у брони |
