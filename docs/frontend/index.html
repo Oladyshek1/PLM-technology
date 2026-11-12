@@ -18,13 +18,13 @@ body {
     background-repeat: no-repeat;
     background-attachment: fixed;
     color: #333;
-    padding-top: 140px; /* Отступ под двухстрочную фиксированную шапку (70px + 70px) */
+    padding-top: 90px; /* Отступ под однострочную фиксированную шапку (70px) */
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
 
-/* ===== 1-Я СТРОКА: ШАПКА (HEADER) ===== */
+/* ===== ШАПКА (HEADER) ===== */
 .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -34,13 +34,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 60px;
+    padding: 0 40px;
     z-index: 1000;
     border-bottom: 1px solid #E0E0E0;
     gap: 20px;
 }
 
-/* Логотип слева в 1-й строке (только изображение Логотип.png) */
+/* Логотип слева в шапке (только изображение Логотип.png) */
 .logo {
     display: flex;
     align-items: center;
@@ -49,18 +49,46 @@ body {
     flex-shrink: 0;
 }
 .logo img {
-    height: 60px;
+    height: 52px;
     width: auto;
     object-fit: contain;
     display: block;
 }
 
-/* Правая часть 1-й строки: имя пользователя, кнопка входа и иконка 'i' */
+/* Центральная часть: навигационные вкладки */
+.nav-tabs {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+    pointer-events: auto;
+}
+.nav-tab {
+    padding: 8px 24px;
+    border: none;
+    border-radius: 30px;
+    background: #B02E61;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 0 0 4px #fff !important;
+    transition: background 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+.nav-tab:hover { background: #8E254E; }
+.nav-tab.active { background: #B02E61; box-shadow: 0 0 0 4px #fff, 0 4px 12px rgba(176, 46, 97, 0.3) !important; }
+
+/* Правая часть шапки: имя пользователя, кнопка входа и иконка 'i' */
 .auth-wrapper {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-shrink: 1;
+    flex-shrink: 0;
     min-width: 0;
     justify-content: flex-end;
 }
@@ -91,6 +119,166 @@ body {
 }
 .auth-btn:hover { background: rgba(249, 233, 240, 0.85); }
 
+/* Круглая иконка-аватар с первой буквой имени пользователя */
+.user-avatar-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #B02E61;
+    color: #fff;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(176, 46, 97, 0.25);
+    font-family: inherit;
+    line-height: 1;
+}
+.user-avatar-btn:hover {
+    background: #8E254E;
+    transform: scale(1.06);
+}
+
+/* Обертка для позиционирования выпадающей плашки профиля */
+.profile-menu-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* ===== ВСПЛЫВАЮЩАЯ ПЛАШКА: ЛИЧНЫЙ КАБИНЕТ (ВЫПАДАЮЩЕЕ ОКНО СПРАВА ПОД АВАТАРОМ) ===== */
+.profile-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 14px);
+    right: 0;
+    width: 340px;
+    max-width: calc(100vw - 32px);
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    z-index: 2500;
+    animation: profileDropdownFade 0.18s ease-out;
+}
+.profile-dropdown.active {
+    display: block;
+}
+@keyframes profileDropdownFade {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-dropdown-header {
+    background: linear-gradient(180deg, #942752 0%, #A62D5D 100%);
+    color: #fff;
+    text-align: center;
+    padding: 22px 18px 18px;
+    position: relative;
+}
+.profile-dropdown-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.15s;
+}
+.profile-dropdown-close:hover {
+    color: #fff;
+    transform: scale(1.1);
+}
+.profile-avatar-large {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+}
+.profile-header-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: #fff;
+}
+.profile-header-subtitle {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 400;
+}
+.profile-dropdown-body {
+    padding: 8px 20px 18px;
+    background: #fff;
+}
+.profile-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #F0F0F0;
+    font-size: 13px;
+    gap: 12px;
+}
+.profile-info-label {
+    color: #444;
+    font-weight: 500;
+    font-size: 13px;
+}
+.profile-info-value {
+    color: #111;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: right;
+    word-break: break-word;
+}
+.profile-action-btn {
+    padding: 5px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    background: #fff;
+    line-height: normal;
+}
+.profile-btn-logout {
+    border: 1.5px solid #8D4462;
+    color: #8D4462;
+}
+.profile-btn-logout:hover {
+    background: rgba(141, 68, 98, 0.08);
+}
+.profile-btn-delete {
+    border: 1.5px solid #C04A46;
+    color: #C04A46;
+}
+.profile-btn-delete:hover {
+    background: rgba(192, 74, 70, 0.08);
+}
+    border: 1.5px solid #C04A46;
+    color: #C04A46;
+}
+.profile-btn-delete:hover {
+    background: rgba(192, 74, 70, 0.08);
+}
+
 /* Иконка «i» в 1-й строке справа от кнопки входа */
 .nav-info-btn {
     width: 44px;
@@ -117,35 +305,6 @@ body {
     display: block;
     flex-shrink: 0;
 }
-
-/* ===== 2-Я СТРОКА: НАВИГАЦИЯ (ВКЛАДКИ) ===== */
-.nav-tabs {
-    position: fixed;
-    top: 70px; left: 0; right: 0;
-    height: 70px;
-    background: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    padding: 0 60px;
-    z-index: 999;
-    border-bottom: none;
-}
-.nav-tab {
-    padding: 10px 30px;
-    border: none;
-    border-radius: 30px;
-    background: #B02E61;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 0 0 7px #fff !important;
-    transition: background 0.2s, box-shadow 0.2s;
-}
-.nav-tab:hover { background: #8E254E; }
-.nav-tab.active { background: #B02E61; box-shadow: 0 0 0 7px #fff, 0 4px 12px rgba(176, 46, 97, 0.3) !important; }
 
 /* Контейнер для контента с карточкой из HTML.html */
 .content-card {
@@ -443,7 +602,6 @@ body {
 
 /* ===== МОИ БРОНИ / БРОНИ ===== */
 .my-bookings-layout { max-width: 1200px; margin: 0 auto; }
-.admin-bookings-layout { max-width: 1400px; margin: 0 auto; }
 
 /* ===== ПАНЕЛЬ ФИЛЬТРОВ (ОБЩАЯ ДЛЯ СТРАНИЦ) ===== */
 .bookings-filters {
@@ -605,204 +763,6 @@ body {
 .booking-action-btn:hover { background: #8E254E; }
 .no-bookings { text-align: center; padding: 60px 20px; color: #999; font-size: 17px; }
 
-/* ===== СТРАНИЦА АДМИНА: БРОНИ ===== */
-#page-admin-bookings {
-    padding: 20px 60px 60px 60px;
-    min-height: calc(100vh - 140px);
-}
-.admin-search-wrapper {
-    position: relative;
-    width: 100%;
-}
-.admin-search-wrapper input {
-    width: 100%;
-    height: 40px;
-    padding: 10px 36px 10px 14px;
-    border: 1px solid #CCC;
-    border-radius: 8px;
-    font-size: 14px;
-    color: #333;
-    background-color: #fff;
-    outline: none;
-    box-sizing: border-box;
-    font-family: inherit;
-    transition: border-color 0.2s;
-}
-.admin-search-wrapper input:focus {
-    border-color: #B02E61;
-}
-.admin-search-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    pointer-events: none;
-    color: #999;
-}
-.admin-summary-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(5px);
-    border-radius: 12px;
-    padding: 24px 30px;
-    margin-bottom: 24px;
-    border: 1px solid #EFEFEF;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-.admin-summary-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 8px;
-}
-.admin-summary-period {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 20px;
-}
-.admin-summary-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-.admin-bar-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-.admin-bar-label {
-    min-width: 200px;
-    font-size: 15px;
-    color: #333;
-    font-weight: 500;
-}
-.admin-bar-track {
-    flex: 1;
-    max-width: 650px;
-    height: 24px;
-    background: rgba(240, 240, 240, 0.5);
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-}
-.admin-bar-fill {
-    height: 100%;
-    border-radius: 12px;
-    background-image: linear-gradient(90deg, #B02E61 0%, #D4457A 100%);
-    transition: width 0.5s ease;
-}
-.admin-table-container {
-    padding: 0;
-}
-.admin-table-wrapper {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(5px);
-    border: 1px solid #EFEFEF;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-.admin-table-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 24px;
-    background: #B02E61;
-    color: #fff;
-}
-.admin-table-header h3 {
-    font-size: 16px;
-    font-weight: 600;
-}
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    font-size: 14px;
-}
-.admin-table thead {
-    background: rgba(245, 245, 245, 0.5);
-    color: #333;
-}
-.admin-table th {
-    padding: 14px 20px;
-    font-weight: 600;
-    font-size: 14px;
-    color: #333;
-    border-bottom: 2px solid #E0E0E0;
-}
-.admin-table th.th-sortable {
-    cursor: pointer;
-    user-select: none;
-}
-.admin-sort-icon {
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 6px;
-    font-size: 20px;
-    line-height: 1;
-    color: #B02E61;
-}
-.admin-table tbody tr {
-    border-bottom: 1px solid #F0F0F0;
-    transition: background 0.15s;
-    cursor: pointer;
-}
-.admin-table tbody tr:nth-child(even) {
-    background: rgba(249, 233, 240, 0.15);
-}
-.admin-table tbody tr:hover {
-    background: rgba(249, 233, 240, 0.3);
-}
-.admin-table tbody tr.selected {
-    background: rgba(176, 46, 97, 0.1) !important;
-    border-left: 3px solid #B02E61;
-}
-.admin-table td {
-    padding: 14px 20px;
-    color: #333;
-    vertical-align: middle;
-}
-.admin-status-badge {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    box-sizing: border-box;
-}
-.admin-status-badge.confirmed {
-    background: rgba(46, 125, 50, 0.1);
-    color: #2E7D32;
-    border: 1px solid rgba(46, 125, 50, 0.3);
-}
-.admin-status-badge.cancelled {
-    background: rgba(229, 57, 53, 0.1);
-    color: #E53935;
-    border: 1px solid rgba(229, 57, 53, 0.3);
-}
-.admin-cancel-btn {
-    padding: 8px 20px;
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-family: inherit;
-}
-.admin-cancel-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-.admin-cancel-btn:active {
-    transform: scale(0.98);
-}
-
 /* ===== МОДАЛЬНЫЕ ОКНА ===== */
 .modal-overlay {
     display: none;
@@ -861,12 +821,12 @@ body {
 /* Красная строка ошибки над кнопками */
 .auth-error-line {
     color: #E53935;
-    font-size: 17px;
-    line-height: 1.4;
+    font-size: 13px;
+    line-height: 1.35;
     text-align: center;
     margin-top: -6px;
-    margin-bottom: 18px;
-    min-height: 20px;
+    margin-bottom: 14px;
+    min-height: 18px;
     display: none;
 }
 .auth-error-line.active {
@@ -1206,28 +1166,59 @@ body {
 </head>
 <body>
 
-<!-- ===== 1-Я СТРОКА ШАПКИ: ЛОГОТИП, ВХОД/РЕГИСТРАЦИЯ И КНОПКА ИНФО ===== -->
+<!-- ===== ШАПКА: ЛОГОТИП, НАВИГАЦИЯ, ВХОД/РЕГИСТРАЦИЯ И КНОПКА ИНФО ===== -->
 <header class="header">
     <a href="#" class="logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
         <img src="src/images/logos/logo.png" alt="Логотип">
     </a>
 
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="showPage('home', this)">Главная</button>
+        <button class="nav-tab" onclick="showPage('booking', this)">Бронирование</button>
+        <button class="nav-tab" id="myBookingsNavBtn" style="display: none;" onclick="showPage('my-bookings', this)">Мои брони</button>
+    </nav>
+
     <div class="auth-wrapper">
         <span class="user-name-display" id="userNameDisplay" style="display: none;"></span>
         <button class="auth-btn" id="authBtn" onclick="openAuthModal()">Войти / Зарегистрироваться</button>
+        <div class="profile-menu-wrapper" id="profileMenuWrapper" style="display: none;">
+            <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserProfileDropdown(event)" title="Личный кабинет">
+                <span id="userAvatarInitial">?</span>
+            </button>
+
+            <!-- Всплывающая плашка личного кабинета под аватаром -->
+            <div class="profile-dropdown" id="userProfileDropdown">
+                <div class="profile-dropdown-header">
+                    <button class="profile-dropdown-close" onclick="closeUserProfileDropdown(event)">&times;</button>
+                    <div class="profile-avatar-large" id="profileModalAvatar">К</div>
+                    <div class="profile-header-name" id="profileModalHeaderName">Ксения</div>
+                    <div class="profile-header-subtitle">Личный кабинет</div>
+                </div>
+                <div class="profile-dropdown-body">
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">ФИО</span>
+                        <span class="profile-info-value" id="profileModalFio">—</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Номер телефона</span>
+                        <span class="profile-info-value" id="profileModalPhone">—</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Выйти с устройства</span>
+                        <button class="profile-action-btn profile-btn-logout" onclick="handleProfileLogout()">Выйти</button>
+                    </div>
+                    <div class="profile-info-row" style="border-bottom: none;">
+                        <span class="profile-info-label">Управление учетной записью</span>
+                        <button class="profile-action-btn profile-btn-delete">Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <button class="nav-info-btn" id="headerInfoBtn" title="Информация о системе" onclick="openSystemInfoModal()">
             <img src="src/icons/info.png" alt="Информация">
         </button>
     </div>
 </header>
-
-<!-- ===== 2-Я СТРОКА ШАПКИ: НАВИГАЦИОННЫЕ ВКЛАДКИ (ПО ЦЕНТРУ) ===== -->
-<nav class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('home', this)">Главная</button>
-    <button class="nav-tab" onclick="showPage('booking', this)">Бронирование</button>
-    <button class="nav-tab" id="myBookingsNavBtn" style="display: none;" onclick="showPage('my-bookings', this)">Мои брони</button>
-    <button class="nav-tab" id="adminBookingsNavBtn" style="display: none;" onclick="showPage('admin-bookings', this)">Брони</button>
-</nav>
 
 <!-- ===== ГЛАВНАЯ СТРАНИЦА (С КАРУСЕЛЬЮ И ХАРАКТЕРИСТИКАМИ ИЗ HTML.HTML) ===== -->
 <div class="page active" id="page-home">
@@ -1292,76 +1283,6 @@ body {
         </div>
         <!-- ===== СПИСОК БРОНЕЙ ===== -->
         <div class="bookings-list" id="bookingsList"></div>
-    </div>
-</div>
-
-<!-- ===== АДМИН-ПАНЕЛЬ: БРОНИ ===== -->
-<div class="page" id="page-admin-bookings">
-    <div class="admin-bookings-layout">
-        <!-- Панель фильтров -->
-        <div class="bookings-filters">
-            <div class="filter-group">
-                <label for="adminFilterRoom">Помещение:</label>
-                <select id="adminFilterRoom">
-                    <option value="">Все помещения</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="adminFilterDateFrom">С:</label>
-                <input type="date" id="adminFilterDateFrom">
-            </div>
-            <div class="filter-group">
-                <label for="adminFilterDateTo">По:</label>
-                <input type="date" id="adminFilterDateTo">
-            </div>
-            <div class="filter-group">
-                <label for="adminFilterSearch">Поиск по заказчику:</label>
-                <div class="admin-search-wrapper">
-                    <input type="text" id="adminFilterSearch" placeholder="Введите имя" onkeydown="if(event.key==='Enter') applyAdminFilters()">
-                    <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                </div>
-            </div>
-            <button class="filter-apply-btn" onclick="applyAdminFilters()">Применить</button>
-            <button class="filter-reset-btn" onclick="resetAdminFilters()">Сбросить</button>
-        </div>
-
-        <!-- Сводка по загруженности -->
-        <div class="admin-summary-card">
-            <div class="admin-summary-title">Сводка по загруженности</div>
-            <div class="admin-summary-period" id="adminSummaryPeriod">За период: —</div>
-            <div class="admin-summary-bars" id="adminSummaryBars">
-                <!-- Заполняется динамически -->
-            </div>
-        </div>
-
-        <!-- Таблица броней -->
-        <div class="admin-table-container">
-            <div class="admin-table-wrapper">
-                <div class="admin-table-header">
-                    <h3>Список броней</h3>
-                    <button class="admin-cancel-btn" id="adminCancelBtn" onclick="handleAdminCancelBooking()">Отменить</button>
-                </div>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 25%;">Помещение</th>
-                            <th style="width: 28%;" class="th-sortable" onclick="toggleAdminSort()" title="Нажмите для сортировки">
-                                Дата и время
-                                <span class="admin-sort-icon" id="adminSortIcon">↓</span>
-                            </th>
-                            <th style="width: 25%;">Заказчик</th>
-                            <th style="width: 22%;">Статус</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminBookingsTbody">
-                        <!-- Заполняется динамически -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -1461,6 +1382,7 @@ body {
         </div>
     </div>
 </div>
+
 
 <!-- ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ ===== -->
 <div class="modal-overlay" id="systemInfoModal">
@@ -1878,51 +1800,177 @@ function saveStoredUser(user) {
     currentUser = user;
 }
 
+// ===== УМНАЯ СИСТЕМА ОПРЕДЕЛЕНИЯ ИМЕНИ =====
+function parseSmartUserNames(rawFio) {
+    if (!rawFio || typeof rawFio !== 'string') {
+        return { avatarLetter: 'U', displayName: 'Пользователь', fioDisplay: '—' };
+    }
+    const clean = rawFio.trim().replace(/\s+/g, ' ');
+    const parts = clean.split(' ').filter(Boolean);
+
+    let givenName = '';
+    let fioDisplay = clean;
+
+    // Регулярное выражение типичных отчеств для русского языка
+    const patronymicRegex = /(ович|евич|ич|овна|евна|ична|ыч|инична)$/i;
+    // Порог длины строки для длинных составных имен
+    const isTooLong = clean.length > 25;
+
+    if (parts.length === 1) {
+        // Одно слово:
+        const single = parts[0];
+        if (single.length > 25) {
+            // Длинное слово: в заголовке профиля "Ааааааааааааа..." (13 симв.), в ФИО "Аааааааааааааааааааааааа..." (24 симв.)
+            givenName = single.substring(0, 13) + '...';
+            fioDisplay = single.substring(0, 24) + '...';
+        } else if (single.length > 14) {
+            givenName = single.substring(0, 13) + '...';
+            fioDisplay = single;
+        } else {
+            givenName = single;
+            fioDisplay = single;
+        }
+    } else if (parts.length === 2) {
+        // Если 2 слова: "Иван Романович" -> Имя: Иван; если "Петров Иван" -> Имя: Иван
+        if (patronymicRegex.test(parts[1])) {
+            givenName = parts[0];
+        } else {
+            givenName = parts[1];
+        }
+        if (isTooLong) {
+            // "Иенгулиегн Вахабитомухатарович" -> ФИО: "И. В."
+            fioDisplay = parts.map(p => p.charAt(0).toUpperCase() + '.').join(' ');
+        } else {
+            fioDisplay = clean;
+        }
+    } else if (parts.length >= 3) {
+        // 3 слова: "Фамилия Имя Отчество" -> Имя: parts[1] (Иван)
+        givenName = parts[1];
+        if (isTooLong) {
+            // "Абхазкпткопткотуов Иенгулиегн Вахабитомухатарович" -> ФИО: "Абхазкпткопткотуов И. В."
+            const surname = parts[0];
+            const initials = parts.slice(1).map(p => p.charAt(0).toUpperCase() + '.').join(' ');
+            fioDisplay = surname + ' ' + initials;
+        } else {
+            // "Гетенберг Иван Романович" -> ФИО: "Гетенберг Иван Романович"
+            fioDisplay = clean;
+        }
+    } else {
+        givenName = clean;
+        fioDisplay = clean;
+    }
+
+    const avatarLetter = (givenName.charAt(0) || clean.charAt(0) || 'U').toUpperCase();
+
+    return {
+        avatarLetter,
+        displayName: givenName,
+        fioDisplay
+    };
+}
+
 function updateAuthButton() {
     const btn = document.getElementById('authBtn');
     const nameEl = document.getElementById('userNameDisplay');
+    const menuWrapper = document.getElementById('profileMenuWrapper');
+    const avatarInitial = document.getElementById('userAvatarInitial');
     const myBookingsNavBtn = document.getElementById('myBookingsNavBtn');
-    const adminBookingsNavBtn = document.getElementById('adminBookingsNavBtn');
 
     if (currentUser) {
-        const isAdmin = currentUser.role === 'ADMIN';
-        if (isAdmin) {
-            if (myBookingsNavBtn) myBookingsNavBtn.style.display = 'none';
-            if (adminBookingsNavBtn) adminBookingsNavBtn.style.display = '';
-        } else {
-            if (myBookingsNavBtn) myBookingsNavBtn.style.display = '';
-            if (adminBookingsNavBtn) adminBookingsNavBtn.style.display = 'none';
-        }
+        if (myBookingsNavBtn) myBookingsNavBtn.style.display = '';
+        
+        // Скрываем обычную кнопку "Войти/Выход" и текстовое имя из шапки
+        if (btn) btn.style.display = 'none';
         if (nameEl) {
-            const displayName = currentUser.name || currentUser.fio;
-            nameEl.textContent = displayName;
-            nameEl.title = displayName;
-            nameEl.style.display = 'inline-block';
+            nameEl.textContent = '';
+            nameEl.style.display = 'none';
         }
-        btn.textContent = 'Выход';
-        btn.onclick = () => {
-            saveStoredUser(null);
-            updateAuthButton();
-            if (document.getElementById('page-my-bookings').classList.contains('active') ||
-                document.getElementById('page-admin-bookings').classList.contains('active')) {
-                showPage('home', document.querySelector('.nav-tab'));
-            }
-            loadScheduleGrid();
-        };
+
+        // Показываем блок с аватаркой с умной буквой имени
+        if (menuWrapper) {
+            menuWrapper.style.display = 'inline-flex';
+            const rawName = (currentUser.name || currentUser.fio || 'Пользователь').trim();
+            const smartNames = parseSmartUserNames(rawName);
+            if (avatarInitial) avatarInitial.textContent = smartNames.avatarLetter;
+            const avatarBtn = document.getElementById('userAvatarBtn');
+            if (avatarBtn) avatarBtn.title = smartNames.displayName;
+        }
     } else {
+        closeUserProfileDropdown();
         if (myBookingsNavBtn) {
             myBookingsNavBtn.style.display = 'none';
-        }
-        if (adminBookingsNavBtn) {
-            adminBookingsNavBtn.style.display = 'none';
         }
         if (nameEl) {
             nameEl.textContent = '';
             nameEl.style.display = 'none';
         }
-        btn.textContent = 'Войти / Зарегистрироваться';
-        btn.onclick = openAuthModal;
+        if (menuWrapper) {
+            menuWrapper.style.display = 'none';
+        }
+        if (btn) {
+            btn.style.display = 'inline-block';
+            btn.textContent = 'Войти / Зарегистрироваться';
+            btn.onclick = openAuthModal;
+        }
     }
+}
+
+function toggleUserProfileDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('userProfileDropdown');
+    if (!dropdown) return;
+    if (dropdown.classList.contains('active')) {
+        closeUserProfileDropdown();
+    } else {
+        openUserProfileDropdown();
+    }
+}
+
+function openUserProfileDropdown() {
+    if (!currentUser) return;
+    const rawFio = (currentUser.name || currentUser.fio || 'Пользователь').trim();
+    const smartNames = parseSmartUserNames(rawFio);
+
+    const avatarLarge = document.getElementById('profileModalAvatar');
+    const headerName = document.getElementById('profileModalHeaderName');
+    const fioEl = document.getElementById('profileModalFio');
+    const phoneEl = document.getElementById('profileModalPhone');
+
+    if (avatarLarge) avatarLarge.textContent = smartNames.avatarLetter;
+    if (headerName) headerName.textContent = smartNames.displayName;
+    if (fioEl) fioEl.textContent = smartNames.fioDisplay;
+    if (phoneEl) {
+        const rawPhone = currentUser.phone || '';
+        phoneEl.textContent = formatPhoneValue(rawPhone) || rawPhone || '—';
+    }
+
+    const dropdown = document.getElementById('userProfileDropdown');
+    if (dropdown) dropdown.classList.add('active');
+}
+
+function closeUserProfileDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('userProfileDropdown');
+    if (dropdown) dropdown.classList.remove('active');
+}
+
+// Закрываем выпадающую плашку при клике вне неё
+document.addEventListener('click', function(e) {
+    const menuWrapper = document.getElementById('profileMenuWrapper');
+    if (menuWrapper && !menuWrapper.contains(e.target)) {
+        closeUserProfileDropdown();
+    }
+});
+
+function handleProfileLogout() {
+    closeUserProfileDropdown();
+    saveStoredUser(null);
+    updateAuthButton();
+    if (document.getElementById('page-my-bookings').classList.contains('active')) {
+        showPage('home', document.querySelector('.nav-tab'));
+    }
+    loadScheduleGrid();
+    // showToast('Вы вышли из системы');
 }
 
 function showErrorModal(htmlMessage, sizeClass = 'modal-size-large') {
@@ -1939,9 +1987,62 @@ function showErrorModal(htmlMessage, sizeClass = 'modal-size-large') {
     }
 }
 
+function formatApiErrorDetail(detail, defaultMsg = 'Произошла ошибка') {
+    if (!detail) return defaultMsg;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+        return detail.map(err => {
+            if (typeof err === 'string') return err;
+            if (err && (err.msg || err.type)) {
+                const field = (err.loc && err.loc.length > 0) ? err.loc[err.loc.length - 1] : '';
+                const fieldLabel = field === 'name' ? 'ФИО' : (field === 'phone' ? 'Телефон' : (field || 'Поле'));
+
+                // Человекочитаемая обработка ошибок Pydantic
+                if (err.type === 'string_too_long') {
+                    const max = err.ctx && err.ctx.max_length !== undefined ? err.ctx.max_length : 100;
+                    return `${fieldLabel} не должно превышать ${max} символов`;
+                }
+                if (err.type === 'string_too_short') {
+                    const min = err.ctx && err.ctx.min_length !== undefined ? err.ctx.min_length : 2;
+                    return `${fieldLabel} должно содержать не менее ${min} символов`;
+                }
+                if (err.type === 'string_pattern_mismatch') {
+                    if (field === 'name') {
+                        return 'В ФИО допустимы только буквы кириллицы и латиницы, пробелы и дефис';
+                    }
+                    if (field === 'phone') {
+                        return 'Некорректный формат номера телефона';
+                    }
+                    return `${fieldLabel} имеет некорректный формат`;
+                }
+                if (err.type === 'missing') {
+                    return `Заполните обязательное поле «${fieldLabel}»`;
+                }
+
+                let m = (err.msg || '').replace(/^Value error,\s*/i, '');
+                if (m) {
+                    if (field === 'name' && !m.toLowerCase().startsWith('фио')) {
+                        return 'ФИО: ' + m;
+                    }
+                    if (field === 'phone' && !m.toLowerCase().startsWith('телефон')) {
+                        return 'Телефон: ' + m;
+                    }
+                    return m;
+                }
+            }
+            return JSON.stringify(err);
+        }).join('; ');
+    }
+    if (typeof detail === 'object') {
+        if (detail.msg) return detail.msg;
+        return JSON.stringify(detail);
+    }
+    return String(detail);
+}
+
 function showAuthError(message) {
     const errEl = document.getElementById('authError');
-    errEl.textContent = message;
+    errEl.textContent = formatApiErrorDetail(message, 'Ошибка');
     errEl.classList.add('active');
 }
 
@@ -1977,8 +2078,9 @@ function validateAuthFields() {
     // Проверка ФИО: разрешены только буквы кириллицы и латиницы, а также пробелы и дефис
     const fioAllowedChars = /^[a-zA-Zа-яА-ЯёЁ\s\-]+$/.test(fio);
     const fioHasLetters = /[a-zA-Zа-яА-ЯёЁ]/.test(fio);
-    const fioLengthValid = fio.length >= 2;
-    const fioValid = fioLengthValid && fioAllowedChars && fioHasLetters;
+    const fioMinValid = fio.length >= 2;
+    const fioMaxValid = fio.length <= 100;
+    const fioValid = fioMinValid && fioMaxValid && fioAllowedChars && fioHasLetters;
 
     const phoneValid = phoneNormalized.length === 12; // +7 + 10 цифр
 
@@ -1989,8 +2091,10 @@ function validateAuthFields() {
         errorMessage = 'Введите ФИО';
     } else if (!fioAllowedChars) {
         errorMessage = 'В ФИО допустимы только буквы кириллицы и латиницы (без цифр и спецсимволов)';
-    } else if (!fioLengthValid) {
+    } else if (!fioMinValid) {
         errorMessage = 'ФИО должно содержать не менее 2 символов';
+    } else if (!fioMaxValid) {
+        errorMessage = 'ФИО не должно превышать 100 символов';
     } else if (!fioHasLetters) {
         errorMessage = 'ФИО должно содержать буквы';
     } else if (!rawPhoneDigits) {
@@ -2040,7 +2144,7 @@ async function handleRegister() {
     saveStoredUser(res.data);
     updateAuthButton();
     closeModal('authModal');
-    showToast('Регистрация успешна! Добро пожаловать, ' + (res.data.name || fio), 'success');
+    // showToast('Регистрация успешна!', 'success');
     loadScheduleGrid();
 }
 
@@ -2262,27 +2366,26 @@ function renderTimeSlots() {
         container.appendChild(slot);
     });
 
-    updateTimeSlotsWithBookings();
+    updateTimeSlotsWithAvailability(null);
 }
 
-// Загрузка броней для текущего помещения и даты
+// Загрузка доступных периодов для текущего помещения и даты
 async function loadScheduleGrid() {
     if (!roomsData[selectedRoomIndex]) return;
     const resourceId = roomsData[selectedRoomIndex].id;
     const bookingDate = getSelectedDateISO();
 
-    const res = await apiFetch(`/bookings?resource_id=${resourceId}&booking_date=${bookingDate}`);
+    // GET /availability возвращает только свободные периоды (без 403, доступен всем)
+    const res = await apiFetch(`/availability?resource_id=${resourceId}&booking_date=${bookingDate}`);
+    let availableTimeIds = null;
     if (res.ok && Array.isArray(res.data)) {
-        // Фильтруем активные брони
-        currentDayBookings = res.data.filter(b => b.status !== 'CANCELLED');
-    } else {
-        currentDayBookings = [];
+        availableTimeIds = new Set(res.data.map(p => p.id));
     }
 
-    updateTimeSlotsWithBookings();
+    updateTimeSlotsWithAvailability(availableTimeIds);
 }
 
-function updateTimeSlotsWithBookings() {
+function updateTimeSlotsWithAvailability(availableTimeIds) {
     const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -2294,17 +2397,14 @@ function updateTimeSlotsWithBookings() {
     const isToday = selectedDate.getTime() === today.getTime();
     const isPastDay = selectedDate < today;
 
-    const myUserId = currentUser ? currentUser.id : null;
-
     document.querySelectorAll('.time-slot').forEach(slot => {
         const periodId = parseInt(slot.dataset.periodId, 10);
         const startHour = parseInt(slot.dataset.startHour, 10);
 
-        // Сброс динамических классов
         slot.classList.remove('past-slot', 'occupied-other', 'occupied-mine');
         slot.removeAttribute('title');
 
-        // 1. Прошедшее время: если период уже начался/прошел (или осталось <= 2 минут до начала), он полностью исчезает
+        // 1. Прошедшее время: день в прошлом или слот уже наступил сегодня
         let isPastTime = false;
         if (isPastDay) {
             isPastTime = true;
@@ -2326,10 +2426,8 @@ function updateTimeSlotsWithBookings() {
             return;
         }
 
-        // 2. Проверка брони из базы данных:
-        // Если период уже занят (неважно кем), также полностью скрываем его из сетки доступного времени
-        const booking = currentDayBookings.find(b => b.time_id === periodId);
-        if (booking) {
+        // 2. Проверка доступности: если период занят (отсутствует в availability), скрываем его
+        if (availableTimeIds !== null && !availableTimeIds.has(periodId)) {
             slot.style.display = 'none';
             if (slot.classList.contains('selected')) {
                 slot.classList.remove('selected');
@@ -2341,45 +2439,8 @@ function updateTimeSlotsWithBookings() {
     });
 }
 
-// ===== ПРОВЕРКА РОЛИ АДМИНИСТРАТОРА (НА СТОРОНЕ СЕРВЕРА) =====
-async function verifyAdminRole() {
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-        return false;
-    }
-    // Проверяем актуальную роль в БД по телефону пользователя
-    try {
-        const res = await apiFetch(`/users?phone=${encodeURIComponent(currentUser.phone)}`);
-        if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
-            const freshUser = res.data[0];
-            if (freshUser.role === 'ADMIN') {
-                // Актуализируем в памяти и localStorage
-                currentUser.role = 'ADMIN';
-                currentUser.id = freshUser.id;
-                currentUser.name = freshUser.name;
-                saveStoredUser(currentUser);
-                return true;
-            }
-        }
-    } catch {
-        return false;
-    }
-    return false;
-}
-
 // ===== НАВИГАЦИЯ =====
-async function showPage(pageName, btn) {
-    // Строгая проверка доступа к админ-панели
-    if (pageName === 'admin-bookings') {
-        const isAdmin = await verifyAdminRole();
-        if (!isAdmin) {
-            showToast('Доступ запрещен. Требуются права администратора.', 'error');
-            // Переключаем на главную
-            const homeTab = document.querySelector('.nav-tab');
-            showPage('home', homeTab);
-            return;
-        }
-    }
-
+function showPage(pageName, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -2388,7 +2449,6 @@ async function showPage(pageName, btn) {
     if (btn) btn.classList.add('active');
     if (pageName === 'home') renderHomeCarousel();
     if (pageName === 'my-bookings') renderMyBookings();
-    if (pageName === 'admin-bookings') initAdminBookingsPage();
     if (pageName === 'booking') loadScheduleGrid();
     window.scrollTo(0, 0);
 }
@@ -2577,7 +2637,7 @@ function confirmPickerDate() {
     showToast('Переход к дате: ' + pickerSelectedDate.toLocaleDateString('ru-RU'), 'success');
 }
 
-setInterval(updateTimeSlotsWithBookings, 30000);
+setInterval(loadScheduleGrid, 30000);
 
 // ===== ВЫБОР ПОМЕЩЕНИЯ И СЛОТА =====
 function selectBookingRoom(index) {
@@ -2954,320 +3014,6 @@ async function confirmCancel() {
     if (document.getElementById('page-my-bookings').classList.contains('active')) {
         renderMyBookings();
     }
-    loadScheduleGrid();
-}
-
-// ===== АДМИН-ПАНЕЛЬ: БРОНИ (ЛОГИКА И ПОДКЛЮЧЕНИЕ К БД) =====
-let adminBookings = [];
-let adminSelectedBookingId = null;
-let adminCurrentSort = 'start'; // 'start' | 'start_desc'
-
-function populateAdminRoomFilter() {
-    const select = document.getElementById('adminFilterRoom');
-    if (!select) return;
-    const curVal = select.value;
-    select.innerHTML = '<option value="">Все помещения</option>';
-    roomsData.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r.id;
-        opt.textContent = r.name || '???';
-        select.appendChild(opt);
-    });
-    if (curVal && Array.from(select.options).some(o => o.value === curVal)) {
-        select.value = curVal;
-    }
-}
-
-function formatHoursText(hours) {
-    const num = Math.round(hours);
-    const lastDigit = num % 10;
-    const lastTwo = num % 100;
-    if (lastTwo >= 11 && lastTwo <= 19) {
-        return `${num} часов`;
-    }
-    if (lastDigit === 1) {
-        return `${num} час`;
-    }
-    if (lastDigit >= 2 && lastDigit <= 4) {
-        return `${num} часа`;
-    }
-    return `${num} часов`;
-}
-
-function formatDisplayDateRu(isoDateStr) {
-    if (!isoDateStr) return '';
-    const parts = isoDateStr.split('-');
-    if (parts.length === 3) {
-        return `${parts[2]}.${parts[1]}.${parts[0]}`;
-    }
-    return isoDateStr;
-}
-
-async function initAdminBookingsPage() {
-    const isAdmin = await verifyAdminRole();
-    if (!isAdmin) {
-        showToast('Доступ запрещен', 'error');
-        showPage('home', document.querySelector('.nav-tab'));
-        return;
-    }
-
-    populateAdminRoomFilter();
-
-    // Если даты еще не выставлены в фильтрах, проставляем текущий месяц
-    const dateFromInput = document.getElementById('adminFilterDateFrom');
-    const dateToInput = document.getElementById('adminFilterDateTo');
-    if (dateFromInput && !dateFromInput.value) {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        dateFromInput.value = toDateISO(firstDay);
-    }
-    if (dateToInput && !dateToInput.value) {
-        const now = new Date();
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        dateToInput.value = toDateISO(lastDay);
-    }
-
-    await applyAdminFilters();
-}
-
-async function applyAdminFilters() {
-    const isAdmin = await verifyAdminRole();
-    if (!isAdmin) {
-        showToast('Доступ запрещен', 'error');
-        showPage('home', document.querySelector('.nav-tab'));
-        return;
-    }
-
-    const roomId = document.getElementById('adminFilterRoom')?.value || '';
-    const dateFrom = document.getElementById('adminFilterDateFrom')?.value || '';
-    const dateTo = document.getElementById('adminFilterDateTo')?.value || '';
-    const searchVal = document.getElementById('adminFilterSearch')?.value?.trim() || '';
-
-    if (dateFrom && dateTo && dateFrom > dateTo) {
-        showToast('Дата «С» не может быть позже даты «По»', 'error');
-        return;
-    }
-
-    // 1. Загрузка сводки загруженности через GET /summary?date_from=...&date_to=...
-    let summaryUrl = '/summary?';
-    const sParams = new URLSearchParams();
-    if (dateFrom) sParams.append('date_from', dateFrom);
-    if (dateTo) sParams.append('date_to', dateTo);
-    if (roomId) sParams.append('resource_id', roomId);
-    summaryUrl += sParams.toString();
-
-    // Текст периода
-    const periodEl = document.getElementById('adminSummaryPeriod');
-    if (periodEl) {
-        if (dateFrom && dateTo) {
-            periodEl.textContent = `За период: ${formatDisplayDateRu(dateFrom)} - ${formatDisplayDateRu(dateTo)}`;
-        } else if (dateFrom) {
-            periodEl.textContent = `За период: с ${formatDisplayDateRu(dateFrom)}`;
-        } else if (dateTo) {
-            periodEl.textContent = `За период: по ${formatDisplayDateRu(dateTo)}`;
-        } else {
-            periodEl.textContent = 'За период: всё время';
-        }
-    }
-
-    // 2. Загрузка всех броней через GET /bookings
-    let bookingsUrl = '/bookings?';
-    const bParams = new URLSearchParams();
-    if (dateFrom) bParams.append('date_from', dateFrom);
-    if (dateTo) bParams.append('date_to', dateTo);
-    if (roomId) bParams.append('resource_id', roomId);
-    if (searchVal) bParams.append('search', searchVal);
-    if (adminCurrentSort) bParams.append('sort', adminCurrentSort);
-    bookingsUrl += bParams.toString();
-
-    const [summaryRes, bookingsRes] = await Promise.all([
-        apiFetch(summaryUrl),
-        apiFetch(bookingsUrl)
-    ]);
-
-    // Рендер сводки
-    renderAdminSummary(summaryRes.ok && Array.isArray(summaryRes.data) ? summaryRes.data : []);
-
-    // Рендер таблицы
-    adminSelectedBookingId = null;
-    updateAdminCancelBtn();
-
-    if (bookingsRes.ok && Array.isArray(bookingsRes.data)) {
-        adminBookings = bookingsRes.data;
-    } else {
-        adminBookings = [];
-    }
-    renderAdminBookingsTable();
-}
-
-async function resetAdminFilters() {
-    const roomSelect = document.getElementById('adminFilterRoom');
-    const dateFromInput = document.getElementById('adminFilterDateFrom');
-    const dateToInput = document.getElementById('adminFilterDateTo');
-    const searchInput = document.getElementById('adminFilterSearch');
-
-    if (roomSelect) roomSelect.value = '';
-    if (dateFromInput) dateFromInput.value = '';
-    if (dateToInput) dateToInput.value = '';
-    if (searchInput) searchInput.value = '';
-
-    await applyAdminFilters();
-}
-
-function renderAdminSummary(summaryItems) {
-    const barsContainer = document.getElementById('adminSummaryBars');
-    if (!barsContainer) return;
-    barsContainer.innerHTML = '';
-
-    if (!summaryItems || summaryItems.length === 0) {
-        barsContainer.innerHTML = '<div style="color: #888; font-size: 14px; padding: 10px 0;">Нет данных о загруженности за выбранный период</div>';
-        return;
-    }
-
-    // Вычисляем максимум часов для процентной ширины бара
-    const maxHours = Math.max(...summaryItems.map(item => item.hours || 0), 1);
-
-    summaryItems.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'admin-bar-row';
-
-        const hours = item.hours || 0;
-        const hoursLabel = formatHoursText(hours);
-        const roomName = item.resource || `Помещение #${item.resource_id}`;
-
-        // Ширина бара относительно максимума (от 10% до 100%)
-        const percentage = Math.max(12, Math.round((hours / maxHours) * 100));
-
-        row.innerHTML = `
-            <div class="admin-bar-label">${roomName} - ${hoursLabel}</div>
-            <div class="admin-bar-track">
-                <div class="admin-bar-fill" style="width: ${percentage}%;"></div>
-            </div>
-        `;
-        barsContainer.appendChild(row);
-    });
-}
-
-function toggleAdminSort() {
-    adminCurrentSort = (adminCurrentSort === 'start') ? 'start_desc' : 'start';
-    const icon = document.getElementById('adminSortIcon');
-    if (icon) {
-        icon.textContent = adminCurrentSort === 'start' ? '↓' : '↑';
-    }
-    applyAdminFilters();
-}
-
-function renderAdminBookingsTable() {
-    const tbody = document.getElementById('adminBookingsTbody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    if (adminBookings.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" style="padding: 40px; color: #888;">Брони не найдены</td>
-            </tr>
-        `;
-        return;
-    }
-
-    adminBookings.forEach(b => {
-        const tr = document.createElement('tr');
-        tr.dataset.bookingId = b.id;
-        if (adminSelectedBookingId === b.id) {
-            tr.classList.add('selected');
-        }
-
-        tr.onclick = () => selectAdminBookingRow(b.id);
-
-        const roomName = b.resource || '—';
-        const dateFormatted = formatDisplayDateRu(b.date);
-        const timeLabel = (b.start_time && b.end_time)
-            ? `${b.start_time.substring(0, 5)} - ${b.end_time.substring(0, 5)}`
-            : '';
-        const dateTimeText = `${dateFormatted}<br>${timeLabel}`;
-        const customerName = b.user || '—';
-
-        // Статус: зеленый для подтвержденных/ожидающих, красный для отмененных
-        const isCancelled = b.status === 'CANCELLED';
-        const statusClass = isCancelled ? 'cancelled' : 'confirmed';
-        const statusText = isCancelled ? 'Отменена' : 'Подтверждена';
-
-        tr.innerHTML = `
-            <td>${roomName}</td>
-            <td>${dateTimeText}</td>
-            <td>${customerName}</td>
-            <td>
-                <span class="admin-status-badge ${statusClass}">${statusText}</span>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function selectAdminBookingRow(bookingId) {
-    if (adminSelectedBookingId === bookingId) {
-        adminSelectedBookingId = null;
-    } else {
-        adminSelectedBookingId = bookingId;
-    }
-
-    document.querySelectorAll('#adminBookingsTbody tr').forEach(tr => {
-        const id = parseInt(tr.dataset.bookingId, 10);
-        tr.classList.toggle('selected', id === adminSelectedBookingId);
-    });
-}
-
-function updateAdminCancelBtn() {
-    const btn = document.getElementById('adminCancelBtn');
-    if (!btn) return;
-    btn.disabled = false;
-}
-
-async function handleAdminCancelBooking() {
-    if (!adminSelectedBookingId) {
-        showToast('Пожалуйста, выберите бронь из таблицы для отмены', 'error');
-        return;
-    }
-
-    const isAdmin = await verifyAdminRole();
-    if (!isAdmin) {
-        showToast('Доступ запрещен. Только администратор может отменять брони.', 'error');
-        return;
-    }
-
-    const b = adminBookings.find(x => x.id === adminSelectedBookingId);
-    if (!b) return;
-
-    if (b.status === 'CANCELLED') {
-        showToast('Эта бронь уже отменена', 'error');
-        return;
-    }
-
-    const dateFormatted = formatDisplayDateRu(b.date);
-    const timeLabel = (b.start_time && b.end_time)
-        ? `${b.start_time.substring(0, 5)} - ${b.end_time.substring(0, 5)}`
-        : '';
-
-    const confirmMsg = `Отменить бронь #${b.id} (${b.resource || ''}, ${dateFormatted} ${timeLabel}, заказчик: ${b.user || ''})?`;
-    if (!confirm(confirmMsg)) {
-        return;
-    }
-
-    const res = await apiFetch(`/bookings/${b.id}/cancel?user_id=${currentUser.id}`, { method: 'POST' });
-
-    if (res.isNetworkError) {
-        showToast('Сервер БД недоступен', 'error');
-        return;
-    }
-
-    if (!res.ok) {
-        showToast(res.data?.detail || 'Ошибка при отмене брони', 'error');
-        return;
-    }
-
-    showToast(`Бронь #${b.id} успешно отменена`, 'success');
-    await applyAdminFilters();
     loadScheduleGrid();
 }
 

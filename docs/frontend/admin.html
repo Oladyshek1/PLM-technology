@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — Бронирование помещений</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #fff;
+    background-image: url('src/images/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #333;
+    padding-top: 90px; /* Отступ под однострочную фиксированную шапку (70px) */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ===== ШАПКА (HEADER) ===== */
+.header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    z-index: 1000;
+    border-bottom: 1px solid #E0E0E0;
+    gap: 20px;
+}
+
+/* Логотип слева в шапке (только изображение Логотип.png) */
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.logo img {
+    height: 52px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* Центральная часть: навигационные вкладки */
+.nav-tabs {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+    pointer-events: auto;
+}
+.nav-tab {
+    padding: 8px 24px;
+    border: none;
+    border-radius: 30px;
+    background: #B02E61;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 0 0 4px #fff !important;
+    transition: background 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+.nav-tab:hover { background: #8E254E; }
+.nav-tab.active { background: #B02E61; box-shadow: 0 0 0 4px #fff, 0 4px 12px rgba(176, 46, 97, 0.3) !important; }
+
+/* Правая часть шапки: имя пользователя, кнопка входа и иконка 'i' */
+.auth-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    min-width: 0;
+    justify-content: flex-end;
+}
+.user-name-display {
+    font-size: 14px;
+    font-weight: 500;
+    color: #000;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    flex-shrink: 1;
+    min-width: 0;
+}
+.auth-btn {
+    padding: 8px 18px;
+    border: 2px solid #8D4462;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #8D4462;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: none !important;
+}
+.auth-btn:hover { background: rgba(249, 233, 240, 0.85); }
+
+/* Иконка «i» в 1-й строке справа от кнопки входа */
+.nav-info-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+.nav-info-btn:hover {
+    transform: scale(1.08);
+}
+.nav-info-btn img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 50%;
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Контейнер для контента с карточкой */
+.content-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    max-width: 1200px;
+    margin: 0 auto;
+    border: 1px solid #EFEFEF;
+}
+
+/* ===== ГЛАВНАЯ СТРАНИЦА (КАРУСЕЛЬ И ОПИСАНИЕ ИЗ HTML.HTML) ===== */
+.rooms-carousel {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    margin-bottom: 40px;
+    scrollbar-width: thin;
+}
+.room-thumb {
+    flex-shrink: 0;
+    width: 160px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.room-thumb:hover { opacity: 0.85; }
+.room-thumb.active { opacity: 1; }
+.room-thumb img {
+    width: 160px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 2px solid transparent;
+    display: block;
+}
+.room-thumb.active img { border-color: #B02E61; }
+.room-thumb span { font-size: 14px; color: #000; display: block; font-weight: 500; }
+
+.room-detail {
+    display: flex;
+    gap: 40px;
+    align-items: stretch;
+}
+.room-specs {
+    flex: 1;
+    border: 2px solid #E0E0E0;
+    padding: 30px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
+}
+.spec-row {
+    display: flex;
+    margin-bottom: 20px;
+    align-items: baseline;
+}
+.spec-row:last-child { margin-bottom: 0; }
+.spec-label {
+    width: 160px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #000;
+    flex-shrink: 0;
+}
+.spec-value {
+    font-size: 16px;
+    color: #000;
+    line-height: 1.5;
+    font-weight: 500;
+}
+.room-photo {
+    flex: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    max-height: 400px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.room-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* СТРАНИЦЫ (PAGE SWITCHING) */
+.page { display: none; padding: 20px 60px 60px 60px; }
+.page.active { display: block; }
+
+/* ===== СТРАНИЦА АДМИНА: БРОНИ ===== */
+.admin-bookings-layout { max-width: 1400px; margin: 0 auto; }
+
+/* ===== ПАНЕЛЬ ФИЛЬТРОВ ===== */
+.bookings-filters {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    padding: 20px 30px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid #EFEFEF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 160px;
+}
+.filter-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    font-family: inherit;
+}
+.filter-group select,
+.filter-group input[type="date"],
+.filter-group input[type="text"] {
+    width: 100%;
+    height: 40px;
+    padding: 10px 14px;
+    border: 1px solid #CCC;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.filter-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+    cursor: pointer;
+}
+.filter-group select:focus,
+.filter-group input[type="date"]:focus,
+.filter-group input[type="text"]:focus {
+    border-color: #B02E61;
+}
+.filter-apply-btn {
+    height: 40px;
+    padding: 0 28px 2px 28px;
+    background: #B02E61;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: inherit;
+    box-shadow: none;
+    align-self: flex-end;
+    margin: 0;
+    box-sizing: border-box;
+    line-height: 1;
+}
+.filter-apply-btn:hover {
+    background: #8E254E;
+}
+.filter-reset-btn {
+    height: 40px;
+    padding: 0 20px 2px 20px;
+    background: transparent;
+    color: #B02E61;
+    border: 2px solid #B02E61;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: flex-end;
+    font-family: inherit;
+    box-sizing: border-box;
+    line-height: 1;
+}
+.filter-reset-btn:hover {
+    background: rgba(249, 233, 240, 0.85);
+}
+
+#page-admin-bookings {
+    padding: 20px 60px 60px 60px;
+    min-height: calc(100vh - 140px);
+}
+.admin-search-wrapper {
+    position: relative;
+    width: 100%;
+}
+.admin-search-wrapper input {
+    width: 100%;
+    height: 40px;
+    padding: 10px 36px 10px 14px;
+    border: 1px solid #CCC;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.admin-search-wrapper input:focus {
+    border-color: #B02E61;
+}
+.admin-search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    color: #999;
+}
+.admin-summary-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    padding: 24px 30px;
+    margin-bottom: 24px;
+    border: 1px solid #EFEFEF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+.admin-summary-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+.admin-summary-period {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+.admin-summary-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.admin-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.admin-bar-label {
+    min-width: 200px;
+    font-size: 15px;
+    color: #333;
+    font-weight: 500;
+}
+.admin-bar-track {
+    flex: 1;
+    max-width: 650px;
+    height: 24px;
+    background: rgba(240, 240, 240, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+.admin-bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    background-image: linear-gradient(90deg, #B02E61 0%, #D4457A 100%);
+    transition: width 0.5s ease;
+}
+.admin-table-container {
+    padding: 0;
+}
+.admin-table-wrapper {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(5px);
+    border: 1px solid #EFEFEF;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+.admin-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: #B02E61;
+    color: #fff;
+}
+.admin-table-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    text-align: left;
+    font-size: 14px;
+}
+.admin-table thead {
+    background: rgba(245, 245, 245, 0.5);
+    color: #333;
+}
+.admin-table th {
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 2px solid #E0E0E0;
+}
+.admin-table th.th-sortable {
+    cursor: pointer;
+    user-select: none;
+}
+.admin-sort-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 6px;
+    font-size: 20px;
+    line-height: 1;
+    color: #B02E61;
+}
+.admin-table tbody tr {
+    border-bottom: 1px solid #F0F0F0;
+    transition: background 0.15s;
+    cursor: pointer;
+}
+.admin-table tbody tr:nth-child(even) {
+    background: rgba(249, 233, 240, 0.15);
+}
+.admin-table tbody tr:hover {
+    background: rgba(249, 233, 240, 0.3);
+}
+.admin-table tbody tr.selected {
+    background: rgba(176, 46, 97, 0.1) !important;
+    border-left: 3px solid #B02E61;
+}
+.admin-table td {
+    padding: 14px 20px;
+    color: #333;
+    vertical-align: middle;
+}
+.admin-status-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+.admin-status-badge.confirmed {
+    background: rgba(46, 125, 50, 0.1);
+    color: #2E7D32;
+    border: 1px solid rgba(46, 125, 50, 0.3);
+}
+.admin-status-badge.cancelled {
+    background: rgba(229, 57, 53, 0.1);
+    color: #E53935;
+    border: 1px solid rgba(229, 57, 53, 0.3);
+}
+.admin-status-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-start;
+}
+.admin-row-cancel-btn {
+    padding: 6px 14px;
+    background: #ffffff;
+    color: #B02E61;
+    border: 1px solid #B02E61;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.admin-row-cancel-btn:hover {
+    background: rgba(176, 46, 97, 0.08);
+}
+.admin-row-cancel-btn:active {
+    transform: scale(0.96);
+    background: rgba(176, 46, 97, 0.15);
+}
+.admin-cancel-btn {
+    padding: 8px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+}
+.admin-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+.admin-cancel-btn:active {
+    transform: scale(0.98);
+}
+
+/* ===== МОДАЛЬНЫЕ ОКНА ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 35px 40px;
+    width: 90%;
+    max-width: 480px;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+.modal h2 {
+    font-size: 22px;
+    color: #000;
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: 700;
+}
+.modal-close {
+    position: absolute;
+    top: 18px; right: 20px;
+    background: none;
+    border: none;
+    font-size: 26px;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+.modal-close:hover { color: #000; }
+
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+.form-group input {
+    width: 100%;
+    height: 42px;
+    padding: 8px 14px;
+    border: 1px solid #D0D0D0;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #333;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.form-group input:focus {
+    border-color: #B02E61;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 5px;
+}
+.auth-action-btn {
+    padding: 10px 24px;
+    border: 2px solid #8D4462;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #8D4462;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 150px;
+    font-family: inherit;
+    box-shadow: none;
+}
+.auth-action-btn:hover { background: rgba(249, 233, 240, 0.85); }
+
+.auth-error-line {
+    min-height: 20px;
+    font-size: 13px;
+    color: #D32F2F;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+/* МОДАЛКА ОШИБКИ */
+.error-modal-overlay {
+    z-index: 3000;
+}
+.error-modal-wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 90vw;
+}
+.error-modal-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 30px 40px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    box-sizing: border-box;
+}
+.error-modal-wrapper.modal-size-compact .error-modal-box {
+    min-width: 420px;
+    max-width: 480px;
+}
+.error-modal-wrapper.modal-size-large .error-modal-box {
+    min-width: 520px;
+    max-width: 580px;
+}
+.error-modal-box h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 16px;
+}
+.error-modal-box p {
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 300 !important;
+    font-size: 24px !important;
+    color: #222;
+    line-height: 1.35;
+    margin: 0;
+}
+.error-modal-outer-close {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 42px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, opacity 0.15s;
+    padding: 0;
+    outline: none;
+}
+.error-modal-outer-close:hover {
+    transform: scale(1.15);
+    opacity: 0.9;
+}
+
+/* МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ */
+.info-modal {
+    text-align: center;
+    padding: 35px 30px;
+}
+.info-modal h2 {
+    font-size: 22px;
+    color: #000;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+.info-modal p {
+    font-size: 15px;
+    color: #444;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+.info-modal a {
+    color: #B02E61;
+    text-decoration: none;
+}
+.info-modal a:hover {
+    text-decoration: underline;
+}
+
+/* Всплывающие уведомления */
+.toast-notice {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #2E7D32;
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    z-index: 9999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.toast-notice.show {
+    display: block;
+    opacity: 1;
+}
+.toast-notice.error {
+    background: #D32F2F;
+}
+
+/* ===== ФУТЕР ===== */
+.footer {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #E0E0E0;
+    margin-top: auto;
+}
+.footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 60px 0;
+}
+.footer-logo {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    padding-top: 7px;
+    margin-bottom: 0;
+    text-decoration: none;
+    cursor: pointer;
+}
+.footer-logo img {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+.footer-content {
+    display: flex;
+    gap: 60px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.8;
+}
+.footer-col {
+    flex: 1;
+    min-width: 250px;
+}
+.footer-col-left {
+    max-width: 480px;
+}
+.footer-col-right {
+    max-width: 520px;
+}
+.footer-col strong {
+    color: #333;
+}
+.footer-col p {
+    margin-bottom: 6px;
+}
+.footer-col-group {
+    margin-top: 24px;
+}
+.footer-col-group p {
+    margin-bottom: 6px;
+}
+.footer-bottom {
+    text-align: center;
+    margin-top: 7px;
+    padding-top: 7px;
+    padding-bottom: 15px;
+    border-top: 1px solid #E0E0E0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+}
+.footer-bottom strong {
+    font-weight: 700;
+}
+.footer-bottom a {
+    color: #B02E61;
+    text-decoration: none;
+}
+.footer-bottom a:hover {
+    text-decoration: underline;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===== ШАПКА: ЛОГОТИП, НАВИГАЦИЯ, ВХОД АДМИНА И КНОПКА ИНФО ===== -->
+<header class="header">
+    <a href="#" class="logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
+        <img src="src/images/logos/logo.png" alt="Логотип">
+    </a>
+
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="showPage('home', this)">Главная</button>
+        <button class="nav-tab" id="adminBookingsNavBtn" style="display: none;" onclick="showPage('admin-bookings', this)">Брони</button>
+    </nav>
+
+    <div class="auth-wrapper">
+        <span class="user-name-display" id="userNameDisplay" style="display: none;"></span>
+        <button class="auth-btn" id="authBtn" onclick="openAdminAuthModal()">Войти</button>
+        <button class="nav-info-btn" id="headerInfoBtn" title="Информация о системе" onclick="openSystemInfoModal()">
+            <img src="src/icons/info.png" alt="Информация">
+        </button>
+    </div>
+</header>
+
+<!-- ===== ГЛАВНАЯ СТРАНИЦА ===== -->
+<div class="page active" id="page-home">
+    <div class="content-card">
+        <!-- Карусель помещений -->
+        <div class="rooms-carousel" id="roomsCarousel">
+            <!-- Заполняется динамически через JS -->
+        </div>
+
+        <!-- Характеристики выбранного помещения -->
+        <div class="room-detail" id="roomDetail">
+            <div class="room-specs" id="roomSpecs">
+                <!-- Заполняется через JS -->
+            </div>
+            <div class="room-photo">
+                <img id="roomPhoto" src="" alt="Фото помещения">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== АДМИН-ПАНЕЛЬ: БРОНИ ===== -->
+<div class="page" id="page-admin-bookings">
+    <div class="admin-bookings-layout">
+        <!-- Панель фильтров -->
+        <div class="bookings-filters">
+            <div class="filter-group">
+                <label for="adminFilterRoom">Помещение:</label>
+                <select id="adminFilterRoom">
+                    <option value="">Все помещения</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="adminFilterDateFrom">С:</label>
+                <input type="date" id="adminFilterDateFrom">
+            </div>
+            <div class="filter-group">
+                <label for="adminFilterDateTo">По:</label>
+                <input type="date" id="adminFilterDateTo">
+            </div>
+            <div class="filter-group">
+                <label for="adminFilterSearch">Поиск по заказчику:</label>
+                <div class="admin-search-wrapper">
+                    <input type="text" id="adminFilterSearch" placeholder="Введите имя" onkeydown="if(event.key==='Enter') applyAdminFilters()">
+                    <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </div>
+            <button class="filter-apply-btn" onclick="applyAdminFilters()">Применить</button>
+            <button class="filter-reset-btn" onclick="resetAdminFilters()">Сбросить</button>
+        </div>
+
+        <!-- Сводка по загруженности -->
+        <div class="admin-summary-card">
+            <div class="admin-summary-title">Сводка по загруженности</div>
+            <div class="admin-summary-period" id="adminSummaryPeriod">За период: —</div>
+            <div class="admin-summary-bars" id="adminSummaryBars">
+                <!-- Заполняется динамически -->
+            </div>
+        </div>
+
+        <!-- Таблица броней -->
+        <div class="admin-table-container">
+            <div class="admin-table-wrapper">
+                <div class="admin-table-header">
+                    <h3>Список броней</h3>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">Помещение</th>
+                            <th style="width: 16%;">Дата создания</th>
+                            <th style="width: 18%;" class="th-sortable" onclick="toggleAdminSort()" title="Нажмите для сортировки">
+                                Дата и время
+                                <span class="admin-sort-icon" id="adminSortIcon">↓</span>
+                            </th>
+                            <th style="width: 28%;">Заказчик</th>
+                            <th style="width: 20%;">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminBookingsTbody">
+                        <!-- Заполняется динамически -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛКА: ВХОД АДМИНИСТРАТОРА (ФИО + ПАРОЛЬ) ===== -->
+<div class="modal-overlay" id="adminAuthModal">
+    <div class="modal auth-modal">
+        <button class="modal-close" onclick="closeModal('adminAuthModal')">&times;</button>
+        <h2>Вход</h2>
+        <div class="form-group">
+            <label for="adminAuthFio">ФИО:</label>
+            <input type="text" id="adminAuthFio" placeholder="Иванов Иван Иванович" oninput="clearAdminAuthError()" onkeydown="if(event.key==='Enter') handleAdminLogin()">
+        </div>
+        <div class="form-group">
+            <label for="adminAuthPassword">Пароль:</label>
+            <input type="password" id="adminAuthPassword" placeholder="Введите пароль" oninput="clearAdminAuthError()" onkeydown="if(event.key==='Enter') handleAdminLogin()">
+        </div>
+        <div class="auth-error-line" id="adminAuthError"></div>
+        <div class="auth-buttons">
+            <button class="auth-action-btn" onclick="handleAdminLogin()">Войти</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ ===== -->
+<div class="modal-overlay" id="systemInfoModal">
+    <div class="modal info-modal">
+        <button class="modal-close" onclick="closeModal('systemInfoModal')">&times;</button>
+        <h2 id="sysInfoProduct">Система бронирования помещений</h2>
+        <p id="sysInfoVersion">Версия: 1.2.0</p>
+        <p id="sysInfoBuild">Сборка: 01.11.2026</p>
+        <p id="sysInfoSupport">Техническая поддержка: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a></p>
+    </div>
+</div>
+
+<!-- ===== МОДАЛКА ОШИБКИ ===== -->
+<div class="modal-overlay error-modal-overlay" id="errorModal">
+    <div class="error-modal-wrapper modal-size-compact">
+        <button class="error-modal-outer-close" onclick="closeModal('errorModal')">&times;</button>
+        <div class="error-modal-box">
+            <h2>Внимание!</h2>
+            <p id="errorModalMessage"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Всплывающие уведомления -->
+<div class="toast-notice" id="toastNotice"></div>
+
+<!-- ===== ФУТЕР ===== -->
+<footer class="footer">
+    <div class="footer-inner">
+        <a href="#" class="footer-logo" onclick="showPage('home', document.querySelector('.nav-tab'))">
+            <img src="src/images/logos/logo.png" alt="Логотип">
+        </a>
+        <div class="footer-content">
+            <div class="footer-col footer-col-left">
+                <p>Общество с ограниченной ответственностью «ТаймРум»</p>
+                <p>Юридический адрес: Нижний Новгород, ул. Рабочая, 17 оф. 55</p>
+                <div class="footer-col-group">
+                    <p>ИНН: 7453350133</p>
+                    <p>Контактный телефон: 8 (800) 123- 45-67</p>
+                </div>
+            </div>
+            <div class="footer-col footer-col-right">
+                <p>ОКВЭД: 62.01</p>
+                <p>Коды видов деятельности: 1.01, 1.02 (в соответствие с Приказом министерства цифрового развития, связи и массовых коммуникаций РФ от 11 мая 2023 г. № 449)</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            Ждем ваших предложений для сотрудничества: <a href="mailto:support@booking-system.ru">support@booking-system.ru</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
+async function apiFetch(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const defaultHeaders = {
+        'Content-Type': 'application/json',
+    };
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...defaultHeaders,
+                ...(options.headers || {})
+            }
+        });
+        const contentType = response.headers.get('content-type');
+        let data = null;
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            try { data = JSON.parse(text); } catch { data = text; }
+        }
+        return {
+            ok: response.ok,
+            status: response.status,
+            data: data
+        };
+    } catch (err) {
+        console.error('API Fetch Error:', err);
+        return {
+            ok: false,
+            status: 0,
+            data: { detail: 'Сетевая ошибка: ' + err.message },
+            isNetworkError: true
+        };
+    }
+}
+
+// Данные
+let roomsData = [];
+
+const roomImagesById = {
+    1: 'src/images/rooms/meeting-room-1.png',   // ID 1: Переговорная А / Переговорная комната № 1
+    2: 'src/images/rooms/meeting-room-2.png',   // ID 2: Переговорная Б / Переговорная комната № 2
+    3: 'src/images/rooms/assembly-hall.png',    // ID 3: Актовый зал
+    4: 'src/images/rooms/conference-hall.png',  // ID 4: Конференц-зал
+    5: 'src/images/rooms/call-room-1.png',      // ID 5: Комната для звонков № 1
+    6: 'src/images/rooms/call-room-2.png'       // ID 6: Комната для звонков № 2
+};
+
+const roomImagesByName = {
+    'переговорная а': 'src/images/rooms/meeting-room-1.png',
+    'переговорная комната № 1': 'src/images/rooms/meeting-room-1.png',
+    'переговорная б': 'src/images/rooms/meeting-room-2.png',
+    'переговорная комната № 2': 'src/images/rooms/meeting-room-2.png',
+    'актовый зал': 'src/images/rooms/assembly-hall.png',
+    'конференц-зал': 'src/images/rooms/conference-hall.png',
+    'конференц зал': 'src/images/rooms/conference-hall.png',
+    'комната для звонков № 1': 'src/images/rooms/call-room-1.png',
+    'комната для звонков 1': 'src/images/rooms/call-room-1.png',
+    'комната для звонков № 2': 'src/images/rooms/call-room-2.png',
+    'комната для звонков 2': 'src/images/rooms/call-room-2.png'
+};
+
+function getRoomImageUrl(roomId, roomName) {
+    const id = parseInt(roomId, 10);
+    if (id && roomImagesById[id]) {
+        return roomImagesById[id];
+    }
+    if (roomName && typeof roomName === 'string') {
+        const cleanName = roomName.trim().toLowerCase();
+        if (roomImagesByName[cleanName]) {
+            return roomImagesByName[cleanName];
+        }
+        for (const [key, val] of Object.entries(roomImagesByName)) {
+            if (cleanName.includes(key)) return val;
+        }
+    }
+    return 'src/images/rooms/assembly-hall.png';
+}
+
+function toDateISO(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+// ===== ВВОД НОМЕРА ТЕЛЕФОНА =====
+function formatPhoneValue(rawVal) {
+    if (!rawVal) return '';
+    if (rawVal.trim() === '+') return '+7 (';
+    const rawDigits = rawVal.replace(/\D/g, '');
+    if (!rawDigits) return '';
+
+    let subDigits = '';
+    if (rawDigits[0] === '7' || rawDigits[0] === '8') {
+        if (rawDigits.length === 1) return '+7 (';
+        subDigits = rawDigits.substring(1, 11);
+    } else {
+        subDigits = rawDigits.substring(0, 10);
+    }
+
+    if (!subDigits) return '+7 (';
+
+    let res = '+7 (';
+    res += subDigits.substring(0, Math.min(3, subDigits.length));
+    if (subDigits.length > 3) {
+        res += ') ' + subDigits.substring(3, Math.min(6, subDigits.length));
+    }
+    if (subDigits.length > 6) {
+        res += '-' + subDigits.substring(6, Math.min(8, subDigits.length));
+    }
+    if (subDigits.length > 8) {
+        res += '-' + subDigits.substring(8, 10);
+    }
+    return res;
+}
+
+function getCursorPositionForDigitCount(formatted, digitCount) {
+    if (!formatted) return 0;
+    if (digitCount <= 0) {
+        return formatted.indexOf('(') !== -1 ? formatted.indexOf('(') + 1 : formatted.length;
+    }
+    let count = 0;
+    for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) {
+            if (i > 1) {
+                count++;
+                if (count === digitCount) return i + 1;
+            }
+        }
+    }
+    return formatted.length;
+}
+
+function handlePhoneInput(input) {
+    const rawVal = input.value;
+    if (!rawVal) {
+        input.value = '';
+        return;
+    }
+
+    const selStart = input.selectionStart !== null ? input.selectionStart : rawVal.length;
+    const textBefore = rawVal.substring(0, selStart);
+    let digitsBefore = textBefore.replace(/\D/g, '');
+    let subDigitsBefore = 0;
+    if (digitsBefore.startsWith('7') || digitsBefore.startsWith('8')) {
+        subDigitsBefore = digitsBefore.substring(1).length;
+    } else {
+        subDigitsBefore = digitsBefore.length;
+    }
+
+    const formatted = formatPhoneValue(rawVal);
+    input.value = formatted;
+
+    const newPos = getCursorPositionForDigitCount(formatted, subDigitsBefore);
+    input.setSelectionRange(newPos, newPos);
+}
+
+function handlePhoneKeyDown(e) {
+    const input = e.target;
+    if (e.key === 'Backspace') {
+        const selStart = input.selectionStart;
+        const selEnd = input.selectionEnd;
+
+        if ((selStart === 0 && selEnd === input.value.length) || input.value.length <= 4) {
+            input.value = '';
+            e.preventDefault();
+            return;
+        }
+
+        if (selStart === selEnd) {
+            const textBefore = input.value.substring(0, selStart);
+            const digitsBefore = textBefore.replace(/\D/g, '');
+            const subDigitsBefore = (digitsBefore.startsWith('7') || digitsBefore.startsWith('8'))
+                ? digitsBefore.substring(1).length
+                : digitsBefore.length;
+
+            if (selStart <= 4 && subDigitsBefore === 0) {
+                input.value = '';
+                e.preventDefault();
+                return;
+            }
+
+            const charToDelete = input.value[selStart - 1];
+            if (!/\d/.test(charToDelete)) {
+                e.preventDefault();
+                let lastDigitIdx = -1;
+                for (let i = selStart - 1; i >= 0; i--) {
+                    if (/\d/.test(input.value[i]) && i > 1) {
+                        lastDigitIdx = i;
+                        break;
+                    }
+                }
+                if (lastDigitIdx !== -1) {
+                    const val = input.value;
+                    const newVal = val.substring(0, lastDigitIdx) + val.substring(lastDigitIdx + 1);
+                    const formatted = formatPhoneValue(newVal);
+                    input.value = formatted;
+                    const targetSubCount = Math.max(0, subDigitsBefore - 1);
+                    const newPos = getCursorPositionForDigitCount(formatted, targetSubCount);
+                    input.setSelectionRange(newPos, newPos);
+                } else {
+                    input.value = '';
+                }
+            }
+        }
+    }
+}
+
+function getNormalizedPhoneById(elemId) {
+    const input = document.getElementById(elemId);
+    if (!input) return '';
+    const rawDigits = input.value.replace(/\D/g, '');
+    let subDigits = '';
+    if (rawDigits.startsWith('7') || rawDigits.startsWith('8')) {
+        subDigits = rawDigits.substring(1);
+    } else {
+        subDigits = rawDigits;
+    }
+    return subDigits.length === 10 ? '+7' + subDigits : '';
+}
+
+// Уведомления
+let toastTimer = null;
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastNotice');
+    if (!toast) return;
+    if (toastTimer) {
+        clearTimeout(toastTimer);
+        toastTimer = null;
+    }
+    toast.textContent = message;
+    if (type === 'error') {
+        toast.classList.add('error');
+    } else {
+        toast.classList.remove('error');
+    }
+    toast.classList.add('show');
+    toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        toastTimer = null;
+    }, 3500);
+}
+
+function showErrorModal(htmlMessage, sizeClass = 'modal-size-compact') {
+    const modal = document.getElementById('errorModal');
+    const wrapper = modal ? modal.querySelector('.error-modal-wrapper') : null;
+    const msgEl = document.getElementById('errorModalMessage');
+    if (modal && msgEl) {
+        msgEl.innerHTML = htmlMessage;
+        if (wrapper) {
+            wrapper.classList.remove('modal-size-large', 'modal-size-compact');
+            wrapper.classList.add(sizeClass);
+        }
+        modal.classList.add('active');
+    }
+}
+
+// ===== АВТОРИЗАЦИЯ АДМИНИСТРАТОРА (С ТОКЕНОМ И ПАРОЛЕМ) =====
+let currentAdmin = null;
+let adminToken = null;
+
+function loadStoredAdmin() {
+    try {
+        const storedUser = localStorage.getItem('apiAdminUser');
+        const storedToken = localStorage.getItem('apiAdminToken');
+        if (storedUser && storedToken) {
+            currentAdmin = JSON.parse(storedUser);
+            adminToken = storedToken;
+        }
+    } catch {
+        currentAdmin = null;
+        adminToken = null;
+    }
+}
+
+function saveStoredAdmin(user, token) {
+    if (user && token) {
+        localStorage.setItem('apiAdminUser', JSON.stringify(user));
+        localStorage.setItem('apiAdminToken', token);
+        currentAdmin = user;
+        adminToken = token;
+    } else {
+        localStorage.removeItem('apiAdminUser');
+        localStorage.removeItem('apiAdminToken');
+        currentAdmin = null;
+        adminToken = null;
+    }
+}
+
+function updateAdminAuthUI() {
+    const btn = document.getElementById('authBtn');
+    const nameEl = document.getElementById('userNameDisplay');
+    const adminTab = document.getElementById('adminBookingsNavBtn');
+
+    if (currentAdmin && adminToken) {
+        if (adminTab) adminTab.style.display = '';
+        if (nameEl) {
+            nameEl.textContent = currentAdmin.name || 'Администратор';
+            nameEl.title = nameEl.textContent;
+            nameEl.style.display = 'inline-block';
+        }
+        btn.textContent = 'Выход';
+        btn.onclick = handleAdminLogout;
+    } else {
+        if (adminTab) adminTab.style.display = 'none';
+        if (nameEl) {
+            nameEl.textContent = '';
+            nameEl.style.display = 'none';
+        }
+        btn.textContent = 'Войти';
+        btn.onclick = openAdminAuthModal;
+    }
+}
+
+function openAdminAuthModal() {
+    const fioInput = document.getElementById('adminAuthFio');
+    const passInput = document.getElementById('adminAuthPassword');
+    if (fioInput) fioInput.value = '';
+    if (passInput) passInput.value = '';
+    clearAdminAuthError();
+    document.getElementById('adminAuthModal').classList.add('active');
+}
+
+function clearAdminAuthError() {
+    const errEl = document.getElementById('adminAuthError');
+    if (errEl) {
+        errEl.textContent = '';
+    }
+}
+
+async function handleAdminLogin() {
+    clearAdminAuthError();
+    const fio = document.getElementById('adminAuthFio')?.value?.trim() || '';
+    const password = document.getElementById('adminAuthPassword')?.value || '';
+
+    if (!fio || !password) {
+        const errEl = document.getElementById('adminAuthError');
+        if (errEl) errEl.textContent = 'Введите ФИО и пароль';
+        return;
+    }
+
+    const res = await apiFetch('/auth/admin-login', {
+        method: 'POST',
+        body: JSON.stringify({ fio: fio, password: password })
+    });
+
+    if (res.isNetworkError) {
+        showErrorModal('Сервер недоступен. Проверьте запуск бэкенда.');
+        return;
+    }
+
+    if (res.status === 401 || !res.ok) {
+        const errEl = document.getElementById('adminAuthError');
+        const detail = res.data?.detail || 'Неверные ФИО или пароль';
+        if (errEl) errEl.textContent = detail;
+        return;
+    }
+
+    // Успешный вход: сохраняем токен и данные админа
+    saveStoredAdmin(res.data.user, res.data.token);
+    updateAdminAuthUI();
+    closeModal('adminAuthModal');
+    // showToast('Успешный вход в панель администратора!', 'success');
+
+    // Переключаем сразу на вкладку "Брони"
+    const adminTab = document.getElementById('adminBookingsNavBtn');
+    showPage('admin-bookings', adminTab);
+}
+
+async function handleAdminLogout() {
+    if (adminToken) {
+        await apiFetch(`/auth/admin-logout?token=${encodeURIComponent(adminToken)}`, { method: 'POST' });
+    }
+    saveStoredAdmin(null, null);
+    updateAdminAuthUI();
+    showPage('home', document.querySelector('.nav-tab'));
+    // showToast('Вы вышли из учетной записи администратора');
+}
+
+// ===== ПРОВЕРКА РОЛИ И ТОКЕНА АДМИНИСТРАТОРА =====
+async function verifyAdminAccess() {
+    if (!currentAdmin || !adminToken) return false;
+    // Проверяем валидность токена запросом summary
+    const todayISO = toDateISO(new Date());
+    const res = await apiFetch(`/summary?date_from=${todayISO}&date_to=${todayISO}&token=${encodeURIComponent(adminToken)}`);
+    return res.ok;
+}
+
+// ===== НАВИГАЦИЯ =====
+async function showPage(pageName, btn) {
+    if (pageName === 'admin-bookings') {
+        const isValid = await verifyAdminAccess();
+        if (!isValid) {
+            showToast('Требуется авторизация администратора', 'error');
+            openAdminAuthModal();
+            return;
+        }
+    }
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    const targetPage = document.getElementById('page-' + pageName);
+    if (targetPage) targetPage.classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (pageName === 'home') renderHomeCarousel();
+    if (pageName === 'admin-bookings') initAdminBookingsPage();
+    window.scrollTo(0, 0);
+}
+
+// ===== ГЛАВНАЯ СТРАНИЦА: КАРУСЕЛЬ И ХАРАКТЕРИСТИКИ ПОМЕЩЕНИЙ =====
+let selectedHomeRoomIndex = 0;
+
+async function loadResources() {
+    const res = await apiFetch('/resources');
+    if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
+        roomsData = res.data;
+    } else {
+        roomsData = [];
+    }
+    renderHomeCarousel();
+}
+
+function renderHomeCarousel() {
+    const carousel = document.getElementById('roomsCarousel');
+    if (!carousel) return;
+    carousel.innerHTML = '';
+
+    if (roomsData.length === 0) {
+        carousel.innerHTML = '<div style="color: #888; padding: 20px;">Загрузка списка помещений из API...</div>';
+        renderHomeRoomDetail(-1);
+        return;
+    }
+
+    roomsData.forEach((room, idx) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'room-thumb' + (idx === selectedHomeRoomIndex ? ' active' : '');
+        thumb.dataset.room = idx;
+        const imgUrl = getRoomImageUrl(room.id);
+
+        thumb.innerHTML = `
+            <img src="${imgUrl}" alt="${room.name || '???'}" onerror="this.onerror=null; this.src='src/images/rooms/assembly-hall.png';">
+            <span>${room.name || '???'}</span>
+        `;
+        thumb.onclick = () => selectHomeRoom(idx);
+        carousel.appendChild(thumb);
+    });
+
+    renderHomeRoomDetail(selectedHomeRoomIndex);
+}
+
+function selectHomeRoom(index) {
+    selectedHomeRoomIndex = index;
+    renderHomeRoomDetail(index);
+}
+
+function renderHomeRoomDetail(index) {
+    const specsEl = document.getElementById('roomSpecs');
+    const photoEl = document.getElementById('roomPhoto');
+    if (!specsEl) return;
+
+    if (!roomsData || roomsData.length === 0 || index < 0 || !roomsData[index]) {
+        specsEl.innerHTML = `
+            <div class="spec-row"><span class="spec-label">Площадь:</span><span class="spec-value">???</span></div>
+            <div class="spec-row"><span class="spec-label">Вместимость:</span><span class="spec-value">???</span></div>
+            <div class="spec-row"><span class="spec-label">Оборудование:</span><span class="spec-value">???</span></div>
+        `;
+        if (photoEl) {
+            photoEl.src = '';
+            photoEl.alt = '???';
+        }
+        return;
+    }
+
+    const room = roomsData[index];
+
+    // Площадь из API (room.area):
+    const areaText = (room.area !== undefined && room.area !== null && room.area !== '') ? `${room.area} кв. м` : '???';
+    
+    // Вместимость из API (room.capacity):
+    const capacityText = (room.capacity !== undefined && room.capacity !== null && room.capacity !== '') ? `до ${room.capacity} человек` : '???';
+    
+    // Оборудование из API (room.equipment):
+    const equipmentText = (room.equipment !== undefined && room.equipment !== null && room.equipment !== '') ? room.equipment : '???';
+    
+    const imgUrl = getRoomImageUrl(room.id);
+
+    specsEl.innerHTML = `
+        <div class="spec-row"><span class="spec-label">Площадь:</span><span class="spec-value">${areaText}</span></div>
+        <div class="spec-row"><span class="spec-label">Вместимость:</span><span class="spec-value">${capacityText}</span></div>
+        <div class="spec-row"><span class="spec-label">Оборудование:</span><span class="spec-value">${equipmentText}</span></div>
+    `;
+
+    if (photoEl) {
+        photoEl.src = imgUrl;
+        photoEl.alt = room.name || '???';
+    }
+
+    document.querySelectorAll('.room-thumb').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+    });
+}
+
+// ===== АДМИН-ПАНЕЛЬ: БРОНИ (ЛОГИКА И ПОДКЛЮЧЕНИЕ К БД С ТОКЕНОМ) =====
+let adminBookings = [];
+let adminSelectedBookingId = null;
+let adminCurrentSort = 'start';
+
+function populateAdminRoomFilter() {
+    const select = document.getElementById('adminFilterRoom');
+    if (!select) return;
+    const curVal = select.value;
+    select.innerHTML = '<option value="">Все помещения</option>';
+    roomsData.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.name || '???';
+        select.appendChild(opt);
+    });
+    if (curVal && Array.from(select.options).some(o => o.value === curVal)) {
+        select.value = curVal;
+    }
+}
+
+function formatHoursText(hours) {
+    const num = Math.round(hours);
+    const lastDigit = num % 10;
+    const lastTwo = num % 100;
+    if (lastTwo >= 11 && lastTwo <= 19) return `${num} часов`;
+    if (lastDigit === 1) return `${num} час`;
+    if (lastDigit >= 2 && lastDigit <= 4) return `${num} часа`;
+    return `${num} часов`;
+}
+
+function formatDisplayDateRu(isoDateStr) {
+    if (!isoDateStr) return '';
+    const parts = isoDateStr.split('-');
+    if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    return isoDateStr;
+}
+
+function formatDisplayDateTimeRu(isoStr) {
+    if (!isoStr) return '—';
+    try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year}<br>${hours}:${minutes}`;
+    } catch (e) {
+        return isoStr;
+    }
+}
+
+async function initAdminBookingsPage() {
+    const isValid = await verifyAdminAccess();
+    if (!isValid) {
+        showToast('Сессия администратора истекла', 'error');
+        openAdminAuthModal();
+        return;
+    }
+
+    populateAdminRoomFilter();
+
+    const dateFromInput = document.getElementById('adminFilterDateFrom');
+    const dateToInput = document.getElementById('adminFilterDateTo');
+    if (dateFromInput && !dateFromInput.value) {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        dateFromInput.value = toDateISO(firstDay);
+    }
+    if (dateToInput && !dateToInput.value) {
+        const now = new Date();
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        dateToInput.value = toDateISO(lastDay);
+    }
+
+    await applyAdminFilters();
+}
+
+async function resetAdminFilters() {
+    const roomSelect = document.getElementById('adminFilterRoom');
+    const dateFromInput = document.getElementById('adminFilterDateFrom');
+    const dateToInput = document.getElementById('adminFilterDateTo');
+    const searchInput = document.getElementById('adminFilterSearch');
+
+    if (roomSelect) roomSelect.value = '';
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
+    if (searchInput) searchInput.value = '';
+
+    await applyAdminFilters();
+}
+
+async function applyAdminFilters() {
+    if (!adminToken) {
+        showToast('Требуется авторизация администратора', 'error');
+        openAdminAuthModal();
+        return;
+    }
+
+    const roomId = document.getElementById('adminFilterRoom')?.value || '';
+    const dateFrom = document.getElementById('adminFilterDateFrom')?.value || '';
+    const dateTo = document.getElementById('adminFilterDateTo')?.value || '';
+    const searchVal = document.getElementById('adminFilterSearch')?.value?.trim() || '';
+
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+        showToast('Дата «С» не может быть позже даты «По»', 'error');
+        return;
+    }
+
+    // 1. Загрузка сводки загруженности через GET /summary?token=...
+    let summaryUrl = `/summary?token=${encodeURIComponent(adminToken)}`;
+    if (dateFrom) summaryUrl += `&date_from=${encodeURIComponent(dateFrom)}`;
+    if (dateTo) summaryUrl += `&date_to=${encodeURIComponent(dateTo)}`;
+    if (roomId) summaryUrl += `&resource_id=${encodeURIComponent(roomId)}`;
+
+    const periodEl = document.getElementById('adminSummaryPeriod');
+    if (periodEl) {
+        if (dateFrom && dateTo) {
+            periodEl.textContent = `За период: ${formatDisplayDateRu(dateFrom)} - ${formatDisplayDateRu(dateTo)}`;
+        } else if (dateFrom) {
+            periodEl.textContent = `За период: с ${formatDisplayDateRu(dateFrom)}`;
+        } else if (dateTo) {
+            periodEl.textContent = `За период: по ${formatDisplayDateRu(dateTo)}`;
+        } else {
+            periodEl.textContent = 'За период: всё время';
+        }
+    }
+
+    // 2. Загрузка всех броней через GET /bookings?token=...
+    let bookingsUrl = `/bookings?token=${encodeURIComponent(adminToken)}`;
+    if (dateFrom) bookingsUrl += `&date_from=${encodeURIComponent(dateFrom)}`;
+    if (dateTo) bookingsUrl += `&date_to=${encodeURIComponent(dateTo)}`;
+    if (roomId) bookingsUrl += `&resource_id=${encodeURIComponent(roomId)}`;
+    if (searchVal) bookingsUrl += `&search=${encodeURIComponent(searchVal)}`;
+    if (adminCurrentSort) bookingsUrl += `&sort=${encodeURIComponent(adminCurrentSort)}`;
+
+    const [summaryRes, bookingsRes] = await Promise.all([
+        apiFetch(summaryUrl),
+        apiFetch(bookingsUrl)
+    ]);
+
+    if (summaryRes.status === 403 || bookingsRes.status === 403) {
+        showToast('Сессия администратора истекла. Пожалуйста, войдите снова.', 'error');
+        saveStoredAdmin(null, null);
+        updateAdminAuthUI();
+        openAdminAuthModal();
+        return;
+    }
+
+    renderAdminSummary(summaryRes.ok && Array.isArray(summaryRes.data) ? summaryRes.data : []);
+
+    adminSelectedBookingId = null;
+
+    if (bookingsRes.ok && Array.isArray(bookingsRes.data)) {
+        adminBookings = bookingsRes.data;
+    } else {
+        adminBookings = [];
+    }
+    renderAdminBookingsTable();
+}
+
+function renderAdminSummary(summaryItems) {
+    const barsContainer = document.getElementById('adminSummaryBars');
+    if (!barsContainer) return;
+    barsContainer.innerHTML = '';
+
+    if (!summaryItems || summaryItems.length === 0) {
+        barsContainer.innerHTML = '<div style="color: #888; font-size: 14px; padding: 10px 0;">Нет данных о загруженности за выбранный период</div>';
+        return;
+    }
+
+    const maxHours = Math.max(...summaryItems.map(item => item.hours || 0), 1);
+
+    summaryItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'admin-bar-row';
+
+        const hours = item.hours || 0;
+        const hoursLabel = formatHoursText(hours);
+        const roomName = item.resource || `Помещение #${item.resource_id}`;
+
+        const percentage = Math.max(12, Math.round((hours / maxHours) * 100));
+
+        row.innerHTML = `
+            <div class="admin-bar-label">${roomName} - ${hoursLabel}</div>
+            <div class="admin-bar-track">
+                <div class="admin-bar-fill" style="width: ${percentage}%;"></div>
+            </div>
+        `;
+        barsContainer.appendChild(row);
+    });
+}
+
+function toggleAdminSort() {
+    adminCurrentSort = (adminCurrentSort === 'start') ? 'start_desc' : 'start';
+    const icon = document.getElementById('adminSortIcon');
+    if (icon) {
+        icon.textContent = adminCurrentSort === 'start' ? '↓' : '↑';
+    }
+    applyAdminFilters();
+}
+
+function renderAdminBookingsTable() {
+    const tbody = document.getElementById('adminBookingsTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (adminBookings.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="padding: 40px; color: #888;">Брони не найдены</td>
+            </tr>
+        `;
+        return;
+    }
+
+    adminBookings.forEach(b => {
+        const tr = document.createElement('tr');
+        tr.dataset.bookingId = b.id;
+        const isSelected = (adminSelectedBookingId === b.id);
+        if (isSelected) {
+            tr.classList.add('selected');
+        }
+
+        tr.onclick = () => selectAdminBookingRow(b.id);
+
+        const roomName = b.resource || '—';
+        const createdAtFormatted = formatDisplayDateTimeRu(b.created_at);
+        const dateFormatted = formatDisplayDateRu(b.date);
+        const timeLabel = (b.start_time && b.end_time)
+            ? `${b.start_time.substring(0, 5)} - ${b.end_time.substring(0, 5)}`
+            : '';
+        const dateTimeText = `${dateFormatted}<br>${timeLabel}`;
+        const customerName = b.user || '—';
+
+        const isCancelled = b.status === 'CANCELLED';
+        const statusClass = isCancelled ? 'cancelled' : 'confirmed';
+        const statusText = isCancelled ? 'Отменена' : 'Подтверждена';
+
+        let cancelBtnHtml = '';
+        if (isSelected && !isCancelled) {
+            cancelBtnHtml = `<button class="admin-row-cancel-btn" onclick="event.stopPropagation(); handleAdminCancelBookingById(${b.id})">Отменить</button>`;
+        }
+
+        tr.innerHTML = `
+            <td>${roomName}</td>
+            <td>${createdAtFormatted}</td>
+            <td>${dateTimeText}</td>
+            <td>${customerName}</td>
+            <td>
+                <div class="admin-status-cell">
+                    <span class="admin-status-badge ${statusClass}">${statusText}</span>
+                    ${cancelBtnHtml}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function selectAdminBookingRow(bookingId) {
+    if (adminSelectedBookingId === bookingId) {
+        adminSelectedBookingId = null;
+    } else {
+        adminSelectedBookingId = bookingId;
+    }
+
+    // Перерисовываем строки, чтобы кнопка «Отменить» появлялась только в выбранной строке
+    renderAdminBookingsTable();
+}
+
+async function handleAdminCancelBookingById(bookingId) {
+    if (!bookingId) return;
+
+    if (!adminToken) {
+        showToast('Требуется авторизация администратора', 'error');
+        openAdminAuthModal();
+        return;
+    }
+
+    const b = adminBookings.find(x => x.id === bookingId);
+    if (!b) return;
+
+    if (b.status === 'CANCELLED') {
+        showToast('Эта бронь уже отменена', 'error');
+        return;
+    }
+
+    const dateFormatted = formatDisplayDateRu(b.date);
+    const timeLabel = (b.start_time && b.end_time)
+        ? `${b.start_time.substring(0, 5)} - ${b.end_time.substring(0, 5)}`
+        : '';
+
+    const confirmMsg = `Отменить бронь #${b.id} (${b.resource || ''}, ${dateFormatted} ${timeLabel}, заказчик: ${b.user || ''})?`;
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+
+    // Передаем токен администратора для гарантированного права отмены
+    const res = await apiFetch(`/bookings/${b.id}/cancel?token=${encodeURIComponent(adminToken)}&user_id=${currentAdmin.id}`, { method: 'POST' });
+
+    if (res.isNetworkError) {
+        showToast('Сервер БД недоступен', 'error');
+        return;
+    }
+
+    if (!res.ok) {
+        showToast(res.data?.detail || 'Ошибка при отмене брони', 'error');
+        return;
+    }
+
+    showToast(`Бронь #${b.id} успешно отменена`, 'success');
+    await applyAdminFilters();
+}
+
+async function handleAdminCancelBooking() {
+    if (adminSelectedBookingId) {
+        await handleAdminCancelBookingById(adminSelectedBookingId);
+    }
+}
+
+// ===== МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ (GET /version) =====
+async function openSystemInfoModal() {
+    const modal = document.getElementById('systemInfoModal');
+    if (!modal) return;
+
+    const productEl = document.getElementById('sysInfoProduct');
+    const versionEl = document.getElementById('sysInfoVersion');
+    const buildEl = document.getElementById('sysInfoBuild');
+    const supportEl = document.getElementById('sysInfoSupport');
+
+    // Состояние загрузки
+    productEl.textContent = 'Загрузка...';
+    versionEl.textContent = 'Версия: —';
+    buildEl.textContent = 'Сборка: —';
+    supportEl.textContent = 'Техническая поддержка: —';
+    modal.classList.add('active');
+
+    const res = await apiFetch('/version');
+
+    if (res.isNetworkError) {
+        productEl.textContent = 'Сервер недоступен';
+        return;
+    }
+
+    if (!res.ok || !res.data) {
+        productEl.textContent = 'Нет данных о системе';
+        return;
+    }
+
+    productEl.textContent = res.data.product || '—';
+    versionEl.textContent = `Версия: ${res.data.version || '—'}`;
+    const build = res.data.build_date_label || res.data.build_date || '—';
+    buildEl.textContent = `Сборка: ${build}`;
+    const email = (res.data.support && res.data.support.email) ? res.data.support.email : '';
+    if (email) {
+        supportEl.innerHTML = `Техническая поддержка: <a href="mailto:${email}">${email}</a>`;
+    } else {
+        supportEl.textContent = 'Техническая поддержка: —';
+    }
+}
+
+// Общие функции модалок
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+    });
+});
+
+// Инициализация
+async function initApp() {
+    loadStoredAdmin();
+    updateAdminAuthUI();
+    await loadResources();
+    if (currentAdmin && adminToken) {
+        // Если уже был авторизован админ, активируем вкладку броней
+        const adminTab = document.getElementById('adminBookingsNavBtn');
+        showPage('admin-bookings', adminTab);
+    }
+}
+
+initApp();
+</script>
+
+</body>
+</html>
