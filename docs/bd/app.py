@@ -172,8 +172,20 @@ class UserIn(BaseModel):
 
 
 class AdminLoginIn(BaseModel):
-    phone: str = Field(..., description="Телефон администратора (+7XXXXXXXXXX)")
+    # Вход администратора: имя (ФИО из формы админ-панели) + пароль.
+    # Телефон тоже принимается — для совместимости со Swagger и старым клиентом.
+    fio: str | None = Field(None, description="Имя администратора (например admin)")
+    phone: str | None = Field(None, description="Телефон администратора (+7XXXXXXXXXX)")
     password: str = Field(..., min_length=1, description="Пароль")
+
+    @field_validator("password")
+    @classmethod
+    def _check_identity(cls, v: str, info):
+        # Хотя бы одно из полей «кто ты» должно быть заполнено.
+        data = info.data
+        if not (data.get("fio") or data.get("phone")):
+            raise ValueError("укажите имя (fio) или телефон (phone)")
+        return v
 
 
 def query(sql, params=()):
@@ -643,27 +655,33 @@ def create_user(body: UserIn):
     return {"id": new_id, "name": body.name, "phone": body.phone, "role": ROLE_USER}
 
 
-@app.post("/auth/admin-login", summary="Вход администратора (телефон + пароль)")
+@app.post("/auth/admin-login", summary="Вход администратора (ФИО + пароль)")
 def admin_login(body: AdminLoginIn):
     # Пароль проверяется по bcrypt-хэшу. Успешный вход создаёт токен сессии,
     # который принимают админские действия (GET /bookings без user_id,
     # GET /summary, отмена чужой брони). Срок жизни — SESSION_HOURS.
+    # «Кто ты» — имя (fio из формы админ-панели) или телефон (phone, Swagger):
+    # имя ищется без учёта регистра, телефон — точно.
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute(
+        base_sql = (
             'SELECT "ID_Пользователь", "Имя", "Телефон", "Роль" AS role, '
-            '       "ПарольHash" AS pw '
-            'FROM "Пользователь" WHERE "Телефон" = %s',
-            (body.phone,),
+            '       "ПарольHash" AS pw FROM "Пользователь" '
         )
+        if body.fio and body.fio.strip():
+            cur.execute(base_sql + 'WHERE lower("Имя") = lower(%s) '
+                                   'ORDER BY "ID_Пользователь" LIMIT 1',
+                        (body.fio.strip(),))
+        else:
+            cur.execute(base_sql + 'WHERE "Телефон" = %s', (body.phone,))
         user = cur.fetchone()
         # Одинаковый ответ на «нет такого» и «неверный пароль» — не подсказываем,
         # какие аккаунты существуют.
         if (user is None or user["role"] != ROLE_ADMIN or not user["pw"]
                 or not bcrypt.checkpw(body.password.encode("utf-8"),
                                       user["pw"].encode("utf-8"))):
-            raise HTTPException(401, "неверный телефон или пароль")
+            raise HTTPException(401, "неверное имя/телефон или пароль")
 
         token = secrets.token_urlsafe(32)
         expires = datetime.now(timezone.utc) + timedelta(hours=SESSION_HOURS)
