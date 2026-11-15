@@ -690,7 +690,7 @@ body {
 }
 .filter-reset-btn {
     height: 40px;
-    padding: 10px 20px;
+    padding: 0 20px 2px 20px;
     background: transparent;
     color: #B02E61;
     border: 2px solid #B02E61;
@@ -700,8 +700,14 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     align-self: flex-end;
     font-family: inherit;
+    box-sizing: border-box;
+    line-height: 1;
 }
 .filter-reset-btn:hover {
     background: rgba(249, 233, 240, 0.85);
@@ -1267,19 +1273,18 @@ body {
         <div class="bookings-filters">
             <div class="filter-group">
                 <label for="filterRoom">Помещение:</label>
-                <select id="filterRoom">
+                <select id="filterRoom" onchange="handleMyBookingsFilterInputWithRetry()">
                     <option value="">Все помещения</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label for="filterDateFrom">С:</label>
-                <input type="date" id="filterDateFrom">
+                <input type="date" id="filterDateFrom" oninput="handleMyBookingsFilterInputWithRetry()" onchange="handleMyBookingsFilterInputWithRetry()">
             </div>
             <div class="filter-group">
                 <label for="filterDateTo">По:</label>
-                <input type="date" id="filterDateTo">
+                <input type="date" id="filterDateTo" oninput="handleMyBookingsFilterInputWithRetry()" onchange="handleMyBookingsFilterInputWithRetry()">
             </div>
-            <button class="filter-apply-btn" onclick="applyMyBookingsFilters()">Применить</button>
             <button class="filter-reset-btn" onclick="resetMyBookingsFilters()">Сбросить</button>
         </div>
         <!-- ===== СПИСОК БРОНЕЙ ===== -->
@@ -2947,23 +2952,77 @@ function renderMyBookingsList() {
 }
 
 // ===== ПРИМЕНЕНИЕ ФИЛЬТРОВ МОИХ БРОНЕЙ (ЧЕРЕЗ API GET /bookings) =====
+let myBookingsFilterDebounceTimer = null;
+let myBookingsFilterErrorTimer = null;
+let myBookingsPendingErrorMessage = null;
+let isMyBookingsWaitingForFix = false;
+
+function clearMyBookingsFilterTimers() {
+    if (myBookingsFilterDebounceTimer) {
+        clearTimeout(myBookingsFilterDebounceTimer);
+        myBookingsFilterDebounceTimer = null;
+    }
+    if (myBookingsFilterErrorTimer) {
+        clearTimeout(myBookingsFilterErrorTimer);
+        myBookingsFilterErrorTimer = null;
+    }
+    myBookingsPendingErrorMessage = null;
+    isMyBookingsWaitingForFix = false;
+}
+
+function handleMyBookingsFilterInputWithRetry() {
+    if (myBookingsFilterDebounceTimer) {
+        clearTimeout(myBookingsFilterDebounceTimer);
+    }
+    myBookingsFilterDebounceTimer = setTimeout(() => {
+        myBookingsFilterDebounceTimer = null;
+        applyMyBookingsFilters();
+    }, 300);
+}
+
+function handleMyBookingsDateFilterError(errorMsg) {
+    if (isMyBookingsWaitingForFix) {
+        clearMyBookingsFilterTimers();
+        showToast(errorMsg, 'error');
+        return;
+    }
+
+    isMyBookingsWaitingForFix = true;
+    myBookingsPendingErrorMessage = errorMsg;
+    if (myBookingsFilterErrorTimer) clearTimeout(myBookingsFilterErrorTimer);
+
+    myBookingsFilterErrorTimer = setTimeout(() => {
+        if (myBookingsPendingErrorMessage) {
+            showToast(myBookingsPendingErrorMessage, 'error');
+        }
+        clearMyBookingsFilterTimers();
+    }, 1000);
+}
+
 async function applyMyBookingsFilters() {
     const dateFrom = document.getElementById('filterDateFrom')?.value || '';
     const dateTo = document.getElementById('filterDateTo')?.value || '';
 
     if (dateFrom && dateTo && dateFrom > dateTo) {
-        showToast('Дата «С» не может быть позже даты «По»', 'error');
+        handleMyBookingsDateFilterError('Дата «С» не может быть позже даты «По»');
         return;
     }
 
+    clearMyBookingsFilterTimers();
     selectedBookingIndex = null;
     await renderMyBookings();
 }
 
 async function resetMyBookingsFilters() {
-    document.getElementById('filterRoom').value = '';
-    document.getElementById('filterDateFrom').value = '';
-    document.getElementById('filterDateTo').value = '';
+    clearMyBookingsFilterTimers();
+    const roomSelect = document.getElementById('filterRoom');
+    const dateFromInput = document.getElementById('filterDateFrom');
+    const dateToInput = document.getElementById('filterDateTo');
+
+    if (roomSelect) roomSelect.value = '';
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
+
     selectedBookingIndex = null;
     await renderMyBookings();
 }

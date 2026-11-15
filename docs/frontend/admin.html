@@ -507,17 +507,10 @@ body {
     background: rgba(176, 46, 97, 0.1) !important;
     border-left: 3px solid #B02E61;
 }
-.admin-table tbody tr.admin-row-locked {
-    cursor: default;
-}
 .admin-table td {
     padding: 14px 20px;
     color: #333;
     vertical-align: middle;
-}
-.admin-table th:last-child,
-.admin-table td:last-child {
-    text-align: left;
 }
 .admin-status-badge {
     display: inline-block;
@@ -540,11 +533,6 @@ body {
     background: rgba(229, 57, 53, 0.1);
     color: #E53935;
     border: 1px solid rgba(229, 57, 53, 0.3);
-}
-.admin-status-badge.expired {
-    background: rgba(120, 120, 120, 0.1);
-    color: #888;
-    border: 1px solid rgba(120, 120, 120, 0.3);
 }
 .admin-status-cell {
     display: flex;
@@ -943,29 +931,28 @@ body {
         <div class="bookings-filters">
             <div class="filter-group">
                 <label for="adminFilterRoom">Помещение:</label>
-                <select id="adminFilterRoom">
+                <select id="adminFilterRoom" onchange="handleFilterInputWithRetry()">
                     <option value="">Все помещения</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label for="adminFilterDateFrom">С:</label>
-                <input type="date" id="adminFilterDateFrom">
+                <input type="date" id="adminFilterDateFrom" oninput="handleFilterInputWithRetry()" onchange="handleFilterInputWithRetry()">
             </div>
             <div class="filter-group">
                 <label for="adminFilterDateTo">По:</label>
-                <input type="date" id="adminFilterDateTo">
+                <input type="date" id="adminFilterDateTo" oninput="handleFilterInputWithRetry()" onchange="handleFilterInputWithRetry()">
             </div>
             <div class="filter-group">
                 <label for="adminFilterSearch">Поиск по заказчику:</label>
                 <div class="admin-search-wrapper">
-                    <input type="text" id="adminFilterSearch" placeholder="Введите имя" onkeydown="if(event.key==='Enter') applyAdminFilters()">
+                    <input type="text" id="adminFilterSearch" placeholder="Введите имя" oninput="handleFilterInputWithRetry()">
                     <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </div>
             </div>
-            <button class="filter-apply-btn" onclick="applyAdminFilters()">Применить</button>
             <button class="filter-reset-btn" onclick="resetAdminFilters()">Сбросить</button>
         </div>
 
@@ -1615,47 +1602,14 @@ function formatHoursText(hours) {
     return `${num} часов`;
 }
 
-function isBookingExpired(b) {
+function isBookingStarted(b) {
     if (!b || !b.date) return false;
     const dateStr = String(b.date).slice(0, 10);
-    const endTime = b.end_time || b.start_time;
-    const parsed = endTime
-        ? new Date(`${dateStr}T${String(endTime).slice(0, 8)}`)
-        : new Date(`${dateStr}T23:59:59`);
+    const startTime = b.start_time;
+    if (!startTime) return false;
+    const parsed = new Date(`${dateStr}T${String(startTime).slice(0, 8)}`);
     if (isNaN(parsed.getTime())) return false;
-    return parsed < new Date();
-}
-
-function calcBookingHours(b) {
-    if (!b.start_time || !b.end_time) return 0;
-    const toMinutes = t => {
-        const [h, m] = String(t).split(':').map(Number);
-        return (h || 0) * 60 + (m || 0);
-    };
-    let diff = toMinutes(b.end_time) - toMinutes(b.start_time);
-    if (diff < 0) diff += 24 * 60;
-    return diff / 60;
-}
-
-function buildAdminSummary(bookings) {
-    const byResource = new Map();
-    bookings.forEach(b => {
-        if (!b || b.status === 'CANCELLED' || isBookingExpired(b)) return;
-        const key = b.resource || '—';
-        if (!byResource.has(key)) {
-            byResource.set(key, {
-                resource: b.resource || '—',
-                resource_id: b.resource_id,
-                hours: 0,
-                bookings_count: 0
-            });
-        }
-        const item = byResource.get(key);
-        item.hours += calcBookingHours(b);
-        item.bookings_count += 1;
-    });
-    return Array.from(byResource.values())
-        .sort((a, b) => String(a.resource).localeCompare(String(b.resource), 'ru'));
+    return parsed <= new Date();
 }
 
 function formatDisplayDateRu(isoDateStr) {
@@ -1707,7 +1661,38 @@ async function initAdminBookingsPage() {
     await applyAdminFilters();
 }
 
+// Обработка фильтров и таймер ожидания продолжения ввода при ошибке (1 секунда)
+let filterDebounceTimer = null;
+let filterErrorTimer = null;
+let pendingFilterErrorMessage = null;
+let isWaitingForFix = false; // Находимся ли в режиме ожидания исправления ошибки пользователем
+
+function clearFilterTimers() {
+    if (filterDebounceTimer) {
+        clearTimeout(filterDebounceTimer);
+        filterDebounceTimer = null;
+    }
+    if (filterErrorTimer) {
+        clearTimeout(filterErrorTimer);
+        filterErrorTimer = null;
+    }
+    pendingFilterErrorMessage = null;
+    isWaitingForFix = false;
+}
+
+function handleFilterInputWithRetry() {
+    // Небольшой debounce (300 мс), чтобы при непрерывном вводе не слать промежуточные запросы
+    if (filterDebounceTimer) {
+        clearTimeout(filterDebounceTimer);
+    }
+    filterDebounceTimer = setTimeout(() => {
+        filterDebounceTimer = null;
+        applyAdminFilters();
+    }, 300);
+}
+
 async function resetAdminFilters() {
+    clearFilterTimers();
     const roomSelect = document.getElementById('adminFilterRoom');
     const dateFromInput = document.getElementById('adminFilterDateFrom');
     const dateToInput = document.getElementById('adminFilterDateTo');
@@ -1733,10 +1718,18 @@ async function applyAdminFilters() {
     const dateTo = document.getElementById('adminFilterDateTo')?.value || '';
     const searchVal = document.getElementById('adminFilterSearch')?.value?.trim() || '';
 
+    // Если даты обе заполнены и dateFrom > dateTo, сразу переходим в обработку ошибки
     if (dateFrom && dateTo && dateFrom > dateTo) {
-        showToast('Дата «С» не может быть позже даты «По»', 'error');
+        handleDateFilterError('Дата «С» не может быть позже даты «По»');
         return;
     }
+
+    // 1. Загрузка сводки загруженности через GET /summary?token=...
+    const effectiveDateFrom = dateFrom || '2000-01-01';
+    const effectiveDateTo = dateTo || '2099-12-31';
+
+    let summaryUrl = `/summary?token=${encodeURIComponent(adminToken)}&date_from=${encodeURIComponent(effectiveDateFrom)}&date_to=${encodeURIComponent(effectiveDateTo)}`;
+    if (roomId) summaryUrl += `&resource_id=${encodeURIComponent(roomId)}`;
 
     const periodEl = document.getElementById('adminSummaryPeriod');
     if (periodEl) {
@@ -1751,30 +1744,39 @@ async function applyAdminFilters() {
         }
     }
 
-    // 1. Загрузка всех броней через GET /bookings?token=...
-    let bookingsBaseUrl = `/bookings?token=${encodeURIComponent(adminToken)}`;
-    if (dateFrom) bookingsBaseUrl += `&date_from=${encodeURIComponent(dateFrom)}`;
-    if (dateTo) bookingsBaseUrl += `&date_to=${encodeURIComponent(dateTo)}`;
-    if (roomId) bookingsBaseUrl += `&resource_id=${encodeURIComponent(roomId)}`;
-    if (adminCurrentSort) bookingsBaseUrl += `&sort=${encodeURIComponent(adminCurrentSort)}`;
-
-    let bookingsUrl = bookingsBaseUrl;
+    // 2. Загрузка всех броней через GET /bookings?token=...
+    let bookingsUrl = `/bookings?token=${encodeURIComponent(adminToken)}`;
+    if (dateFrom) bookingsUrl += `&date_from=${encodeURIComponent(dateFrom)}`;
+    if (dateTo) bookingsUrl += `&date_to=${encodeURIComponent(dateTo)}`;
+    if (roomId) bookingsUrl += `&resource_id=${encodeURIComponent(roomId)}`;
     if (searchVal) bookingsUrl += `&search=${encodeURIComponent(searchVal)}`;
+    if (adminCurrentSort) bookingsUrl += `&sort=${encodeURIComponent(adminCurrentSort)}`;
 
-    // Сводка не должна зависеть от поиска и не учитывает прошедшие брони
-    const summaryBookingsPromise = searchVal ? apiFetch(bookingsBaseUrl) : Promise.resolve(null);
-    const [bookingsRes, summaryBookingsRes] = await Promise.all([
-        apiFetch(bookingsUrl),
-        summaryBookingsPromise
+    const [summaryRes, bookingsRes] = await Promise.all([
+        apiFetch(summaryUrl),
+        apiFetch(bookingsUrl)
     ]);
 
-    if (bookingsRes.status === 403 || (summaryBookingsRes && summaryBookingsRes.status === 403)) {
+    if (summaryRes.status === 403 || bookingsRes.status === 403) {
+        clearFilterTimers();
         showToast('Сессия администратора истекла. Пожалуйста, войдите снова.', 'error');
         saveStoredAdmin(null, null);
         updateAdminAuthUI();
         openAdminAuthModal();
         return;
     }
+
+    // Проверка ошибок от сервера (например, 400 "date_from должен быть не позже date_to")
+    if (!summaryRes.ok || !bookingsRes.ok) {
+        const errorDetail = summaryRes.data?.detail || bookingsRes.data?.detail || 'Ошибка при загрузке данных';
+        handleDateFilterError(errorDetail);
+        return;
+    }
+
+    // Если запрос прошел успешно — сбрасываем состояние ошибки и таймеры
+    clearFilterTimers();
+
+    renderAdminSummary(summaryRes.ok && Array.isArray(summaryRes.data) ? summaryRes.data : []);
 
     adminSelectedBookingId = null;
 
@@ -1783,12 +1785,29 @@ async function applyAdminFilters() {
     } else {
         adminBookings = [];
     }
-
-    const summarySource = summaryBookingsRes
-        ? (summaryBookingsRes.ok && Array.isArray(summaryBookingsRes.data) ? summaryBookingsRes.data : [])
-        : adminBookings;
-    renderAdminSummary(buildAdminSummary(summarySource));
     renderAdminBookingsTable();
+}
+
+function handleDateFilterError(errorMsg) {
+    if (isWaitingForFix) {
+        // Пользователь ввел данные в течение 5 секунд, запрос повторился и СНОВА выдал ошибку -> сообщаем сразу
+        clearFilterTimers();
+        showToast(errorMsg, 'error');
+        return;
+    }
+
+    // Первичная ошибка: молча ждем 1 секунду продолжения ввода от пользователя
+    isWaitingForFix = true;
+    pendingFilterErrorMessage = errorMsg;
+    if (filterErrorTimer) clearTimeout(filterErrorTimer);
+
+    filterErrorTimer = setTimeout(() => {
+        // Если за 1 секунду пользователь ничего не исправил/не ввел — выдаем ошибку
+        if (pendingFilterErrorMessage) {
+            showToast(pendingFilterErrorMessage, 'error');
+        }
+        clearFilterTimers();
+    }, 1000);
 }
 
 function renderAdminSummary(summaryItems) {
@@ -1854,6 +1873,8 @@ function renderAdminBookingsTable() {
             tr.classList.add('selected');
         }
 
+        tr.onclick = () => selectAdminBookingRow(b.id);
+
         const roomName = b.resource || '—';
         const createdAtFormatted = formatDisplayDateTimeRu(b.created_at);
         const dateFormatted = formatDisplayDateRu(b.date);
@@ -1864,28 +1885,19 @@ function renderAdminBookingsTable() {
         const customerName = b.user || '—';
 
         const isCancelled = b.status === 'CANCELLED';
-        const isExpired = !isCancelled && isBookingExpired(b);
-        const isSelectable = !isCancelled && !isExpired;
+        const isStarted = !isCancelled && isBookingStarted(b);
+        const canCancel = !isCancelled && !isStarted;
 
-        let statusClass = 'confirmed';
-        let statusText = 'Подтверждена';
-        if (isCancelled) {
-            statusClass = 'cancelled';
-            statusText = 'Отменена';
-        } else if (isExpired) {
-            statusClass = 'expired';
-            statusText = 'Дата прошла';
-        }
+        const statusClass = isCancelled ? 'cancelled' : 'confirmed';
+        const statusText = isCancelled ? 'Отменена' : 'Подтверждена';
 
-        if (isSelectable) {
-            tr.onclick = () => selectAdminBookingRow(b.id);
-        } else {
-            tr.classList.add('admin-row-locked');
-            tr.title = isCancelled ? 'Бронь отменена' : 'Бронь уже прошла';
-        }
+        tr.onclick = (e) => {
+            e.stopPropagation();
+            selectAdminBookingRow(b.id);
+        };
 
         let cancelBtnHtml = '';
-        if (isSelected && isSelectable) {
+        if (isSelected && canCancel) {
             cancelBtnHtml = `<button class="admin-row-cancel-btn" onclick="event.stopPropagation(); handleAdminCancelBookingById(${b.id})">Отменить</button>`;
         }
 
@@ -1906,9 +1918,6 @@ function renderAdminBookingsTable() {
 }
 
 function selectAdminBookingRow(bookingId) {
-    const b = adminBookings.find(x => x.id === bookingId);
-    if (!b || b.status === 'CANCELLED' || isBookingExpired(b)) return;
-
     if (adminSelectedBookingId === bookingId) {
         adminSelectedBookingId = null;
     } else {
@@ -1936,8 +1945,8 @@ async function handleAdminCancelBookingById(bookingId) {
         return;
     }
 
-    if (isBookingExpired(b)) {
-        showToast('Бронь уже прошла, отменить её нельзя', 'error');
+    if (isBookingStarted(b)) {
+        showToast('Время брони уже наступило, отменить её нельзя', 'error');
         return;
     }
 
@@ -2021,6 +2030,18 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('active');
     });
+});
+
+// Сброс выделения строки при клике в пустое место страницы или таблицы
+document.addEventListener('click', (e) => {
+    // Если клик не внутри строки таблицы броней и было выделение — сбрасываем
+    if (adminSelectedBookingId !== null) {
+        const row = e.target.closest('#adminBookingsTbody tr');
+        if (!row) {
+            adminSelectedBookingId = null;
+            renderAdminBookingsTable();
+        }
+    }
 });
 
 // Инициализация
