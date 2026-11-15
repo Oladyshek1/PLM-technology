@@ -609,7 +609,7 @@ body {
 }
 .modal-close {
     position: absolute;
-    top: 18px; right: 20px;
+    top: 15px; right: 20px;
     background: none;
     border: none;
     font-size: 26px;
@@ -742,20 +742,27 @@ body {
 
 /* МОДАЛКА: ИНФОРМАЦИЯ О СИСТЕМЕ */
 .info-modal {
-    text-align: center;
-    padding: 35px 30px;
+    max-width: 480px;
+    text-align: left;
+    padding: 35px 40px;
+    border-radius: 12px;
 }
 .info-modal h2 {
-    font-size: 22px;
-    color: #000;
+    font-size: 20px;
+    font-weight: 600;
     margin-bottom: 20px;
-    font-weight: 700;
+    color: #222;
+    line-height: 1.4;
+    text-align: left;
 }
 .info-modal p {
-    font-size: 15px;
+    font-size: 16px;
     color: #444;
     margin-bottom: 12px;
-    line-height: 1.5;
+    line-height: 1.6;
+}
+.info-modal p:last-child {
+    margin-bottom: 0;
 }
 .info-modal a {
     color: #B02E61;
