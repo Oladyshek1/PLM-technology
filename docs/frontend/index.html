@@ -919,6 +919,8 @@ body {
 .mini-calendar-grid .day-cell { font-size: 12px; padding: 6px 3px; cursor: pointer; border-radius: 4px; color: #333; transition: background 0.15s; }
 .mini-calendar-grid .day-cell:hover { background: rgba(249, 233, 240, 0.85); }
 .mini-calendar-grid .day-cell.other-month { color: #333; }
+.mini-calendar-grid .day-cell.other-month.past-mini-day { color: #333; cursor: not-allowed; }
+.mini-calendar-grid .day-cell.other-month.past-mini-day:hover { background: none; }
 .mini-calendar-grid .day-cell.selected { background: #B02E61; color: #fff; }
 .mini-calendar-grid .day-cell.past-mini-day { color: #333; cursor: not-allowed; }
 .mini-calendar-grid .day-cell.past-mini-day:hover { background: none; }
@@ -2567,9 +2569,31 @@ function renderPickerCalendar() {
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
     for (let i = startDay - 1; i >= 0; i--) {
+        const prevD = daysInPrevMonth - i;
+        const prevDate = new Date(year, month - 1, prevD);
+        prevDate.setHours(0, 0, 0, 0);
+        const isPast = prevDate < today;
+        const isSelected = pickerSelectedDate &&
+            prevDate.getFullYear() === pickerSelectedDate.getFullYear() &&
+            prevDate.getMonth() === pickerSelectedDate.getMonth() &&
+            prevDate.getDate() === pickerSelectedDate.getDate();
+
         const el = document.createElement('div');
-        el.className = 'day-cell other-month';
-        el.textContent = daysInPrevMonth - i;
+        el.className = 'day-cell other-month' + (isPast ? ' past-mini-day' : '') + (isSelected ? ' selected' : '');
+        el.textContent = prevD;
+
+        if (!isPast) {
+            el.onclick = () => {
+                pickerSelectedDate = new Date(year, month - 1, prevD);
+                pickerSelectedDate.setHours(0, 0, 0, 0);
+                document.querySelectorAll('#pickerCalGrid .day-cell').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+            };
+            el.ondblclick = () => {
+                pickerSelectedDate = new Date(year, month - 1, prevD);
+                confirmPickerDate();
+            };
+        }
         grid.appendChild(el);
     }
 
@@ -2604,9 +2628,30 @@ function renderPickerCalendar() {
     const totalCells = startDay + daysInMonth;
     const remaining = (7 - totalCells % 7) % 7;
     for (let i = 1; i <= remaining; i++) {
+        const nextDate = new Date(year, month + 1, i);
+        nextDate.setHours(0, 0, 0, 0);
+        const isPast = nextDate < today;
+        const isSelected = pickerSelectedDate &&
+            nextDate.getFullYear() === pickerSelectedDate.getFullYear() &&
+            nextDate.getMonth() === pickerSelectedDate.getMonth() &&
+            nextDate.getDate() === pickerSelectedDate.getDate();
+
         const el = document.createElement('div');
-        el.className = 'day-cell other-month';
+        el.className = 'day-cell other-month' + (isPast ? ' past-mini-day' : '') + (isSelected ? ' selected' : '');
         el.textContent = i;
+
+        if (!isPast) {
+            el.onclick = () => {
+                pickerSelectedDate = new Date(year, month + 1, i);
+                pickerSelectedDate.setHours(0, 0, 0, 0);
+                document.querySelectorAll('#pickerCalGrid .day-cell').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+            };
+            el.ondblclick = () => {
+                pickerSelectedDate = new Date(year, month + 1, i);
+                confirmPickerDate();
+            };
+        }
         grid.appendChild(el);
     }
 }
@@ -3206,9 +3251,26 @@ function renderRescheduleMiniCalendar() {
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
     for (let i = startDay - 1; i >= 0; i--) {
+        const prevD = daysInPrevMonth - i;
+        const prevDate = new Date(year, month - 1, prevD);
+        prevDate.setHours(0, 0, 0, 0);
+        const isPast = prevDate < today;
+
         const el = document.createElement('div');
-        el.className = 'day-cell other-month';
-        el.textContent = daysInPrevMonth - i;
+        el.className = 'day-cell other-month' + (isPast ? ' past-mini-day' : '');
+        el.textContent = prevD;
+
+        if (!isPast) {
+            el.onclick = () => {
+                rescheduleSelectedDay = prevD;
+                document.querySelectorAll('#miniCalGrid .day-cell').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+                document.getElementById('rescheduleDate').value =
+                    year + '-' + String(month).padStart(2, '0') + '-' + String(prevD).padStart(2, '0');
+                clearRescheduleError();
+                updateRescheduleAvailableTimes();
+            };
+        }
         grid.appendChild(el);
     }
 
@@ -3239,9 +3301,25 @@ function renderRescheduleMiniCalendar() {
     const totalCells = startDay + daysInMonth;
     const remaining = (7 - totalCells % 7) % 7;
     for (let i = 1; i <= remaining; i++) {
+        const nextDate = new Date(year, month + 1, i);
+        nextDate.setHours(0, 0, 0, 0);
+        const isPast = nextDate < today;
+
         const el = document.createElement('div');
-        el.className = 'day-cell other-month';
+        el.className = 'day-cell other-month' + (isPast ? ' past-mini-day' : '');
         el.textContent = i;
+
+        if (!isPast) {
+            el.onclick = () => {
+                rescheduleSelectedDay = i;
+                document.querySelectorAll('#miniCalGrid .day-cell').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+                document.getElementById('rescheduleDate').value =
+                    year + '-' + String(month + 2).padStart(2, '0') + '-' + String(i).padStart(2, '0');
+                clearRescheduleError();
+                updateRescheduleAvailableTimes();
+            };
+        }
         grid.appendChild(el);
     }
 }
