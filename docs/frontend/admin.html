@@ -68,20 +68,22 @@ body {
     pointer-events: auto;
 }
 .nav-tab {
-    padding: 8px 24px;
+    padding: 12px 32px;
     border: none;
-    border-radius: 30px;
+    border-radius: 32px;
     background: #B02E61;
     color: #fff;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    box-shadow: 0 0 0 4px #fff !important;
-    transition: background 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-shadow: none;
+    transition: background 0.2s;
     white-space: nowrap;
 }
 .nav-tab:hover { background: #8E254E; }
-.nav-tab.active { background: #B02E61; box-shadow: 0 0 0 4px #fff, 0 4px 12px rgba(176, 46, 97, 0.3) !important; }
+.nav-tab:focus { outline: none; }
+.nav-tab.active { background: #B02E61; box-shadow: 0 4px 12px rgba(176, 46, 97, 0.3) !important; }
 
 /* Правая часть шапки: имя пользователя, кнопка входа и иконка 'i' */
 .auth-wrapper {
@@ -505,19 +507,28 @@ body {
     background: rgba(176, 46, 97, 0.1) !important;
     border-left: 3px solid #B02E61;
 }
+.admin-table tbody tr.admin-row-locked {
+    cursor: default;
+}
 .admin-table td {
     padding: 14px 20px;
     color: #333;
     vertical-align: middle;
 }
+.admin-table th:last-child,
+.admin-table td:last-child {
+    text-align: left;
+}
 .admin-status-badge {
     display: inline-block;
+    width: 120px;
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
+    text-align: center;
     box-sizing: border-box;
 }
 .admin-status-badge.confirmed {
@@ -530,17 +541,23 @@ body {
     color: #E53935;
     border: 1px solid rgba(229, 57, 53, 0.3);
 }
+.admin-status-badge.expired {
+    background: rgba(120, 120, 120, 0.1);
+    color: #888;
+    border: 1px solid rgba(120, 120, 120, 0.3);
+}
 .admin-status-cell {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-start;
 }
 .admin-row-cancel-btn {
     padding: 6px 14px;
     background: #ffffff;
-    color: #B02E61;
-    border: 1px solid #B02E61;
+    color: #E53935;
+    border: 1px solid #E53935;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 500;
@@ -555,11 +572,11 @@ body {
     box-sizing: border-box;
 }
 .admin-row-cancel-btn:hover {
-    background: rgba(176, 46, 97, 0.08);
+    background: rgba(229, 57, 53, 0.08);
 }
 .admin-row-cancel-btn:active {
     transform: scale(0.96);
-    background: rgba(176, 46, 97, 0.15);
+    background: rgba(229, 57, 53, 0.15);
 }
 .admin-cancel-btn {
     padding: 8px 20px;
@@ -1598,6 +1615,49 @@ function formatHoursText(hours) {
     return `${num} часов`;
 }
 
+function isBookingExpired(b) {
+    if (!b || !b.date) return false;
+    const dateStr = String(b.date).slice(0, 10);
+    const endTime = b.end_time || b.start_time;
+    const parsed = endTime
+        ? new Date(`${dateStr}T${String(endTime).slice(0, 8)}`)
+        : new Date(`${dateStr}T23:59:59`);
+    if (isNaN(parsed.getTime())) return false;
+    return parsed < new Date();
+}
+
+function calcBookingHours(b) {
+    if (!b.start_time || !b.end_time) return 0;
+    const toMinutes = t => {
+        const [h, m] = String(t).split(':').map(Number);
+        return (h || 0) * 60 + (m || 0);
+    };
+    let diff = toMinutes(b.end_time) - toMinutes(b.start_time);
+    if (diff < 0) diff += 24 * 60;
+    return diff / 60;
+}
+
+function buildAdminSummary(bookings) {
+    const byResource = new Map();
+    bookings.forEach(b => {
+        if (!b || b.status === 'CANCELLED' || isBookingExpired(b)) return;
+        const key = b.resource || '—';
+        if (!byResource.has(key)) {
+            byResource.set(key, {
+                resource: b.resource || '—',
+                resource_id: b.resource_id,
+                hours: 0,
+                bookings_count: 0
+            });
+        }
+        const item = byResource.get(key);
+        item.hours += calcBookingHours(b);
+        item.bookings_count += 1;
+    });
+    return Array.from(byResource.values())
+        .sort((a, b) => String(a.resource).localeCompare(String(b.resource), 'ru'));
+}
+
 function formatDisplayDateRu(isoDateStr) {
     if (!isoDateStr) return '';
     const parts = isoDateStr.split('-');
@@ -1678,12 +1738,6 @@ async function applyAdminFilters() {
         return;
     }
 
-    // 1. Загрузка сводки загруженности через GET /summary?token=...
-    let summaryUrl = `/summary?token=${encodeURIComponent(adminToken)}`;
-    if (dateFrom) summaryUrl += `&date_from=${encodeURIComponent(dateFrom)}`;
-    if (dateTo) summaryUrl += `&date_to=${encodeURIComponent(dateTo)}`;
-    if (roomId) summaryUrl += `&resource_id=${encodeURIComponent(roomId)}`;
-
     const periodEl = document.getElementById('adminSummaryPeriod');
     if (periodEl) {
         if (dateFrom && dateTo) {
@@ -1697,28 +1751,30 @@ async function applyAdminFilters() {
         }
     }
 
-    // 2. Загрузка всех броней через GET /bookings?token=...
-    let bookingsUrl = `/bookings?token=${encodeURIComponent(adminToken)}`;
-    if (dateFrom) bookingsUrl += `&date_from=${encodeURIComponent(dateFrom)}`;
-    if (dateTo) bookingsUrl += `&date_to=${encodeURIComponent(dateTo)}`;
-    if (roomId) bookingsUrl += `&resource_id=${encodeURIComponent(roomId)}`;
-    if (searchVal) bookingsUrl += `&search=${encodeURIComponent(searchVal)}`;
-    if (adminCurrentSort) bookingsUrl += `&sort=${encodeURIComponent(adminCurrentSort)}`;
+    // 1. Загрузка всех броней через GET /bookings?token=...
+    let bookingsBaseUrl = `/bookings?token=${encodeURIComponent(adminToken)}`;
+    if (dateFrom) bookingsBaseUrl += `&date_from=${encodeURIComponent(dateFrom)}`;
+    if (dateTo) bookingsBaseUrl += `&date_to=${encodeURIComponent(dateTo)}`;
+    if (roomId) bookingsBaseUrl += `&resource_id=${encodeURIComponent(roomId)}`;
+    if (adminCurrentSort) bookingsBaseUrl += `&sort=${encodeURIComponent(adminCurrentSort)}`;
 
-    const [summaryRes, bookingsRes] = await Promise.all([
-        apiFetch(summaryUrl),
-        apiFetch(bookingsUrl)
+    let bookingsUrl = bookingsBaseUrl;
+    if (searchVal) bookingsUrl += `&search=${encodeURIComponent(searchVal)}`;
+
+    // Сводка не должна зависеть от поиска и не учитывает прошедшие брони
+    const summaryBookingsPromise = searchVal ? apiFetch(bookingsBaseUrl) : Promise.resolve(null);
+    const [bookingsRes, summaryBookingsRes] = await Promise.all([
+        apiFetch(bookingsUrl),
+        summaryBookingsPromise
     ]);
 
-    if (summaryRes.status === 403 || bookingsRes.status === 403) {
+    if (bookingsRes.status === 403 || (summaryBookingsRes && summaryBookingsRes.status === 403)) {
         showToast('Сессия администратора истекла. Пожалуйста, войдите снова.', 'error');
         saveStoredAdmin(null, null);
         updateAdminAuthUI();
         openAdminAuthModal();
         return;
     }
-
-    renderAdminSummary(summaryRes.ok && Array.isArray(summaryRes.data) ? summaryRes.data : []);
 
     adminSelectedBookingId = null;
 
@@ -1727,6 +1783,11 @@ async function applyAdminFilters() {
     } else {
         adminBookings = [];
     }
+
+    const summarySource = summaryBookingsRes
+        ? (summaryBookingsRes.ok && Array.isArray(summaryBookingsRes.data) ? summaryBookingsRes.data : [])
+        : adminBookings;
+    renderAdminSummary(buildAdminSummary(summarySource));
     renderAdminBookingsTable();
 }
 
@@ -1793,8 +1854,6 @@ function renderAdminBookingsTable() {
             tr.classList.add('selected');
         }
 
-        tr.onclick = () => selectAdminBookingRow(b.id);
-
         const roomName = b.resource || '—';
         const createdAtFormatted = formatDisplayDateTimeRu(b.created_at);
         const dateFormatted = formatDisplayDateRu(b.date);
@@ -1805,11 +1864,28 @@ function renderAdminBookingsTable() {
         const customerName = b.user || '—';
 
         const isCancelled = b.status === 'CANCELLED';
-        const statusClass = isCancelled ? 'cancelled' : 'confirmed';
-        const statusText = isCancelled ? 'Отменена' : 'Подтверждена';
+        const isExpired = !isCancelled && isBookingExpired(b);
+        const isSelectable = !isCancelled && !isExpired;
+
+        let statusClass = 'confirmed';
+        let statusText = 'Подтверждена';
+        if (isCancelled) {
+            statusClass = 'cancelled';
+            statusText = 'Отменена';
+        } else if (isExpired) {
+            statusClass = 'expired';
+            statusText = 'Дата прошла';
+        }
+
+        if (isSelectable) {
+            tr.onclick = () => selectAdminBookingRow(b.id);
+        } else {
+            tr.classList.add('admin-row-locked');
+            tr.title = isCancelled ? 'Бронь отменена' : 'Бронь уже прошла';
+        }
 
         let cancelBtnHtml = '';
-        if (isSelected && !isCancelled) {
+        if (isSelected && isSelectable) {
             cancelBtnHtml = `<button class="admin-row-cancel-btn" onclick="event.stopPropagation(); handleAdminCancelBookingById(${b.id})">Отменить</button>`;
         }
 
@@ -1830,6 +1906,9 @@ function renderAdminBookingsTable() {
 }
 
 function selectAdminBookingRow(bookingId) {
+    const b = adminBookings.find(x => x.id === bookingId);
+    if (!b || b.status === 'CANCELLED' || isBookingExpired(b)) return;
+
     if (adminSelectedBookingId === bookingId) {
         adminSelectedBookingId = null;
     } else {
@@ -1854,6 +1933,11 @@ async function handleAdminCancelBookingById(bookingId) {
 
     if (b.status === 'CANCELLED') {
         showToast('Эта бронь уже отменена', 'error');
+        return;
+    }
+
+    if (isBookingExpired(b)) {
+        showToast('Бронь уже прошла, отменить её нельзя', 'error');
         return;
     }
 

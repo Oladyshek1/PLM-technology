@@ -68,20 +68,22 @@ body {
     pointer-events: auto;
 }
 .nav-tab {
-    padding: 8px 24px;
+    padding: 12px 32px;
     border: none;
-    border-radius: 30px;
+    border-radius: 32px;
     background: #B02E61;
     color: #fff;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    box-shadow: 0 0 0 4px #fff !important;
-    transition: background 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-shadow: none;
+    transition: background 0.2s;
     white-space: nowrap;
 }
 .nav-tab:hover { background: #8E254E; }
-.nav-tab.active { background: #B02E61; box-shadow: 0 0 0 4px #fff, 0 4px 12px rgba(176, 46, 97, 0.3) !important; }
+.nav-tab:focus { outline: none; }
+.nav-tab.active { background: #B02E61; box-shadow: 0 4px 12px rgba(176, 46, 97, 0.3) !important; }
 
 /* Правая часть шапки: имя пользователя, кнопка входа и иконка 'i' */
 .auth-wrapper {
@@ -157,7 +159,7 @@ body {
     position: absolute;
     top: calc(100% + 14px);
     right: 0;
-    width: 340px;
+    width: 400px;
     max-width: calc(100vw - 32px);
     border-radius: 16px;
     overflow: hidden;
@@ -178,7 +180,7 @@ body {
     background: linear-gradient(180deg, #942752 0%, #A62D5D 100%);
     color: #fff;
     text-align: center;
-    padding: 22px 18px 18px;
+    padding: 26px 22px 22px;
     position: relative;
 }
 .profile-dropdown-close {
@@ -198,59 +200,59 @@ body {
     transform: scale(1.1);
 }
 .profile-avatar-large {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.4);
-    margin: 0 auto 10px;
+    margin: 0 auto 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 600;
     color: #fff;
 }
 .profile-header-name {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     margin-bottom: 2px;
     color: #fff;
 }
 .profile-header-subtitle {
-    font-size: 12px;
+    font-size: 13px;
     color: rgba(255, 255, 255, 0.85);
     font-weight: 400;
 }
 .profile-dropdown-body {
-    padding: 8px 20px 18px;
+    padding: 10px 24px 22px;
     background: #fff;
 }
 .profile-info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
+    padding: 14px 0;
     border-bottom: 1px solid #F0F0F0;
-    font-size: 13px;
-    gap: 12px;
+    font-size: 15px;
+    gap: 14px;
 }
 .profile-info-label {
     color: #444;
     font-weight: 500;
-    font-size: 13px;
+    font-size: 15px;
 }
 .profile-info-value {
     color: #111;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 15px;
     text-align: right;
     word-break: break-word;
 }
 .profile-action-btn {
-    padding: 5px 18px;
+    padding: 7px 20px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -470,7 +472,7 @@ body {
 }
 .week-day.past-day .day-name,
 .week-day.past-day .day-date {
-    color: #333;
+    color: #b0b0b0;
 }
 
 .calendar-btn {
@@ -582,10 +584,11 @@ body {
 .action-btn.primary:hover { background: #8E254E; }
 #page-booking .action-btn.primary {
     border: none;
-    box-shadow: 0 0 0 7px #fff !important;
+    box-shadow: none;
+    font-size: 17px;
 }
 #page-booking .action-btn.primary:hover {
-    box-shadow: 0 0 0 7px #fff, 0 4px 12px rgba(176, 46, 97, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(176, 46, 97, 0.3);
 }
 
 /* Инлайн-подсказка при бронировании */
@@ -919,10 +922,10 @@ body {
 .mini-calendar-grid .day-cell { font-size: 12px; padding: 6px 3px; cursor: pointer; border-radius: 4px; color: #333; transition: background 0.15s; }
 .mini-calendar-grid .day-cell:hover { background: rgba(249, 233, 240, 0.85); }
 .mini-calendar-grid .day-cell.other-month { color: #333; }
-.mini-calendar-grid .day-cell.other-month.past-mini-day { color: #333; cursor: not-allowed; }
+.mini-calendar-grid .day-cell.other-month.past-mini-day { color: #b5b5b5; cursor: not-allowed; }
 .mini-calendar-grid .day-cell.other-month.past-mini-day:hover { background: none; }
 .mini-calendar-grid .day-cell.selected { background: #B02E61; color: #fff; }
-.mini-calendar-grid .day-cell.past-mini-day { color: #333; cursor: not-allowed; }
+.mini-calendar-grid .day-cell.past-mini-day { color: #b5b5b5; cursor: not-allowed; }
 .mini-calendar-grid .day-cell.past-mini-day:hover { background: none; }
 
 .reschedule-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
@@ -1205,13 +1208,9 @@ body {
                         <span class="profile-info-label">Номер телефона</span>
                         <span class="profile-info-value" id="profileModalPhone">—</span>
                     </div>
-                    <div class="profile-info-row">
+                    <div class="profile-info-row" style="border-bottom: none;">
                         <span class="profile-info-label">Выйти с устройства</span>
                         <button class="profile-action-btn profile-btn-logout" onclick="handleProfileLogout()">Выйти</button>
-                    </div>
-                    <div class="profile-info-row" style="border-bottom: none;">
-                        <span class="profile-info-label">Управление учетной записью</span>
-                        <button class="profile-action-btn profile-btn-delete">Удалить</button>
                     </div>
                 </div>
             </div>
