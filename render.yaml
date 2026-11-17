@@ -41,7 +41,6 @@ services:
   - type: web
     name: plm-booking-frontend
     runtime: static
-    region: frankfurt
     rootDir: docs/frontend
     staticPublishPath: .
     routes:
