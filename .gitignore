@@ -23,6 +23,10 @@ Thumbs.db
 .env
 !.env.example
 
+# Туннель для демо (бинарник cloudflared, ~53 МБ) — не коммитить
+cloudflared.exe
+cloudflared*/
+
 # Downloads / scratch
 *.zip
 

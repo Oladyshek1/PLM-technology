@@ -1065,7 +1065,9 @@ body {
 </footer>
 
 <script>
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// Пусто = запросы идут на тот же адрес, с которого открыта страница:
+// локально это 127.0.0.1:8000, через туннель — публичный адрес.
+const API_BASE_URL = '';
 
 async function apiFetch(endpoint, options = {}) {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
