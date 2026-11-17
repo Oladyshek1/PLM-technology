@@ -85,4 +85,13 @@ def connect(database: str = DB_NAME) -> psycopg2.extensions.connection:
     # Подключение к PostgreSQL.
     # autocommit=False (по умолчанию psycopg2): транзакция стартует вместе с первым
     # оператором и закрывается явно conn.commit() / conn.rollback().
-    return psycopg2.connect(get_uri(database))
+    # keepalives: облачные пулеры (Supabase pooler, PgBouncer) рвут «тихие»
+    # соединения, поэтому держим их живыми и ставим таймаут на установку.
+    return psycopg2.connect(
+        get_uri(database),
+        connect_timeout=15,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=5,
+    )

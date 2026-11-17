@@ -84,7 +84,10 @@ def _minutes(t):
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    db.get_server()  # embedded PostgreSQL поднимается вместе с API
+    # Локальный встроенный PostgreSQL поднимаем только если нет DATABASE_URL.
+    # С внешней БД (Supabase/облако) подключаемся напрямую, pgserver не нужен.
+    if db.is_embedded():
+        db.get_server()
     yield
 
 
