@@ -24,11 +24,17 @@ WORKING_START = time(8, 0)
 WORKING_END = time(22, 0)
 PERIOD_MINUTES = 60
 
-# Жизненный цикл брони: PENDING (создана) → CONFIRMED (подтверждена),
-# CANCELLED — отменена. Слот занимают все статусы, кроме CANCELLED.
-PENDING = "PENDING"
-CONFIRMED = "CONFIRMED"
+# Жизненный цикл брони: BOOKED (забронирована, слот занят) →
+# CLOSED (закрыта — период закончился, ставится автоматически при чтении).
+# CANCELLED — отменена пользователем (слот свободен).
+# Слот занимают BOOKED и CLOSED; CANCELLED слот освобождает.
+BOOKED = "BOOKED"
+CLOSED = "CLOSED"
 CANCELLED = "CANCELLED"
+
+# Устаревшие названия статусов: используются только в миграции старых баз.
+LEGACY_PENDING = "PENDING"
+LEGACY_CONFIRMED = "CONFIRMED"
 
 # Роли пользователей: обычный пользователь и администратор (может видеть
 # и отменять брони всех пользователей). При регистрации всегда USER —
@@ -103,6 +109,11 @@ CREATE INDEX IF NOT EXISTS "ix_session_user" ON "Сессия" ("ID_Пользо
 
 def ensure_database():
     # Создаёт БД booking, если её ещё нет (CREATE DATABASE нельзя в транзакции).
+    # Только для локального встроенного PostgreSQL: во внешней базе (DATABASE_URL,
+    # облако) она уже создана провайдером, и прав его на CREATE DATABASE нет.
+    if not db.is_embedded():
+        print("Внешняя БД (DATABASE_URL): БД уже существует, создавать не нужно")
+        return
     admin = psycopg2.connect(db.get_uri("postgres"))
     admin.autocommit = True
     try:
@@ -193,25 +204,67 @@ def ensure_statuses(cur):
     cur.executemany(
         'INSERT INTO "Статус" ("Название") VALUES (%s) '
         'ON CONFLICT ("Название") DO NOTHING',
-        [(PENDING,), (CONFIRMED,), (CANCELLED,)],
+        [(BOOKED,), (CLOSED,), (CANCELLED,)],
     )
 
 
+def migrate_legacy_statuses(cur):
+    # Переход на новую модель статусов (17.11):
+    #   PENDING   → BOOKED   (подтверждение больше не нужно, бронь сразу занята);
+    #   CONFIRMED → BOOKED;
+    #   строки PENDING/CONFIRMED из справочника удаляются.
+    # Заодно брони BOOKED, чей период уже закончился, сразу переводятся в CLOSED.
+    def sid(name):
+        cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (name,))
+        row = cur.fetchone()
+        return None if row is None else row[0]
+
+    booked_id = sid(BOOKED)
+    moved = 0
+    for legacy in (LEGACY_PENDING, LEGACY_CONFIRMED):
+        legacy_id = sid(legacy)
+        if legacy_id is None:
+            continue
+        cur.execute(
+            'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Статус" = %s',
+            (booked_id, legacy_id),
+        )
+        moved += cur.rowcount
+        cur.execute('DELETE FROM "Статус" WHERE "ID_Статус" = %s', (legacy_id,))
+    if moved:
+        print(f"Статусы: {LEGACY_PENDING}/{LEGACY_CONFIRMED} объединены в "
+              f"{BOOKED} (броней переведено: {moved})")
+
+    # Прошедшие брони сразу закрываем.
+    closed_id = sid(CLOSED)
+    cur.execute(
+        'UPDATE "Бронь" b SET "ID_Статус" = %s '
+        'FROM "Время" v '
+        'WHERE b."ID_Время" = v."ID_Время" AND b."ID_Статус" = %s '
+        '  AND (b."Дата" + v."ВремяОкончания") < NOW()',
+        (closed_id, booked_id),
+    )
+    closed_now = cur.rowcount
+    if closed_now:
+        print(f"Статусы: прошедшие брони закрыты (переведено в {CLOSED}: {closed_now})")
+
+
 def migrate_active_status(cur):
-    # Старый статус ACTIVE заменён на CONFIRMED: брони переводим, строку убираем.
+    # Старый статус ACTIVE заменён на CONFIRMED (теперь — BOOKED):
+    # брони переводим, строку убираем.
     cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', ("ACTIVE",))
     old = cur.fetchone()
     if old is None:
         return
-    cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (CONFIRMED,))
-    confirmed_id = cur.fetchone()[0]
+    cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (BOOKED,))
+    booked_id = cur.fetchone()[0]
     cur.execute(
         'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Статус" = %s',
-        (confirmed_id, old[0]),
+        (booked_id, old[0]),
     )
     moved = cur.rowcount
     cur.execute('DELETE FROM "Статус" WHERE "ID_Статус" = %s', (old[0],))
-    print(f"Статусы: ACTIVE объединён с CONFIRMED (броней переведено: {moved})")
+    print(f"Статусы: ACTIVE объединён с {BOOKED} (броней переведено: {moved})")
 
 
 def ensure_active_slot_index(cur):
@@ -369,8 +422,11 @@ def print_admin_password(password, generated, created):
 
 
 def main():
-    print("Embedded PostgreSQL: первый запуск может занять несколько секунд...")
-    db.get_server()
+    if db.is_embedded():
+        print("Embedded PostgreSQL: первый запуск может занять несколько секунд...")
+        db.get_server()
+    else:
+        print("Внешняя БД: подключаюсь по DATABASE_URL...")
     ensure_database()
 
     conn = db.connect()
@@ -407,10 +463,11 @@ def main():
 
         periods = seed_periods(cur)
         migrate_active_status(cur)
+        migrate_legacy_statuses(cur)
         ensure_active_slot_index(cur)
 
         conn.commit()
-        print(f"OK: таблицы созданы, залиты статусы ({PENDING}, {CONFIRMED}, {CANCELLED}), "
+        print(f"OK: таблицы созданы, залиты статусы ({BOOKED}, {CLOSED}, {CANCELLED}), "
               f"3 переговорные, 3 пользователя (админ {ADMIN_NAME} / {ADMIN_PHONE}), "
               f"{periods} периодов брони ({WORKING_START.strftime('%H:%M')}-"
               f"{WORKING_END.strftime('%H:%M')}, шаг {PERIOD_MINUTES} мин).")

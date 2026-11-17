@@ -17,10 +17,11 @@ from pydantic import BaseModel, Field, field_validator
 
 import db
 
-# Жизненный цикл брони: PENDING (создана) → CONFIRMED (подтверждена),
-# CANCELLED — отменена. Слот занимают все статусы, кроме CANCELLED.
-PENDING = "PENDING"
-CONFIRMED = "CONFIRMED"
+# Жизненный цикл брони: BOOKED (забронирована, слот занят) →
+# CLOSED (закрыта — период закончился, ставится автоматически при чтении).
+# CANCELLED — отменена (слот свободен).
+BOOKED = "BOOKED"
+CLOSED = "CLOSED"
 CANCELLED = "CANCELLED"
 
 # Роли пользователей. USER регистрируется сам; ADMIN создаётся init_db.py и
@@ -90,10 +91,11 @@ app = FastAPI(
     description=(
         "Система бронирования общих помещений. "
         "Время — в ISO 8601 (дата YYYY-MM-DD, интервалы вида "
-        "2026-10-26T09:00:00+03:00). Бронь проходит жизненный цикл "
-        "PENDING → CONFIRMED, отмена — CANCELLED (слот освобождается). "
-        "Отменить или подтвердить бронь можно только ДО начала её периода: "
-        "если период уже начался (или прошёл), оба действия возвращают 409. "
+        "2026-10-26T09:00:00+03:00). Бронь создаётся сразу в статусе BOOKED "
+        "(забронирована, слот занят) и после окончания периода автоматически "
+        "переходит в CLOSED (закрыта). Отмена — CANCELLED (слот освобождается). "
+        "Отменить бронь можно только ДО начала её периода: "
+        "если период уже начался (или прошёл), возвращается 409. "
         "Накладки невозможны: в POST /bookings строка ресурса блокируется "
         "(SELECT ... FOR UPDATE) до конца транзакции, плюс на (помещение, дата, "
         "период) стоит уникальный индекс для неотменённых броней. "
@@ -140,6 +142,13 @@ class BookingIn(BaseModel):
         None,
         description="Конец брони в ISO 8601, например 2026-10-26T11:00:00+03:00 "
                     "(указывается вместе со starts_at)",
+    )
+    allow_overlap_own: bool = Field(
+        False,
+        description="Подтверждение «да, бронирую второе помещение на это же время». "
+                    "Если у пользователя уже есть бронь на ту же дату и периоды в "
+                    "другом помещении, без этого флага вернётся 409 с описанием "
+                    "конфликта (conflict: own_overlap).",
     )
 
 
@@ -236,6 +245,42 @@ def require_admin_or_none(cur, token: str | None):
     # То же, но без исключения: None, если токена/роли нет.
     user = session_user(cur, token)
     return user if user is not None and user["role"] == ROLE_ADMIN else None
+
+
+def close_finished_bookings():
+    # Переводит BOOKED → CLOSED для броней, чей период уже закончился
+    # (дата + время окончания < текущего момента). Вызывается при чтении
+    # списка броней — отдельный планировщик не нужен.
+    # Возвращает число закрытых записей (0 — если закрывать было нечего).
+    conn = db.connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (CLOSED,))
+        row = cur.fetchone()
+        if row is None:
+            return 0
+        closed_id = row[0]
+        cur.execute('SELECT "ID_Статус" FROM "Статус" WHERE "Название" = %s', (BOOKED,))
+        row = cur.fetchone()
+        if row is None:
+            return 0
+        booked_id = row[0]
+        cur.execute(
+            'UPDATE "Бронь" b SET "ID_Статус" = %s '
+            'FROM "Время" v '
+            'WHERE b."ID_Время" = v."ID_Время" AND b."ID_Статус" = %s '
+            '  AND (b."Дата" + v."ВремяОкончания") < NOW()',
+            (closed_id, booked_id),
+        )
+        n = cur.rowcount
+        conn.commit()
+        return n
+    except Exception:
+        conn.rollback()
+        return 0
+    finally:
+        conn.close()
 
 
 def status_id(cur, name):
@@ -507,6 +552,9 @@ def list_bookings(
     # ?token=... — токен администратора: снимает ограничение «только свои», открывает
     # поиск по заказчику и просмотр всех броней. Без токена: обязателен user_id,
     # search запрещён (403), отдаются только брони этого пользователя.
+    # Перед выдачей закрываем прошедшие брони (BOOKED → CLOSED): статус
+    # пересчитывается в момент чтения, фоновой задачи не требуется.
+    close_finished_bookings()
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -587,9 +635,10 @@ def summary(
 ):
     # Сумма часов броней по каждому помещению за период (обе даты включительно).
     # Час = длительность периода из справочника "Время" (сейчас 60 мин).
-    # Учитываются PENDING и CONFIRMED; CANCELLED не входит.
+    # Учитываются BOOKED и CLOSED (состоявшиеся брони); CANCELLED не входит.
     # ?resource_id=2 — сводка по одному помещению.
     # ?token=... — обязателен токен администратора (POST /auth/admin-login).
+    close_finished_bookings()
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -732,7 +781,8 @@ def create_booking(body: BookingIn):
     # Одна бронь = один период. Несколько периодов подряд (например 09:00-10:00
     # и 10:00-11:00) приходят как time_ids или как интервал starts_at/ends_at
     # в ISO 8601 и создаются ВСЕ ИЛИ НИ ОДИН: та же транзакция и та же блокировка
-    # строки ресурса, что и для одного слота. Новая бронь получает статус PENDING.
+    # строки ресурса, что и для одного слота. Новая бронь сразу получает статус
+    # BOOKED — подтверждение не требуется.
     conn = db.connect()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -777,6 +827,55 @@ def create_booking(body: BookingIn):
 
         cancelled_id = status_id(cur, CANCELLED)
 
+        # Проверка «у меня уже есть бронь на это время в ДРУГОМ помещении».
+        # Это не ошибка — пользователь может посидеть в двух комнатах, но обычно
+        # это опечатка, поэтому без явного allow_overlap_own возвращаем 409
+        # с описанием конфликта: фронт показывает «у вас уже есть бронь, уверены?»,
+        # а при подтверждении повторяет запрос с allow_overlap_own=true.
+        if not body.allow_overlap_own:
+            cur.execute("""
+                SELECT r."ID_Ресурс"        AS resource_id,
+                       r."Название"         AS resource,
+                       v."ID_Время"         AS time_id,
+                       v."ВремяНачала"      AS start_time,
+                       v."ВремяОкончания"   AS end_time
+                FROM "Бронь" b
+                JOIN "Ресурс" r ON b."ID_Ресурс" = r."ID_Ресурс"
+                JOIN "Время"  v ON b."ID_Время"  = v."ID_Время"
+                WHERE b."ID_Пользователь" = %s
+                  AND b."Дата" = %s
+                  AND b."ID_Ресурс" <> %s
+                  AND b."ID_Время" = ANY(%s)
+                  AND b."ID_Статус" <> %s
+                ORDER BY v."ВремяНачала", r."Название"
+            """, (body.user_id, booking_date, body.resource_id, requested, cancelled_id))
+            own = cur.fetchall()
+            if own:
+                conflicts = [
+                    {
+                        "resource": c["resource"],
+                        "resource_id": c["resource_id"],
+                        "time_id": c["time_id"],
+                        "start_time": _hhmmss(c["start_time"]),
+                        "end_time": _hhmmss(c["end_time"]),
+                    }
+                    for c in own
+                ]
+                names = ", ".join(
+                    f'{c["resource"]} ({c["start_time"]}-{c["end_time"]})'
+                    for c in conflicts
+                )
+                raise HTTPException(
+                    409,
+                    {
+                        "detail": "у вас уже есть бронь на это время: " + names
+                                  + ". Чтобы забронировать ещё и это помещение, "
+                                    "повторите запрос с allow_overlap_own=true",
+                        "conflict": "own_overlap",
+                        "conflicts": conflicts,
+                    },
+                )
+
         # Накладка: пересечение по (ресурс, дата) среди НЕ отменённых —
         # проверяем каждый выбранный период против всех существующих броней.
         # new.start < old.end AND new.end > old.start
@@ -804,7 +903,7 @@ def create_booking(body: BookingIn):
                 "накладка: уже занято " + ", ".join(_period_label(p) for p in busy),
             )
 
-        pending_id = status_id(cur, PENDING)
+        booked_id = status_id(cur, BOOKED)
         # INSERT ... SELECT вставляет все выбранные периоды одним оператором.
         cur.execute(
             'INSERT INTO "Бронь" '
@@ -812,7 +911,7 @@ def create_booking(body: BookingIn):
             'SELECT %s, %s, %s, v."ID_Время", %s FROM "Время" v '
             'WHERE v."ID_Время" = ANY(%s) '
             'RETURNING "ID_Бронь", "ID_Время", "Создана"',
-            (body.user_id, body.resource_id, pending_id, booking_date, requested),
+            (body.user_id, body.resource_id, booked_id, booking_date, requested),
         )
         rows = cur.fetchall()
         new_ids = {row["ID_Время"]: row["ID_Бронь"] for row in rows}
@@ -857,7 +956,7 @@ def create_booking(body: BookingIn):
         "end_time": created[-1]["end_time"],
         "starts_at": created[0]["starts_at"],
         "ends_at": created[-1]["ends_at"],
-        "status": PENDING,
+        "status": BOOKED,
         "created_at": created_at.isoformat(),
         "bookings": created,
     }
@@ -884,55 +983,6 @@ def _booking_row(cur, booking_id):
         raise HTTPException(404, "бронь не найдена")
     row["cancelled_id"] = cancelled_id
     return row
-
-
-@app.post("/bookings/{booking_id}/confirm", summary="Подтвердить бронь (только владелец)")
-def confirm_booking(booking_id: int, user_id: int):
-    # PENDING → CONFIRMED. Подтверждать может только владелец брони.
-    # Период уже начался или прошёл — 409: задним числом не подтверждаем.
-    conn = db.connect()
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        booking = _booking_row(cur, booking_id)
-
-        if booking["user_id"] != user_id:
-            raise HTTPException(403, "это не ваша бронь")
-        if booking["status"] == CANCELLED:
-            raise HTTPException(409, "бронь уже отменена")
-        if booking["status"] == CONFIRMED:
-            raise HTTPException(409, "бронь уже подтверждена")
-        if _period_started(booking["date"], booking["start_time"]):
-            raise HTTPException(
-                409,
-                "нельзя подтвердить прошедшую бронь: "
-                + _booking_label(booking)
-                + " (период уже начался)",
-            )
-
-        confirmed_id = status_id(cur, CONFIRMED)
-        cur.execute(
-            'UPDATE "Бронь" SET "ID_Статус" = %s WHERE "ID_Бронь" = %s',
-            (confirmed_id, booking_id),
-        )
-        conn.commit()
-    except HTTPException:
-        conn.rollback()
-        raise
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
-
-    return {
-        "id": booking_id,
-        "status": CONFIRMED,
-        "date": booking["date"].isoformat(),
-        "start_time": _hhmmss(booking["start_time"]),
-        "end_time": _hhmmss(booking["end_time"]),
-        "starts_at": _iso_local(booking["date"], booking["start_time"]),
-        "ends_at": _iso_local(booking["date"], booking["end_time"]),
-    }
 
 
 @app.post("/bookings/{booking_id}/cancel", summary="Отменить бронь (владелец или администратор)")

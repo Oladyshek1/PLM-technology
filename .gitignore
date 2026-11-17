@@ -19,6 +19,10 @@ Thumbs.db
 .vscode/
 *.swp
 
+# Секреты (пароли, строки подключения) — не коммитить
+.env
+!.env.example
+
 # Downloads / scratch
 *.zip
 
