@@ -426,22 +426,12 @@ def _resolve_periods(cur, body):
 # где фронт выложен отдельно).
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
-# Кеширование:
-#   страницы (index.html, admin.html) — no-cache: браузер каждый раз
-#     перепроверяет по ETag (файл маленький, экономия не нужна, зато правки
-#     видны сразу после обновления страницы);
-#   картинки/иконки /src/* — 7 дней: меняются редко. Если поменяли картинку
-#     и хотите увидеть сразу — обновите Ctrl+F5 или добавьте ?v=2 в путь.
-#   Ответы API не кешируются (данные броней меняются).
-CACHE_STATIC = {"Cache-Control": "public, max-age=604800"}
-CACHE_PAGE = {"Cache-Control": "no-cache"}
-
 
 @app.get("/", include_in_schema=False)
 def root():
     index = FRONTEND_DIR / "index.html"
     if index.is_file():
-        return FileResponse(index, headers=CACHE_PAGE)
+        return FileResponse(index)
     return RedirectResponse("/docs")
 
 
@@ -449,28 +439,12 @@ def root():
 def admin_page():
     page = FRONTEND_DIR / "admin.html"
     if page.is_file():
-        return FileResponse(page, headers=CACHE_PAGE)
+        return FileResponse(page)
     raise HTTPException(404, "admin.html не найден")
 
 
-class CachedStaticFiles(StaticFiles):
-    # StaticFiles сам не умеет ставить свои заголовки — добавляем Cache-Control
-    # к ответу на каждый файл (он отдаётся только вместе с ETag/Last-Modified,
-    # так что при изменении файла браузер всё равно получит новую версию).
-    def __init__(self, *args, cache_headers: dict | None = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.cache_headers = cache_headers or {}
-
-    async def get_response(self, path, scope):
-        response = await super().get_response(path, scope)
-        for key, value in self.cache_headers.items():
-            response.headers[key] = value
-        return response
-
-
 if (FRONTEND_DIR / "src").is_dir():
-    app.mount("/src", CachedStaticFiles(directory=str(FRONTEND_DIR / "src"),
-                                        cache_headers=CACHE_STATIC), name="static")
+    app.mount("/src", StaticFiles(directory=str(FRONTEND_DIR / "src")), name="static")
 
 
 @app.get("/version", summary="Версия продукта, дата сборки и контакты поддержки")
