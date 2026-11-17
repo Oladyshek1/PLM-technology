@@ -4,13 +4,15 @@
 # Запуск:  python init_db.py  (один раз), затем  uvicorn app:app --reload
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 import re
 import secrets
 
 import bcrypt
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from psycopg2.errors import UniqueViolation
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel, Field, field_validator
@@ -416,9 +418,33 @@ def _resolve_periods(cur, body):
 
 # ---------------------------------------------------------------- чтение
 
+# ------------------------------------------------------------------ фронт
+# Раздаём статические страницы из docs/frontend тем же сервером, что и API:
+# тогда одному адресу достаточно для сайта и для запросов, и туннель
+# (cloudflared) даёт одну публичную ссылку на всё.
+# Если папки нет — сервер работает как API-only (например, при развёртывании,
+# где фронт выложен отдельно).
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
+
 @app.get("/", include_in_schema=False)
 def root():
+    index = FRONTEND_DIR / "index.html"
+    if index.is_file():
+        return FileResponse(index)
     return RedirectResponse("/docs")
+
+
+@app.get("/admin.html", include_in_schema=False)
+def admin_page():
+    page = FRONTEND_DIR / "admin.html"
+    if page.is_file():
+        return FileResponse(page)
+    raise HTTPException(404, "admin.html не найден")
+
+
+if (FRONTEND_DIR / "src").is_dir():
+    app.mount("/src", StaticFiles(directory=str(FRONTEND_DIR / "src")), name="static")
 
 
 @app.get("/version", summary="Версия продукта, дата сборки и контакты поддержки")
