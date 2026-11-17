@@ -18,26 +18,10 @@ Backend: Python, FastAPI, psycopg2
 
 ЗАПУСК
 
-  Локально (встроенный PostgreSQL, папка pgdata):
-    pip install fastapi "uvicorn[standard]" pgserver psycopg2-binary bcrypt
-    $env:ADMIN_PASSWORD="свой_пароль"   # необязательно: без неё генерируется
-    python init_db.py            # 1-й раз: initdb + старт PG + таблицы + сид
-    uvicorn app:app --reload     # API: http://127.0.0.1:8000
-
-  С внешней БД (облако / общий сервер):
-    задайте DATABASE_URL (переменная окружения или файл .env,
-    образец — .env.example), затем:
-    python init_db.py            # создаёт таблицы и сид в этой БД
-    uvicorn app:app --host 0.0.0.0 --port 8000
-
-    Если DATABASE_URL задана — встроенный pgserver не запускается,
-    пакет pgserver не нужен. Можно положить DATABASE_URL в .env рядом
-    с этим файлом (файл .env в git не попадает).
-
-  Деплой в облако (Render): в корне репозитория лежит render.yaml
-    (PostgreSQL + API + статический фронт). После создания сервисов
-    выполните init_db.py один раз (Shell в панели Render).
-
+  pip install fastapi "uvicorn[standard]" pgserver psycopg2-binary bcrypt
+  $env:ADMIN_PASSWORD="свой_пароль"   # необязательно: без неё генерируется
+  python init_db.py            # 1-й раз: initdb + старт PG + таблицы + сид
+  uvicorn app:app --reload     # API: http://127.0.0.1:8000
 
 Swagger: http://127.0.0.1:8000/docs — все эндпоинты можно дёргать прямо
 из браузера (кнопка «Try it out»).

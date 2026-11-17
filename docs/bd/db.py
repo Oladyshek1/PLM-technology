@@ -2,18 +2,15 @@
 #
 # Два режима, выбираются автоматически:
 #
-# 1) ОБЛАКО / внешняя БД (Render, Neon, Supabase, локальный Postgres):
-#    задана переменная окружения DATABASE_URL, например
-#      postgresql://user:pass@host:5432/booking
-#    — подключаемся напрямую, ничего не поднимаем.
+# 1) ОБЛАКО (Supabase / Neon / свой сервер): задана переменная окружения
+#    DATABASE_URL, например
+#      postgresql://postgres.xxx:pass@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+#    — подключаемся напрямую, встроенный PostgreSQL не поднимаем.
 #
-# 2) ЛОКАЛЬНАЯ РАЗРАБОТКА (по умолчанию):
-#    DATABASE_URL не задана → используется встроенный PostgreSQL (пакет pgserver).
-#    Сервер поднимается сам при первом обращении (initdb + старт), данные лежат
-#    в папке pgdata рядом со скриптом. Останавливается вместе с последним
-#    процессом, который его открыл.
+# 2) ЛОКАЛЬНАЯ РАЗРАБОТКА (по умолчанию): DATABASE_URL не задана — работает
+#    встроенный PostgreSQL (пакет pgserver), данные лежат в папке pgdata.
 #
-# Переменные можно положить в файл .env рядом с этим модулем (см. .env.example).
+# Переменную можно положить в файл .env рядом с этим модулем (см. .env.example).
 from pathlib import Path
 import os
 
@@ -27,9 +24,7 @@ _server = None
 
 
 def _load_dotenv():
-    # Читаем .env (если он есть), не перетирая уже заданные переменные окружения.
-    # Мини-реализация вместо зависимости от python-dotenv: формат простой —
-    # строка KEY=VALUE, # в начале — комментарий.
+    # Читаем .env (если есть), не перетирая уже заданные переменные окружения.
     env_path = BASE_DIR / ".env"
     if not env_path.exists():
         return
@@ -48,20 +43,17 @@ _load_dotenv()
 
 
 def database_url() -> str | None:
-    # Строка подключения из окружения (облачный Postgres) или None —
-    # тогда работаем через встроенный pgserver.
+    # Строка подключения из окружения или None (тогда работает pgserver).
     url = os.environ.get("DATABASE_URL")
     if not url:
         return None
-    # Heroku/Render иногда отдают postgres:// — psycopg2 понимает только
-    # postgresql://, поэтому правим схему.
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://"):]
     return url
 
 
 def is_embedded() -> bool:
-    # True — локальный встроенный PostgreSQL (pgserver), False — внешняя БД.
+    # True — локальный встроенный PostgreSQL, False — внешняя БД.
     return database_url() is None
 
 
@@ -69,7 +61,7 @@ def get_server():
     # Локальный встроенный сервер (только если DATABASE_URL не задана).
     global _server
     if _server is None:
-        import pgserver  # импорт внутри, чтобы в облаке пакет не требовался
+        import pgserver  # импорт внутри: в облаке пакет не нужен
         _server = pgserver.get_server(str(PGDATA))
     return _server
 
@@ -85,13 +77,8 @@ def connect(database: str = DB_NAME) -> psycopg2.extensions.connection:
     # Подключение к PostgreSQL.
     # autocommit=False (по умолчанию psycopg2): транзакция стартует вместе с первым
     # оператором и закрывается явно conn.commit() / conn.rollback().
-    # keepalives: облачные пулеры (Supabase pooler, PgBouncer) рвут «тихие»
-    # соединения, поэтому держим их живыми и ставим таймаут на установку.
-    return psycopg2.connect(
-        get_uri(database),
-        connect_timeout=15,
-        keepalives=1,
-        keepalives_idle=30,
-        keepalives_interval=10,
-        keepalives_count=5,
-    )
+    #
+    # ВАЖНО: каждый вызов открывает НОВОЕ соединение, и вызывающий код обязан
+    # закрыть его (conn.close()) — иначе на бесплатном Supabase упрёмся в лимит
+    # «max clients 15». Пула здесь намеренно нет: он отдавал мёртвые соединения.
+    return psycopg2.connect(get_uri(database), connect_timeout=15)

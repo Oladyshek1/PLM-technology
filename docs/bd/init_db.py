@@ -109,8 +109,8 @@ CREATE INDEX IF NOT EXISTS "ix_session_user" ON "Сессия" ("ID_Пользо
 
 def ensure_database():
     # Создаёт БД booking, если её ещё нет (CREATE DATABASE нельзя в транзакции).
-    # Только для локального встроенного PostgreSQL: во внешней базе (DATABASE_URL,
-    # облако) она уже создана провайдером, и прав его на CREATE DATABASE нет.
+    # Только для локального встроенного PostgreSQL: во внешней базе (DATABASE_URL)
+    # она уже создана провайдером, и прав на CREATE DATABASE может не быть.
     if not db.is_embedded():
         print("Внешняя БД (DATABASE_URL): БД уже существует, создавать не нужно")
         return

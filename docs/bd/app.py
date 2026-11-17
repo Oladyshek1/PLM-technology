@@ -9,6 +9,7 @@ import re
 import secrets
 
 import bcrypt
+import psycopg2
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
@@ -85,7 +86,6 @@ def _minutes(t):
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Локальный встроенный PostgreSQL поднимаем только если нет DATABASE_URL.
-    # С внешней БД (Supabase/облако) подключаемся напрямую, pgserver не нужен.
     if db.is_embedded():
         db.get_server()
     yield
@@ -257,6 +257,17 @@ def close_finished_bookings():
     # (дата + время окончания < текущего момента). Вызывается при чтении
     # списка броней — отдельный планировщик не нужен.
     # Возвращает число закрытых записей (0 — если закрывать было нечего).
+    # При обрыве соединения (пулер Supabase) — одна повторная попытка.
+    for attempt in (1, 2):
+        try:
+            return _close_finished_bookings()
+        except psycopg2.OperationalError:
+            if attempt == 2:
+                return 0
+            continue
+
+
+def _close_finished_bookings():
     conn = db.connect()
     try:
         cur = conn.cursor()
@@ -281,10 +292,15 @@ def close_finished_bookings():
         n = cur.rowcount
         conn.commit()
         return n
-    except Exception:
-        conn.rollback()
-        return 0
     finally:
+        # Ранние return внутри try не доходят до commit/rollback — закрываем
+        # транзакцию явно, иначе соединение остаётся в «idle in transaction»
+        # и держит блокировки (на Supabase это съедает лимит).
+        try:
+            if conn.info.transaction_status != 0:
+                conn.rollback()
+        except Exception:
+            pass
         conn.close()
 
 
@@ -422,11 +438,9 @@ def _resolve_periods(cur, body):
 # ---------------------------------------------------------------- чтение
 
 # ------------------------------------------------------------------ фронт
-# Раздаём статические страницы из docs/frontend тем же сервером, что и API:
-# тогда одному адресу достаточно для сайта и для запросов, и туннель
-# (cloudflared) даёт одну публичную ссылку на всё.
-# Если папки нет — сервер работает как API-only (например, при развёртывании,
-# где фронт выложен отдельно).
+# Отдаём страницы из docs/frontend тем же сервером, что и API: тогда одной
+# ссылки достаточно и для сайта, и для запросов (удобно для туннеля).
+# Если папки нет — работаем как чистый API (GET / ведёт на Swagger).
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 
